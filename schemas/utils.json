@@ -1,0 +1,67 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "http://openconverters.com/schemas/utils.json",
+    "title": "utils",
+    "description": "Shared definition utilities for SAS (Semiconductor Agnostic Structure)",
+    "type": "object",
+    "properties": {
+        "dimensionWithTolerance": {
+            "$ref": "#/$defs/dimensionWithTolerance"
+        },
+        "curve": {
+            "$ref": "#/$defs/curve"
+        },
+        "numberArray": {
+            "$ref": "#/$defs/numberArray"
+        }
+    },
+    "$defs": {
+        "dimensionWithTolerance": {
+            "description": "A dimension with minimum, nominal, and maximum values",
+            "type": "object",
+            "properties": {
+                "minimum": {
+                    "description": "The minimum value of the dimension",
+                    "type": "number"
+                },
+                "nominal": {
+                    "description": "The nominal value of the dimension",
+                    "type": "number"
+                },
+                "maximum": {
+                    "description": "The maximum value of the dimension",
+                    "type": "number"
+                }
+            },
+            "anyOf": [
+                {"required": ["minimum"]},
+                {"required": ["nominal"]},
+                {"required": ["maximum"]}
+            ]
+        },
+        "curve": {
+            "type": "object",
+            "description": "X-Y curve data points",
+            "additionalProperties": false,
+            "properties": {
+                "xData": {
+                    "description": "X-axis values",
+                    "$ref": "#/$defs/numberArray"
+                },
+                "yData": {
+                    "description": "Y-axis values",
+                    "$ref": "#/$defs/numberArray"
+                }
+            }
+        },
+        "numberArray": {
+            "type": "array",
+            "description": "Array of numeric values",
+            "items": {
+                "type": [
+                    "number"
+                ]
+            }
+        }
+    }
+}

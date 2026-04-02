@@ -1,0 +1,100 @@
+{
+    "inputs": {
+        "designRequirements": {}
+    },
+    "semiconductor": {
+        "manufacturerInfo": {
+            "name": "Infineon",
+            "reference": "IPB017N10N5",
+            "status": "production",
+            "datasheetUrl": "https://www.infineon.com/dgdl/Infineon-IPB017N10N5-DataSheet-v02_01-EN.pdf",
+            "datasheetInfo": {
+                "part": {
+                    "partNumber": "IPB017N10N5",
+                    "series": "OptiMOS 5",
+                    "deviceType": "mosfet",
+                    "technology": "Si",
+                    "subType": "nChannel",
+                    "case": "TO-263-3 (D2PAK)"
+                },
+                "electrical": {
+                    "drainSourceVoltage": 100,
+                    "gateSourceVoltageMax": 20,
+                    "continuousDrainCurrent": 180,
+                    "continuousDrainCurrentAt100C": 128,
+                    "pulsedDrainCurrent": 720,
+                    "powerDissipation": 214,
+                    "avalancheEnergy": 0.95,
+                    "onResistance": 0.0017,
+                    "onResistanceVgs": 10,
+                    "onResistanceId": 100,
+                    "gateThresholdVoltage": { "minimum": 2.2, "nominal": 3.0, "maximum": 3.8 },
+                    "inputCapacitance": 13.2e-9,
+                    "outputCapacitance": 2.8e-9,
+                    "reverseTransferCapacitance": 0.098e-9,
+                    "capacitanceMeasurementVds": 50,
+                    "totalGateCharge": 182e-9,
+                    "gateSourceCharge": 56e-9,
+                    "gateDrainCharge": 34e-9,
+                    "outputCharge": 159e-9,
+                    "bodyDiodeForwardVoltage": 0.85,
+                    "bodyDiodeContinuousCurrent": 180,
+                    "reverseRecoveryCharge": 160e-9,
+                    "figureOfMerit": 3.1e-10
+                },
+                "modelParams": {
+                    "level": 3,
+                    "vto": 3.0,
+                    "kp": 350,
+                    "lambda": 0.01,
+                    "rd": 0.0008,
+                    "rs": 0.0008,
+                    "cgs": 8.5e-9,
+                    "cgd": 0.098e-9,
+                    "cds": 2.7e-9,
+                    "is": 1e-12,
+                    "n": 1.5
+                },
+                "curves": {
+                    "rdsOnVsTj": {
+                        "xData": [-40, 25, 75, 125, 150, 175],
+                        "yData": [0.0012, 0.0017, 0.0024, 0.0032, 0.0037, 0.0043]
+                    },
+                    "cossVsVds": {
+                        "xData": [1, 5, 10, 25, 50, 80, 100],
+                        "yData": [40e-9, 10e-9, 5.5e-9, 2.8e-9, 1.5e-9, 0.9e-9, 0.7e-9]
+                    }
+                },
+                "thermal": {
+                    "thermalResistanceJunctionCase": 0.7,
+                    "thermalResistanceJunctionAmbient": 62,
+                    "junctionTemperatureMax": 175,
+                    "junctionTemperatureMin": -55
+                },
+                "mechanical": {
+                    "assemblyType": "SMT",
+                    "case": "TO-263-3 (D2PAK)",
+                    "length": 0.0103,
+                    "width": 0.0088,
+                    "height": 0.0045
+                },
+                "business": {
+                    "packaging": "Tape and Reel",
+                    "vpe": 800,
+                    "moq": 1,
+                    "cost": 2.45
+                }
+            }
+        },
+        "distributorsInfo": [
+            {
+                "name": "Digi-Key",
+                "reference": "IPB017N10N5-ND",
+                "link": "https://www.digikey.com/en/products/detail/infineon/IPB017N10N5/5817556",
+                "cost": 2.45,
+                "stock": 15000
+            }
+        ]
+    },
+    "outputs": {}
+}

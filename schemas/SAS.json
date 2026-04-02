@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "http://openconverters.com/schemas/SAS/SAS.json",
+    "title": "SAS",
+    "description": "Semiconductor Agnostic Structure (SAS). When wrapped with inputs + outputs, forms a valid EAS document.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "inputs": {
+            "description": "Design requirements and operating points for this semiconductor",
+            "type": "object"
+        },
+        "semiconductor": {
+            "description": "The semiconductor component data",
+            "title": "semiconductor",
+            "$ref": "./semiconductor.json"
+        },
+        "outputs": {
+            "description": "Computed results (conduction loss, switching loss, thermal, etc.)",
+            "type": ["object", "array"]
+        }
+    },
+    "required": ["inputs", "semiconductor", "outputs"]
+}
