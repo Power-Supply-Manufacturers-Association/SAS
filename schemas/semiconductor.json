@@ -13,6 +13,11 @@
             "description": "Where to buy this component",
             "type": "array",
             "items": { "$ref": "./utils.json#/$defs/distributorInfo" }
+        },
+        "substitutesInfo": {
+            "description": "Substitute or equivalent components that can replace this one",
+            "type": "array",
+            "items": { "$ref": "./utils.json#/$defs/substituteInfo" }
         }
     },
     "required": ["manufacturerInfo"],

@@ -62,6 +62,39 @@
                     "number"
                 ]
             }
+        },
+        "distributorInfo": {
+            "description": "Where to buy this component",
+            "type": "object",
+            "properties": {
+                "name": { "type": "string", "description": "Distributor name (e.g., Digi-Key, Mouser)" },
+                "reference": { "type": ["string", "null"], "description": "Distributor part number" },
+                "link": { "type": ["string", "null"], "format": "uri", "description": "Product page URL" },
+                "cost": { "type": ["number", "null"], "description": "Unit cost in USD" },
+                "stock": { "type": ["integer", "null"], "description": "Available stock quantity" },
+                "country": { "type": ["string", "null"], "description": "Country of distribution" }
+            },
+            "required": ["name"]
+        },
+        "substituteInfo": {
+            "description": "A substitute or equivalent component that can replace this one",
+            "type": "object",
+            "properties": {
+                "partNumber": { "type": "string", "description": "Part number of the substitute" },
+                "manufacturer": { "type": ["string", "null"], "description": "Manufacturer of the substitute" },
+                "type": {
+                    "type": "string",
+                    "description": "Type of substitution",
+                    "enum": ["drop-in", "near-equivalent", "functional", "upgrade", "downgrade", "successor"]
+                },
+                "notes": { "type": ["string", "null"], "description": "Differences or caveats" },
+                "source": {
+                    "type": ["string", "null"],
+                    "description": "Where this substitution was identified",
+                    "enum": ["manufacturer", "distributor", "cross-reference", "engineering", null]
+                }
+            },
+            "required": ["partNumber"]
         }
     }
 }
