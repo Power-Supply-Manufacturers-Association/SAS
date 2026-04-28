@@ -1,0 +1,236 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "http://openconverters.com/schemas/SAS/inputs/designRequirements.json",
+    "$comment": "SPDX-License-Identifier: Apache-2.0",
+    "title": "designRequirements",
+    "description": "The list of requirements that a given semiconductor must comply with. Built on top of the EAS designRequirementsBase mixin, with semiconductor-specific common fields and a deviceType-discriminated oneOf for per-type required ratings (mirrors the same discriminator already present in semiconductor.json).",
+    "allOf": [
+        {
+            "$ref": "../../../EAS/schemas/utils.json#/$defs/designRequirementsBase"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "deviceType": {
+                    "description": "Required device type. Drives the per-type oneOf below and aligns with semiconductor.json's deviceType discriminator.",
+                    "type": "string",
+                    "enum": [
+                        "mosfet",
+                        "diode",
+                        "igbt",
+                        "bjt"
+                    ]
+                },
+                "maximumJunctionTemperature": {
+                    "description": "Maximum allowed junction temperature, in Celsius",
+                    "type": "number"
+                },
+                "maximumPowerDissipation": {
+                    "description": "Maximum allowed continuous power dissipation, in W",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "role": {
+                    "description": "Semiconductor role in the converter.",
+                    "type": "string",
+                    "enum": [
+                        "mainSwitch",
+                        "synchronousRectifier",
+                        "freewheelingDiode",
+                        "clampDiode",
+                        "bootstrapDiode",
+                        "lineRectifier",
+                        "bridgeRectifier",
+                        "bodyDiode",
+                        "inrushLimiter",
+                        "esdProtection",
+                        "tvs",
+                        "zenerReference",
+                        "smallSignal"
+                    ]
+                },
+                "allowedTechnologies": {
+                    "description": "Subset of semiconductor process technologies acceptable for this design. Orthogonal to deviceType (a 'mosfet' can be Si / SiC / GaN; an 'igbt' can be Si or SiC).",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "Si",
+                            "SiC",
+                            "GaN",
+                            "GaAs",
+                            "Ge"
+                        ]
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                },
+                "application": {
+                    "$ref": "../../../EAS/schemas/utils.json#/$defs/semiconductorApplication"
+                },
+                "subApplication": {
+                    "$ref": "../../../EAS/schemas/utils.json#/$defs/semiconductorSubApplication"
+                }
+            },
+            "required": [
+                "deviceType"
+            ],
+            "oneOf": [
+                {
+                    "description": "MOSFET-specific requirements",
+                    "properties": {
+                        "deviceType": {
+                            "const": "mosfet"
+                        },
+                        "ratedDrainSourceVoltage": {
+                            "description": "Required minimum V_DS rating, in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "ratedContinuousDrainCurrent": {
+                            "description": "Required minimum continuous I_D rating (typically at T_c = 25 C), in A",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumOnResistance": {
+                            "description": "Maximum allowed R_DS(on), in Ohm",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumGateCharge": {
+                            "description": "Maximum allowed total gate charge Q_g, in C",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumOutputCapacitance": {
+                            "description": "Maximum allowed C_oss at a reference V_DS, in F",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumSwitchingLossPerCycle": {
+                            "description": "Maximum allowed switching energy E_on + E_off per cycle, in J",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumReverseRecoveryCharge": {
+                            "description": "Maximum allowed body-diode reverse-recovery charge Q_rr, in C",
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "required": [
+                        "ratedDrainSourceVoltage",
+                        "ratedContinuousDrainCurrent"
+                    ]
+                },
+                {
+                    "description": "Diode-specific requirements",
+                    "properties": {
+                        "deviceType": {
+                            "const": "diode"
+                        },
+                        "ratedReverseVoltage": {
+                            "description": "Required minimum V_RRM (or V_R) rating, in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "ratedForwardCurrent": {
+                            "description": "Required minimum continuous forward current rating I_F, in A",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumForwardVoltage": {
+                            "description": "Maximum allowed forward voltage drop V_F at the rated current, in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumReverseRecoveryCharge": {
+                            "description": "Maximum allowed reverse recovery charge Q_rr, in C",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumReverseRecoveryTime": {
+                            "description": "Maximum allowed reverse recovery time t_rr, in s",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumReverseLeakage": {
+                            "description": "Maximum allowed reverse leakage current I_R, in A",
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "required": [
+                        "ratedReverseVoltage",
+                        "ratedForwardCurrent"
+                    ]
+                },
+                {
+                    "description": "IGBT-specific requirements",
+                    "properties": {
+                        "deviceType": {
+                            "const": "igbt"
+                        },
+                        "ratedCollectorEmitterVoltage": {
+                            "description": "Required minimum V_CES rating, in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "ratedCollectorCurrent": {
+                            "description": "Required minimum continuous I_C rating, in A",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumSaturationVoltage": {
+                            "description": "Maximum allowed V_CE(sat), in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumSwitchingLossPerCycle": {
+                            "description": "Maximum allowed switching energy E_on + E_off per cycle, in J",
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "required": [
+                        "ratedCollectorEmitterVoltage",
+                        "ratedCollectorCurrent"
+                    ]
+                },
+                {
+                    "description": "BJT-specific requirements",
+                    "properties": {
+                        "deviceType": {
+                            "const": "bjt"
+                        },
+                        "ratedCollectorEmitterVoltage": {
+                            "description": "Required minimum V_CEO rating, in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "ratedCollectorCurrent": {
+                            "description": "Required minimum continuous I_C rating, in A",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumSaturationVoltage": {
+                            "description": "Maximum allowed V_CE(sat), in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "minimumDcCurrentGain": {
+                            "description": "Minimum required DC current gain h_FE",
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "required": [
+                        "ratedCollectorEmitterVoltage",
+                        "ratedCollectorCurrent"
+                    ]
+                }
+            ]
+        }
+    ],
+    "$defs": {}
+}

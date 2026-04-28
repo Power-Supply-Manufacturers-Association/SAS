@@ -8,7 +8,8 @@
     "properties": {
         "inputs": {
             "description": "Design requirements and operating points for this semiconductor",
-            "type": "object"
+            "title": "inputs",
+            "$ref": "./inputs.json"
         },
         "semiconductor": {
             "description": "The semiconductor component data",
