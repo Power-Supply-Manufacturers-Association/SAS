@@ -3,7 +3,7 @@
     "$id": "http://openconverters.com/schemas/SAS/inputs.json",
     "$comment": "SPDX-License-Identifier: Apache-2.0",
     "title": "inputs",
-    "description": "The description of the inputs that can be used to design or evaluate a Semiconductor. Mirrors the MAS / CAS / RAS inputs structure (operatingPoints[] + designRequirements). Operating points use the EAS multiPortOperatingPoint template since semiconductors are typically three- or four-terminal devices (gate/drain/source, anode/cathode, base/collector/emitter).",
+    "description": "The description of the inputs that can be used to design or evaluate a Semiconductor. Mirrors the MAS / CAS / RAS inputs structure (operatingPoints[] + designRequirements). Operating points use the PEAS multiPortOperatingPoint template since semiconductors are typically three- or four-terminal devices (gate/drain/source, anode/cathode, base/collector/emitter).",
     "type": "object",
     "properties": {
         "operatingPoints": {
@@ -11,7 +11,7 @@
             "title": "operatingPoints",
             "type": "array",
             "items": {
-                "$ref": "../../EAS/schemas/inputs/multiPortOperatingPoint.json"
+                "$ref": "../../PEAS/schemas/inputs/multiPortOperatingPoint.json"
             },
             "minItems": 1
         },

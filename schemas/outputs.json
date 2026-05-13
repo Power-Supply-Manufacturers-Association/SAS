@@ -3,7 +3,7 @@
     "$id": "http://openconverters.com/schemas/SAS/outputs.json",
     "$comment": "SPDX-License-Identifier: Apache-2.0",
     "title": "outputs",
-    "description": "Outputs computed for one operating point of a semiconductor. Each named block is independently optional; every block carries the EAS outputBase {origin, methodUsed} provenance shell. The top-level SAS document holds an array of these — outputs[i] aligns positionally with inputs.operatingPoints[i].",
+    "description": "Outputs computed for one operating point of a semiconductor. Each named block is independently optional; every block carries the PEAS outputBase {origin, methodUsed} provenance shell. The top-level SAS document holds an array of these — outputs[i] aligns positionally with inputs.operatingPoints[i].",
     "type": "object",
     "properties": {
         "conductionLosses": {
@@ -40,7 +40,7 @@
         },
         "isolationCheck": {
             "description": "Insulation coordination figures, for isolated parts (gate drivers, optocouplers).",
-            "$ref": "../../EAS/schemas/outputs/insulationCoordination.json"
+            "$ref": "../../PEAS/schemas/outputs/insulationCoordination.json"
         }
     },
     "required": [],
@@ -49,7 +49,7 @@
             "title": "conductionLossesOutput",
             "allOf": [
                 {
-                    "$ref": "../../EAS/schemas/outputs/outputBase.json"
+                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -78,7 +78,7 @@
                             "type": "number"
                         },
                         "conditions": {
-                            "$ref": "../../EAS/schemas/outputs/measurementCondition.json"
+                            "$ref": "../../PEAS/schemas/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -91,7 +91,7 @@
             "title": "switchingLossesOutput",
             "allOf": [
                 {
-                    "$ref": "../../EAS/schemas/outputs/outputBase.json"
+                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -123,7 +123,7 @@
                         },
                         "conditions": {
                             "description": "V_DS, I_D, R_g, T_j at which the switching energies were extracted.",
-                            "$ref": "../../EAS/schemas/outputs/measurementCondition.json"
+                            "$ref": "../../PEAS/schemas/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -136,7 +136,7 @@
             "title": "reverseRecoveryLossesOutput",
             "allOf": [
                 {
-                    "$ref": "../../EAS/schemas/outputs/outputBase.json"
+                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -162,7 +162,7 @@
                             "minimum": 0
                         },
                         "conditions": {
-                            "$ref": "../../EAS/schemas/outputs/measurementCondition.json"
+                            "$ref": "../../PEAS/schemas/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -175,7 +175,7 @@
             "title": "gateDriveEnergyOutput",
             "allOf": [
                 {
-                    "$ref": "../../EAS/schemas/outputs/outputBase.json"
+                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -211,7 +211,7 @@
             "title": "totalPowerDissipationOutput",
             "allOf": [
                 {
-                    "$ref": "../../EAS/schemas/outputs/outputBase.json"
+                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -256,7 +256,7 @@
             "title": "junctionTemperatureOutput",
             "allOf": [
                 {
-                    "$ref": "../../EAS/schemas/outputs/outputBase.json"
+                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -295,7 +295,7 @@
             "description": "Safe Operating Area check. Compares the operating-point trajectory in the V-I plane against the device's SOA contour and reports whether it stays inside.",
             "allOf": [
                 {
-                    "$ref": "../../EAS/schemas/outputs/outputBase.json"
+                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -358,14 +358,14 @@
             "title": "lifetimeOutput",
             "allOf": [
                 {
-                    "$ref": "../../EAS/schemas/outputs/outputBase.json"
+                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
                     "properties": {
                         "predictedHours": {
                             "description": "Predicted lifetime under the operating point, in hours.",
-                            "$ref": "../../EAS/schemas/utils.json#/$defs/dimensionWithTolerance"
+                            "$ref": "../../PEAS/schemas/utils.json#/$defs/dimensionWithTolerance"
                         },
                         "thermalCycles": {
                             "description": "Predicted number of thermal cycles to wear-out under the operating point.",
@@ -386,7 +386,7 @@
                             ]
                         },
                         "conditions": {
-                            "$ref": "../../EAS/schemas/outputs/measurementCondition.json"
+                            "$ref": "../../PEAS/schemas/outputs/measurementCondition.json"
                         }
                     },
                     "required": [

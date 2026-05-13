@@ -18,7 +18,7 @@
 SAS is part of the **OpenConverters** family of agnostic structures:
 
 ```
-EAS (Electronic Agnostic Structure) -- Universal container
+PEAS (Power Electronics Agnostic Structure) -- Universal container
  |
  +-- MAS (Magnetic Agnostic Structure) -- Inductors, transformers, chokes
  +-- CAS (Capacitor Agnostic Structure) -- Capacitors
@@ -26,7 +26,7 @@ EAS (Electronic Agnostic Structure) -- Universal container
  +-- RAS (Resistor Agnostic Structure) -- Resistors
 ```
 
-Every valid SAS document is also a valid EAS document. SAS is a sibling to MAS (for magnetics) and CAS (for capacitors), all sharing the same three-section `inputs / component / outputs` architecture defined by EAS.
+Every valid SAS document is also a valid PEAS document. SAS is a sibling to MAS (for magnetics) and CAS (for capacitors), all sharing the same three-section `inputs / component / outputs` architecture defined by PEAS.
 
 ### SAS/data/ vs TAS/data/
 
@@ -48,7 +48,7 @@ An important distinction: **SAS/data/** stores manufacturing building blocks -- 
 
 ### The Three Sections
 
-Every SAS document has three parts, matching the EAS pattern:
+Every SAS document has three parts, matching the PEAS pattern:
 
 ```
 +----------------+     +------------------+     +----------------+

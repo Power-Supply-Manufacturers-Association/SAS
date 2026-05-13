@@ -39,10 +39,10 @@
     "required": [],
     "$defs": {
         "manufacturerInfo": {
-            "description": "Manufacturer-specific information \u2014 extends EAS base with semiconductor-specific datasheetInfo.",
+            "description": "Manufacturer-specific information \u2014 extends PEAS base with semiconductor-specific datasheetInfo.",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/EAS/utils.json#/$defs/manufacturerInfo"
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/manufacturerInfo"
                 },
                 {
                     "type": "object",

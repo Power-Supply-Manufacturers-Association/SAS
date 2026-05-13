@@ -3,10 +3,10 @@
     "$id": "http://openconverters.com/schemas/SAS/inputs/designRequirements.json",
     "$comment": "SPDX-License-Identifier: Apache-2.0",
     "title": "designRequirements",
-    "description": "The list of requirements that a given semiconductor must comply with. Built on top of the EAS designRequirementsBase mixin, with semiconductor-specific common fields and a deviceType-discriminated oneOf for per-type required ratings (mirrors the same discriminator already present in semiconductor.json).",
+    "description": "The list of requirements that a given semiconductor must comply with. Built on top of the PEAS designRequirementsBase mixin, with semiconductor-specific common fields and a deviceType-discriminated oneOf for per-type required ratings (mirrors the same discriminator already present in semiconductor.json).",
     "allOf": [
         {
-            "$ref": "../../../EAS/schemas/utils.json#/$defs/designRequirementsBase"
+            "$ref": "../../../PEAS/schemas/utils.json#/$defs/designRequirementsBase"
         },
         {
             "type": "object",
@@ -66,10 +66,10 @@
                     "uniqueItems": true
                 },
                 "application": {
-                    "$ref": "../../../EAS/schemas/utils.json#/$defs/semiconductorApplication"
+                    "$ref": "../../../PEAS/schemas/utils.json#/$defs/semiconductorApplication"
                 },
                 "subApplication": {
-                    "$ref": "../../../EAS/schemas/utils.json#/$defs/semiconductorSubApplication"
+                    "$ref": "../../../PEAS/schemas/utils.json#/$defs/semiconductorSubApplication"
                 }
             },
             "required": [

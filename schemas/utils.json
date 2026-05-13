@@ -2,6 +2,6 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "http://openconverters.com/schemas/SAS/utils.json",
     "title": "SAS utils",
-    "description": "Redirect shim — all definitions live in EAS/schemas/utils.json.",
-    "$ref": "../../EAS/schemas/utils.json"
+    "description": "Redirect shim — all definitions live in PEAS/schemas/utils.json.",
+    "$ref": "../../PEAS/schemas/utils.json"
 }
