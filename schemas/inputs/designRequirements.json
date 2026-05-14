@@ -6,7 +6,7 @@
     "description": "The list of requirements that a given semiconductor must comply with. Built on top of the PEAS designRequirementsBase mixin, with semiconductor-specific common fields and a deviceType-discriminated oneOf for per-type required ratings (mirrors the same discriminator already present in semiconductor.json).",
     "allOf": [
         {
-            "$ref": "../../../PEAS/schemas/utils.json#/$defs/designRequirementsBase"
+            "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/designRequirementsBase"
         },
         {
             "type": "object",
@@ -66,10 +66,10 @@
                     "uniqueItems": true
                 },
                 "application": {
-                    "$ref": "../../../PEAS/schemas/utils.json#/$defs/semiconductorApplication"
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/semiconductorApplication"
                 },
                 "subApplication": {
-                    "$ref": "../../../PEAS/schemas/utils.json#/$defs/semiconductorSubApplication"
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/semiconductorSubApplication"
                 }
             },
             "required": [

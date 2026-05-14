@@ -1,0 +1,291 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "http://openconverters.com/schemas/SAS/mosfet.json",
+    "title": "mosfet",
+    "description": "MOSFET (Si, SiC, GaN, GaAs) component data. The presence of the 'mosfet' field at the top level of an SAS document discriminates the device type — there is no deviceType property.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "manufacturerInfo": {
+            "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with MOSFET-specific datasheetInfo.",
+            "allOf": [
+                {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/manufacturerInfo"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "datasheetInfo": {
+                            "$ref": "#/$defs/datasheetInfo"
+                        }
+                    },
+                    "required": [
+                        "datasheetInfo"
+                    ]
+                }
+            ]
+        },
+        "distributorsInfo": {
+            "description": "Where to buy this component",
+            "type": "array",
+            "items": {
+                "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/distributorInfo"
+            }
+        }
+    },
+    "required": [
+        "manufacturerInfo"
+    ],
+    "$defs": {
+        "datasheetInfo": {
+            "description": "All information extracted from the MOSFET datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "part": {
+                    "$ref": "./utils.json#/$defs/part"
+                },
+                "electrical": {
+                    "$ref": "#/$defs/electrical"
+                },
+                "thermal": {
+                    "$ref": "./utils.json#/$defs/thermal"
+                },
+                "mechanical": {
+                    "$ref": "./utils.json#/$defs/mechanical"
+                },
+                "business": {
+                    "$ref": "./utils.json#/$defs/business"
+                },
+                "modelParams": {
+                    "$ref": "#/$defs/modelParams"
+                },
+                "curves": {
+                    "$ref": "#/$defs/curves"
+                }
+            },
+            "required": [
+                "part",
+                "electrical"
+            ]
+        },
+        "electrical": {
+            "description": "MOSFET electrical characteristics — every field is relevant to MOSFETs.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "drainSourceVoltage": {
+                    "type": "number",
+                    "description": "V_DS max in Volts"
+                },
+                "gateSourceVoltageMax": {
+                    "type": "number",
+                    "description": "V_GS max in Volts"
+                },
+                "continuousDrainCurrent": {
+                    "type": "number",
+                    "description": "I_D at Tc=25C in Amperes"
+                },
+                "continuousDrainCurrentAt100C": {
+                    "type": "number",
+                    "description": "I_D at Tc=100C in Amperes"
+                },
+                "pulsedDrainCurrent": {
+                    "type": "number",
+                    "description": "I_DM in Amperes"
+                },
+                "powerDissipation": {
+                    "type": "number",
+                    "description": "P_D max at Tc=25C in Watts"
+                },
+                "avalancheEnergy": {
+                    "type": "number",
+                    "description": "E_AS in Joules"
+                },
+                "onResistance": {
+                    "type": "number",
+                    "description": "R_DS(on) in Ohms"
+                },
+                "onResistanceVgs": {
+                    "type": "number",
+                    "description": "V_GS for R_DS(on) spec in Volts"
+                },
+                "onResistanceId": {
+                    "type": "number",
+                    "description": "I_D for R_DS(on) spec in Amperes"
+                },
+                "gateThresholdVoltage": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance",
+                    "description": "V_GS(th) in Volts"
+                },
+                "inputCapacitance": {
+                    "type": "number",
+                    "description": "C_iss in Farads"
+                },
+                "outputCapacitance": {
+                    "type": "number",
+                    "description": "C_oss in Farads"
+                },
+                "reverseTransferCapacitance": {
+                    "type": "number",
+                    "description": "C_rss in Farads"
+                },
+                "capacitanceMeasurementVds": {
+                    "type": "number",
+                    "description": "V_DS for cap measurement in Volts"
+                },
+                "totalGateCharge": {
+                    "type": "number",
+                    "description": "Q_g in Coulombs"
+                },
+                "gateSourceCharge": {
+                    "type": "number",
+                    "description": "Q_gs in Coulombs"
+                },
+                "gateDrainCharge": {
+                    "type": "number",
+                    "description": "Q_gd in Coulombs"
+                },
+                "outputCharge": {
+                    "type": "number",
+                    "description": "Q_oss in Coulombs"
+                },
+                "turnOnDelay": {
+                    "type": "number",
+                    "description": "t_d(on) in seconds"
+                },
+                "riseTime": {
+                    "type": "number",
+                    "description": "t_r in seconds"
+                },
+                "turnOffDelay": {
+                    "type": "number",
+                    "description": "t_d(off) in seconds"
+                },
+                "fallTime": {
+                    "type": "number",
+                    "description": "t_f in seconds"
+                },
+                "bodyDiodeForwardVoltage": {
+                    "type": "number",
+                    "description": "V_SD in Volts"
+                },
+                "bodyDiodeContinuousCurrent": {
+                    "type": "number",
+                    "description": "I_S in Amperes"
+                },
+                "reverseRecoveryTime": {
+                    "type": "number",
+                    "description": "t_rr in seconds"
+                },
+                "reverseRecoveryCharge": {
+                    "type": "number",
+                    "description": "Q_rr in Coulombs"
+                },
+                "figureOfMerit": {
+                    "type": "number",
+                    "description": "R_DS(on) x Q_g in Ohm-Coulombs"
+                }
+            },
+            "required": [
+                "drainSourceVoltage",
+                "onResistance",
+                "continuousDrainCurrent"
+            ]
+        },
+        "modelParams": {
+            "description": "SPICE model parameters for MOSFET.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "level": {
+                    "type": "integer",
+                    "description": "SPICE model level"
+                },
+                "vto": {
+                    "type": "number",
+                    "description": "Threshold voltage in Volts"
+                },
+                "kp": {
+                    "type": "number",
+                    "description": "Transconductance in A/V^2"
+                },
+                "lambda": {
+                    "type": "number",
+                    "description": "Channel-length modulation in 1/V"
+                },
+                "rd": {
+                    "type": "number",
+                    "description": "Drain resistance in Ohms"
+                },
+                "rs": {
+                    "type": "number",
+                    "description": "Source resistance in Ohms"
+                },
+                "cgs": {
+                    "type": "number",
+                    "description": "Gate-source capacitance in Farads"
+                },
+                "cgd": {
+                    "type": "number",
+                    "description": "Gate-drain capacitance in Farads"
+                },
+                "cds": {
+                    "type": "number",
+                    "description": "Drain-source capacitance in Farads"
+                },
+                "is": {
+                    "type": "number",
+                    "description": "Body diode saturation current in Amperes"
+                },
+                "n": {
+                    "type": "number",
+                    "description": "Body diode ideality factor"
+                }
+            }
+        },
+        "curves": {
+            "description": "MOSFET characteristic curves from datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "rdsOnVsTj": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "R_DS(on) vs Tj"
+                },
+                "rdsOnVsId": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "R_DS(on) vs I_D"
+                },
+                "cissVsVds": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "C_iss vs V_DS"
+                },
+                "cossVsVds": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "C_oss vs V_DS"
+                },
+                "crssVsVds": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "C_rss vs V_DS"
+                },
+                "gateCharge": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "V_GS vs Q_g"
+                },
+                "bodyDiodeVf": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "V_SD vs I_SD"
+                },
+                "soa": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "Safe Operating Area"
+                },
+                "thermalImpedance": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "Z_th(j-c) vs pulse width"
+                }
+            }
+        }
+    }
+}

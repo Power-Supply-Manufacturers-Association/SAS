@@ -2,6 +2,178 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "http://openconverters.com/schemas/SAS/utils.json",
     "title": "SAS utils",
-    "description": "Redirect shim — all definitions live in PEAS/schemas/utils.json.",
-    "$ref": "../../PEAS/schemas/utils.json"
+    "description": "Shared sub-schemas reused by every SAS per-type document (mosfet, diode, igbt, bjt). Component-specific electricals, modelParams and curves live in the per-type files.",
+    "$defs": {
+        "part": {
+            "description": "Basic part identification — shared across all semiconductor types. The discriminator (mosfet/diode/igbt/bjt) is the field name in the document, not a property here.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "partNumber": {
+                    "type": "string"
+                },
+                "series": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "technology": {
+                    "type": "string",
+                    "enum": [
+                        "Si",
+                        "SiC",
+                        "GaN",
+                        "GaAs",
+                        "Ge"
+                    ]
+                },
+                "subType": {
+                    "type": "string",
+                    "description": "Per-device-type subtype. MOSFET: nChannel/pChannel. Diode: schottky/sicSchottky/ultrafast/fastRecovery/fast/standard/zener/tvs. IGBT: nChannel. BJT: npn/pnp."
+                },
+                "case": {
+                    "type": "string",
+                    "description": "Package code (TO-220, SOT-23, etc.)"
+                },
+                "matchcodeDescription": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                }
+            },
+            "required": [
+                "partNumber",
+                "technology"
+            ]
+        },
+        "thermal": {
+            "description": "Thermal characteristics — shared across all semiconductor types.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "thermalResistanceJunctionCase": {
+                    "type": "number",
+                    "description": "R_th(j-c) in K/W"
+                },
+                "thermalResistanceJunctionAmbient": {
+                    "type": "number",
+                    "description": "R_th(j-a) in K/W"
+                },
+                "thermalResistanceCaseSink": {
+                    "type": "number",
+                    "description": "R_th(c-s) in K/W"
+                },
+                "junctionTemperatureMax": {
+                    "type": "number",
+                    "description": "T_j max in Celsius"
+                },
+                "junctionTemperatureMin": {
+                    "type": "number",
+                    "description": "T_j min in Celsius"
+                },
+                "fosterNetwork": {
+                    "description": "Foster RC network for transient thermal impedance",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "resistance": {
+                                "type": "number",
+                                "description": "K/W"
+                            },
+                            "timeConstant": {
+                                "type": "number",
+                                "description": "seconds"
+                            }
+                        },
+                        "required": [
+                            "resistance",
+                            "timeConstant"
+                        ]
+                    }
+                }
+            }
+        },
+        "mechanical": {
+            "description": "Mechanical specs — shared across all semiconductor types.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "assemblyType": {
+                    "description": "PCB mounting / assembly type",
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/connectionType"
+                },
+                "case": {
+                    "type": "string",
+                    "description": "Package name (TO-220, SOT-23, etc.)"
+                },
+                "length": {
+                    "description": "Body length in meters",
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "width": {
+                    "description": "Body width in meters",
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "height": {
+                    "description": "Body height in meters",
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "weight": {
+                    "type": "number",
+                    "description": "kg"
+                }
+            }
+        },
+        "business": {
+            "description": "Commercial info — shared across all semiconductor types.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "packaging": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "vpe": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "description": "Units per package"
+                },
+                "moq": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "description": "Minimum order quantity"
+                },
+                "leadTime": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "weeks"
+                },
+                "stock": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "cost": {
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "description": "unit cost"
+                }
+            }
+        }
+    }
 }

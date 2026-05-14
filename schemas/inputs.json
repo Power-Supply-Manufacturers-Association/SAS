@@ -11,7 +11,7 @@
             "title": "operatingPoints",
             "type": "array",
             "items": {
-                "$ref": "../../PEAS/schemas/inputs/multiPortOperatingPoint.json"
+                "$ref": "http://openconverters.com/schemas/PEAS/inputs/multiPortOperatingPoint.json"
             },
             "minItems": 1
         },

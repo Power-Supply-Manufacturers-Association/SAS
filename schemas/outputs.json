@@ -40,7 +40,7 @@
         },
         "isolationCheck": {
             "description": "Insulation coordination figures, for isolated parts (gate drivers, optocouplers).",
-            "$ref": "../../PEAS/schemas/outputs/insulationCoordination.json"
+            "$ref": "http://openconverters.com/schemas/PEAS/outputs/insulationCoordination.json"
         }
     },
     "required": [],
@@ -49,7 +49,7 @@
             "title": "conductionLossesOutput",
             "allOf": [
                 {
-                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
+                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -78,7 +78,7 @@
                             "type": "number"
                         },
                         "conditions": {
-                            "$ref": "../../PEAS/schemas/outputs/measurementCondition.json"
+                            "$ref": "http://openconverters.com/schemas/PEAS/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -91,7 +91,7 @@
             "title": "switchingLossesOutput",
             "allOf": [
                 {
-                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
+                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -123,7 +123,7 @@
                         },
                         "conditions": {
                             "description": "V_DS, I_D, R_g, T_j at which the switching energies were extracted.",
-                            "$ref": "../../PEAS/schemas/outputs/measurementCondition.json"
+                            "$ref": "http://openconverters.com/schemas/PEAS/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -136,7 +136,7 @@
             "title": "reverseRecoveryLossesOutput",
             "allOf": [
                 {
-                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
+                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -162,7 +162,7 @@
                             "minimum": 0
                         },
                         "conditions": {
-                            "$ref": "../../PEAS/schemas/outputs/measurementCondition.json"
+                            "$ref": "http://openconverters.com/schemas/PEAS/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -175,7 +175,7 @@
             "title": "gateDriveEnergyOutput",
             "allOf": [
                 {
-                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
+                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -211,7 +211,7 @@
             "title": "totalPowerDissipationOutput",
             "allOf": [
                 {
-                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
+                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -256,7 +256,7 @@
             "title": "junctionTemperatureOutput",
             "allOf": [
                 {
-                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
+                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -295,7 +295,7 @@
             "description": "Safe Operating Area check. Compares the operating-point trajectory in the V-I plane against the device's SOA contour and reports whether it stays inside.",
             "allOf": [
                 {
-                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
+                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -309,43 +309,64 @@
                             "type": "number"
                         },
                         "appliedTrajectory": {
-                            "description": "V-I trajectory sampled along the operating point. Index-aligned arrays.",
+                            "description": "V-I trajectory sampled along the operating point.",
                             "type": "object",
+                            "additionalProperties": false,
                             "properties": {
-                                "voltage": {
+                                "samples": {
                                     "type": "array",
                                     "items": {
-                                        "type": "number"
-                                    }
-                                },
-                                "current": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "number"
-                                    }
-                                },
-                                "time": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "number"
+                                        "type": "object",
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "time": {
+                                                "description": "Time of the sample, in s.",
+                                                "type": "number"
+                                            },
+                                            "voltage": {
+                                                "description": "Device voltage at the sample, in V.",
+                                                "type": "number"
+                                            },
+                                            "current": {
+                                                "description": "Device current at the sample, in A.",
+                                                "type": "number"
+                                            }
+                                        },
+                                        "required": [
+                                            "time",
+                                            "voltage",
+                                            "current"
+                                        ]
                                     }
                                 }
-                            }
+                            },
+                            "required": [
+                                "samples"
+                            ]
                         },
                         "failurePoint": {
                             "description": "Point on the trajectory at which the SOA contour is first exceeded; absent if passes is true.",
                             "type": "object",
+                            "additionalProperties": false,
                             "properties": {
                                 "voltage": {
+                                    "description": "Device voltage at the failure point, in V.",
                                     "type": "number"
                                 },
                                 "current": {
+                                    "description": "Device current at the failure point, in A.",
                                     "type": "number"
                                 },
                                 "time": {
+                                    "description": "Time of the failure point, in s.",
                                     "type": "number"
                                 }
-                            }
+                            },
+                            "required": [
+                                "voltage",
+                                "current",
+                                "time"
+                            ]
                         }
                     },
                     "required": [
@@ -358,14 +379,14 @@
             "title": "lifetimeOutput",
             "allOf": [
                 {
-                    "$ref": "../../PEAS/schemas/outputs/outputBase.json"
+                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
                     "properties": {
                         "predictedHours": {
                             "description": "Predicted lifetime under the operating point, in hours.",
-                            "$ref": "../../PEAS/schemas/utils.json#/$defs/dimensionWithTolerance"
+                            "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance"
                         },
                         "thermalCycles": {
                             "description": "Predicted number of thermal cycles to wear-out under the operating point.",
@@ -386,7 +407,7 @@
                             ]
                         },
                         "conditions": {
-                            "$ref": "../../PEAS/schemas/outputs/measurementCondition.json"
+                            "$ref": "http://openconverters.com/schemas/PEAS/outputs/measurementCondition.json"
                         }
                     },
                     "required": [

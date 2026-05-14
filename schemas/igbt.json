@@ -1,0 +1,182 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "http://openconverters.com/schemas/SAS/igbt.json",
+    "title": "igbt",
+    "description": "IGBT component data. The presence of the 'igbt' field at the top level of an SAS document discriminates the device type — there is no deviceType property.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "manufacturerInfo": {
+            "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with IGBT-specific datasheetInfo.",
+            "allOf": [
+                {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/manufacturerInfo"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "datasheetInfo": {
+                            "$ref": "#/$defs/datasheetInfo"
+                        }
+                    },
+                    "required": [
+                        "datasheetInfo"
+                    ]
+                }
+            ]
+        },
+        "distributorsInfo": {
+            "description": "Where to buy this component",
+            "type": "array",
+            "items": {
+                "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/distributorInfo"
+            }
+        }
+    },
+    "required": [
+        "manufacturerInfo"
+    ],
+    "$defs": {
+        "datasheetInfo": {
+            "description": "All information extracted from the IGBT datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "part": {
+                    "$ref": "./utils.json#/$defs/part"
+                },
+                "electrical": {
+                    "$ref": "#/$defs/electrical"
+                },
+                "thermal": {
+                    "$ref": "./utils.json#/$defs/thermal"
+                },
+                "mechanical": {
+                    "$ref": "./utils.json#/$defs/mechanical"
+                },
+                "business": {
+                    "$ref": "./utils.json#/$defs/business"
+                },
+                "modelParams": {
+                    "$ref": "#/$defs/modelParams"
+                },
+                "curves": {
+                    "$ref": "#/$defs/curves"
+                }
+            },
+            "required": [
+                "part",
+                "electrical"
+            ]
+        },
+        "electrical": {
+            "description": "IGBT electrical characteristics.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "collectorEmitterVoltage": {
+                    "type": "number",
+                    "description": "V_CE max in Volts"
+                },
+                "gateEmitterVoltageMax": {
+                    "type": "number",
+                    "description": "V_GE max in Volts"
+                },
+                "continuousCollectorCurrent": {
+                    "type": "number",
+                    "description": "I_C at Tc=25C in Amperes"
+                },
+                "collectorEmitterSaturation": {
+                    "type": "number",
+                    "description": "V_CE(sat) in Volts"
+                },
+                "collectorEmitterSaturationIc": {
+                    "type": "number",
+                    "description": "I_C for V_CE(sat) spec in Amperes"
+                },
+                "turnOnEnergy": {
+                    "type": "number",
+                    "description": "E_on in Joules"
+                },
+                "turnOffEnergy": {
+                    "type": "number",
+                    "description": "E_off in Joules"
+                },
+                "totalGateCharge": {
+                    "type": "number",
+                    "description": "Q_g in Coulombs"
+                },
+                "gateThresholdVoltage": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "inputCapacitance": {
+                    "type": "number",
+                    "description": "C_ies in Farads"
+                },
+                "powerDissipation": {
+                    "type": "number",
+                    "description": "P_D max in Watts"
+                },
+                "shortCircuitTime": {
+                    "type": "number",
+                    "description": "t_SC in seconds"
+                }
+            },
+            "required": [
+                "collectorEmitterVoltage",
+                "collectorEmitterSaturation",
+                "continuousCollectorCurrent"
+            ]
+        },
+        "modelParams": {
+            "description": "SPICE model parameters for IGBT.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "vto": {
+                    "type": "number",
+                    "description": "Threshold voltage in Volts"
+                },
+                "kp": {
+                    "type": "number",
+                    "description": "Transconductance in A/V^2"
+                },
+                "eon": {
+                    "type": "number",
+                    "description": "Turn-on energy in Joules"
+                },
+                "eoff": {
+                    "type": "number",
+                    "description": "Turn-off energy in Joules"
+                }
+            }
+        },
+        "curves": {
+            "description": "IGBT characteristic curves from datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "vceVsIc": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "V_CE(sat) vs I_C"
+                },
+                "eonVsIc": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "E_on vs I_C"
+                },
+                "eoffVsIc": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "E_off vs I_C"
+                },
+                "thermalImpedance": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "Z_th(j-c) vs pulse width"
+                },
+                "soa": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "Safe Operating Area"
+                }
+            }
+        }
+    }
+}

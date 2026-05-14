@@ -1,0 +1,219 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "http://openconverters.com/schemas/SAS/diode.json",
+    "title": "diode",
+    "description": "Diode (Schottky, ultrafast, SiC Schottky, Zener, TVS) component data. The presence of the 'diode' field at the top level of an SAS document discriminates the device type — there is no deviceType property.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "manufacturerInfo": {
+            "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with diode-specific datasheetInfo.",
+            "allOf": [
+                {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/manufacturerInfo"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "datasheetInfo": {
+                            "$ref": "#/$defs/datasheetInfo"
+                        }
+                    },
+                    "required": [
+                        "datasheetInfo"
+                    ]
+                }
+            ]
+        },
+        "distributorsInfo": {
+            "description": "Where to buy this component",
+            "type": "array",
+            "items": {
+                "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/distributorInfo"
+            }
+        }
+    },
+    "required": [
+        "manufacturerInfo"
+    ],
+    "$defs": {
+        "datasheetInfo": {
+            "description": "All information extracted from the diode datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "part": {
+                    "$ref": "./utils.json#/$defs/part"
+                },
+                "electrical": {
+                    "$ref": "#/$defs/electrical"
+                },
+                "thermal": {
+                    "$ref": "./utils.json#/$defs/thermal"
+                },
+                "mechanical": {
+                    "$ref": "./utils.json#/$defs/mechanical"
+                },
+                "business": {
+                    "$ref": "./utils.json#/$defs/business"
+                },
+                "modelParams": {
+                    "$ref": "#/$defs/modelParams"
+                },
+                "curves": {
+                    "$ref": "#/$defs/curves"
+                }
+            },
+            "required": [
+                "part",
+                "electrical"
+            ]
+        },
+        "electrical": {
+            "description": "Diode electrical characteristics — every field is relevant to diodes.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "reverseVoltage": {
+                    "type": "number",
+                    "description": "V_RRM in Volts"
+                },
+                "forwardCurrent": {
+                    "type": "number",
+                    "description": "I_F(AV) in Amperes"
+                },
+                "surgeCurrent": {
+                    "type": "number",
+                    "description": "I_FSM in Amperes"
+                },
+                "forwardVoltage": {
+                    "type": "number",
+                    "description": "V_F in Volts"
+                },
+                "forwardVoltageAt": {
+                    "type": "number",
+                    "description": "I_F at which V_F is specified in Amperes"
+                },
+                "reverseLeakageCurrent": {
+                    "type": "number",
+                    "description": "I_R in Amperes"
+                },
+                "reverseRecoveryTime": {
+                    "type": "number",
+                    "description": "t_rr in seconds"
+                },
+                "reverseRecoveryCharge": {
+                    "type": "number",
+                    "description": "Q_rr in Coulombs"
+                },
+                "junctionCapacitance": {
+                    "type": "number",
+                    "description": "C_j in Farads"
+                },
+                "junctionCapacitanceVr": {
+                    "type": "number",
+                    "description": "V_R for C_j measurement in Volts"
+                },
+                "powerDissipation": {
+                    "type": "number",
+                    "description": "P_D max in Watts"
+                },
+                "clampingVoltage": {
+                    "type": "number",
+                    "description": "V_C at I_PP for TVS in Volts"
+                },
+                "breakdownVoltage": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance",
+                    "description": "V_BR for Zener/TVS in Volts"
+                },
+                "standoffVoltage": {
+                    "type": "number",
+                    "description": "V_WM working voltage for TVS in Volts"
+                },
+                "peakPulseCurrent": {
+                    "type": "number",
+                    "description": "I_PP for TVS in Amperes"
+                }
+            },
+            "required": [
+                "reverseVoltage",
+                "forwardVoltage",
+                "forwardCurrent"
+            ]
+        },
+        "modelParams": {
+            "description": "SPICE model parameters for diode.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "is": {
+                    "type": "number",
+                    "description": "Saturation current in Amperes"
+                },
+                "n": {
+                    "type": "number",
+                    "description": "Ideality factor"
+                },
+                "rs": {
+                    "type": "number",
+                    "description": "Series resistance in Ohms"
+                },
+                "cj0": {
+                    "type": "number",
+                    "description": "Zero-bias junction capacitance in Farads"
+                },
+                "vj": {
+                    "type": "number",
+                    "description": "Junction potential in Volts"
+                },
+                "m": {
+                    "type": "number",
+                    "description": "Grading coefficient"
+                },
+                "tt": {
+                    "type": "number",
+                    "description": "Transit time in seconds"
+                },
+                "bv": {
+                    "type": "number",
+                    "description": "Breakdown voltage in Volts"
+                },
+                "ibv": {
+                    "type": "number",
+                    "description": "Current at breakdown in Amperes"
+                }
+            }
+        },
+        "curves": {
+            "description": "Diode characteristic curves from datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "forwardVoltageVsCurrent": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "V_F vs I_F"
+                },
+                "forwardVoltageVsTj": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "V_F vs Tj"
+                },
+                "reverseCurrentVsVoltage": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "I_R vs V_R"
+                },
+                "capacitanceVsVoltage": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "C_j vs V_R"
+                },
+                "thermalImpedance": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "Z_th(j-c) vs pulse width"
+                },
+                "soa": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "description": "Safe Operating Area"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,106 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "http://openconverters.com/schemas/SAS/bjt.json",
+    "title": "bjt",
+    "description": "BJT (npn or pnp) component data. The presence of the 'bjt' field at the top level of an SAS document discriminates the device type — there is no deviceType property.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "manufacturerInfo": {
+            "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with BJT-specific datasheetInfo.",
+            "allOf": [
+                {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/manufacturerInfo"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "datasheetInfo": {
+                            "$ref": "#/$defs/datasheetInfo"
+                        }
+                    },
+                    "required": [
+                        "datasheetInfo"
+                    ]
+                }
+            ]
+        },
+        "distributorsInfo": {
+            "description": "Where to buy this component",
+            "type": "array",
+            "items": {
+                "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/distributorInfo"
+            }
+        }
+    },
+    "required": [
+        "manufacturerInfo"
+    ],
+    "$defs": {
+        "datasheetInfo": {
+            "description": "All information extracted from the BJT datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "part": {
+                    "$ref": "./utils.json#/$defs/part"
+                },
+                "electrical": {
+                    "$ref": "#/$defs/electrical"
+                },
+                "thermal": {
+                    "$ref": "./utils.json#/$defs/thermal"
+                },
+                "mechanical": {
+                    "$ref": "./utils.json#/$defs/mechanical"
+                },
+                "business": {
+                    "$ref": "./utils.json#/$defs/business"
+                }
+            },
+            "required": [
+                "part",
+                "electrical"
+            ]
+        },
+        "electrical": {
+            "description": "BJT electrical characteristics.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "collectorEmitterVoltage": {
+                    "type": "number",
+                    "description": "V_CEO in Volts"
+                },
+                "collectorBaseVoltage": {
+                    "type": "number",
+                    "description": "V_CBO in Volts"
+                },
+                "collectorCurrent": {
+                    "type": "number",
+                    "description": "I_C max in Amperes"
+                },
+                "dcCurrentGain": {
+                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance",
+                    "description": "h_FE"
+                },
+                "saturationVoltage": {
+                    "type": "number",
+                    "description": "V_CE(sat) in Volts"
+                },
+                "transitionFrequency": {
+                    "type": "number",
+                    "description": "f_T in Hz"
+                },
+                "powerDissipation": {
+                    "type": "number",
+                    "description": "P_D max in Watts"
+                }
+            },
+            "required": [
+                "collectorEmitterVoltage",
+                "collectorCurrent"
+            ]
+        }
+    }
+}

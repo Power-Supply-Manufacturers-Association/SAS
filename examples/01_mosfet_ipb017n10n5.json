@@ -1,8 +1,45 @@
 {
     "inputs": {
-        "designRequirements": {}
+        "operatingPoints": [
+            {
+                "name": "nominal",
+                "conditions": {
+                    "ambientTemperature": 25
+                },
+                "excitationsPerPort": [
+                    {
+                        "port": "drain",
+                        "excitation": {
+                            "frequency": 100000,
+                            "voltage": {
+                                "processed": {
+                                    "label": "rectangular",
+                                    "peak": 48,
+                                    "offset": 24
+                                }
+                            },
+                            "current": {
+                                "processed": {
+                                    "label": "rectangular",
+                                    "peak": 30,
+                                    "offset": 15
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "designRequirements": {
+            "name": "48V synchronous rectifier",
+            "deviceType": "mosfet",
+            "ratedDrainSourceVoltage": 80,
+            "ratedContinuousDrainCurrent": 60,
+            "maximumOnResistance": 0.005,
+            "allowedTechnologies": ["Si", "SiC"]
+        }
     },
-    "semiconductor": {
+    "mosfet": {
         "manufacturerInfo": {
             "name": "Infineon",
             "reference": "IPB017N10N5",
@@ -12,7 +49,6 @@
                 "part": {
                     "partNumber": "IPB017N10N5",
                     "series": "OptiMOS 5",
-                    "deviceType": "mosfet",
                     "technology": "Si",
                     "subType": "nChannel",
                     "case": "TO-263-3 (D2PAK)"
@@ -72,11 +108,11 @@
                     "junctionTemperatureMin": -55
                 },
                 "mechanical": {
-                    "assemblyType": "SMT",
+                    "assemblyType": "smt",
                     "case": "TO-263-3 (D2PAK)",
-                    "length": 0.0103,
-                    "width": 0.0088,
-                    "height": 0.0045
+                    "length": { "nominal": 0.0103 },
+                    "width": { "nominal": 0.0088 },
+                    "height": { "nominal": 0.0045 }
                 },
                 "business": {
                     "packaging": "Tape and Reel",
@@ -96,5 +132,7 @@
             }
         ]
     },
-    "outputs": {}
+    "outputs": [
+        {}
+    ]
 }

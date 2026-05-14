@@ -1,8 +1,45 @@
 {
     "inputs": {
-        "designRequirements": {}
+        "operatingPoints": [
+            {
+                "name": "nominal",
+                "conditions": {
+                    "ambientTemperature": 25
+                },
+                "excitationsPerPort": [
+                    {
+                        "port": "anode",
+                        "excitation": {
+                            "frequency": 100000,
+                            "voltage": {
+                                "processed": {
+                                    "label": "rectangular",
+                                    "peak": 60,
+                                    "offset": 0
+                                }
+                            },
+                            "current": {
+                                "processed": {
+                                    "label": "rectangular",
+                                    "peak": 15,
+                                    "offset": 7.5
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "designRequirements": {
+            "name": "60V synchronous rectifier",
+            "deviceType": "diode",
+            "ratedReverseVoltage": 60,
+            "ratedForwardCurrent": 30,
+            "maximumForwardVoltage": 0.5,
+            "allowedTechnologies": ["Si", "SiC"]
+        }
     },
-    "semiconductor": {
+    "diode": {
         "manufacturerInfo": {
             "name": "STMicroelectronics",
             "reference": "STPS30L60CT",
@@ -11,7 +48,6 @@
                 "part": {
                     "partNumber": "STPS30L60CT",
                     "series": null,
-                    "deviceType": "diode",
                     "technology": "Si",
                     "subType": "schottky",
                     "case": "TO-220AB"
@@ -53,11 +89,11 @@
                     "junctionTemperatureMin": -65
                 },
                 "mechanical": {
-                    "assemblyType": "THT",
+                    "assemblyType": "tht",
                     "case": "TO-220AB",
-                    "length": 0.0157,
-                    "width": 0.0102,
-                    "height": 0.0045
+                    "length": { "nominal": 0.0157 },
+                    "width": { "nominal": 0.0102 },
+                    "height": { "nominal": 0.0045 }
                 },
                 "business": {
                     "packaging": "Tube",
@@ -76,5 +112,7 @@
             }
         ]
     },
-    "outputs": {}
+    "outputs": [
+        {}
+    ]
 }
