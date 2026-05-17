@@ -190,7 +190,10 @@
             "required": [
                 "drainSourceVoltage",
                 "onResistance",
-                "continuousDrainCurrent"
+                "continuousDrainCurrent",
+                "gateThresholdVoltage",
+                "outputCapacitance",
+                "totalGateCharge"
             ]
         },
         "modelParams": {
