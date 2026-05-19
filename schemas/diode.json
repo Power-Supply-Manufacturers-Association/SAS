@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "http://openconverters.com/schemas/SAS/diode.json",
+    "$id": "https://psma.com/sas/diode.json",
     "title": "diode",
     "description": "Diode (Schottky, ultrafast, SiC Schottky, Zener, TVS) component data. The presence of the 'diode' field at the top level of an SAS document discriminates the device type — there is no deviceType property.",
     "type": "object",
@@ -10,7 +10,7 @@
             "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with diode-specific datasheetInfo.",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/manufacturerInfo"
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo"
                 },
                 {
                     "type": "object",
@@ -29,7 +29,7 @@
             "description": "Where to buy this component",
             "type": "array",
             "items": {
-                "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/distributorInfo"
+                "$ref": "https://psma.com/peas/utils.json#/$defs/distributorInfo"
             }
         }
     },
@@ -123,7 +123,7 @@
                     "description": "V_C at I_PP for TVS in Volts"
                 },
                 "breakdownVoltage": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance",
                     "description": "V_BR for Zener/TVS in Volts"
                 },
                 "standoffVoltage": {
@@ -191,27 +191,27 @@
             "additionalProperties": false,
             "properties": {
                 "forwardVoltageVsCurrent": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "V_F vs I_F"
                 },
                 "forwardVoltageVsTj": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "V_F vs Tj"
                 },
                 "reverseCurrentVsVoltage": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "I_R vs V_R"
                 },
                 "capacitanceVsVoltage": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "C_j vs V_R"
                 },
                 "thermalImpedance": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "Z_th(j-c) vs pulse width"
                 },
                 "soa": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "Safe Operating Area"
                 }
             }

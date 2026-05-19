@@ -1,12 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "http://openconverters.com/schemas/SAS/inputs/designRequirements.json",
+    "$id": "https://psma.com/sas/inputs/designRequirements.json",
     "$comment": "SPDX-License-Identifier: Apache-2.0",
     "title": "designRequirements",
     "description": "The list of requirements that a given semiconductor must comply with. Built on top of the PEAS designRequirementsBase mixin, with semiconductor-specific common fields and a deviceType-discriminated oneOf for per-type required ratings (mirrors the same discriminator already present in semiconductor.json).",
     "allOf": [
         {
-            "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/designRequirementsBase"
+            "$ref": "https://psma.com/peas/utils.json#/$defs/designRequirementsBase"
         },
         {
             "type": "object",
@@ -66,10 +66,10 @@
                     "uniqueItems": true
                 },
                 "application": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/semiconductorApplication"
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/semiconductorApplication"
                 },
                 "subApplication": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/semiconductorSubApplication"
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/semiconductorSubApplication"
                 }
             },
             "required": [

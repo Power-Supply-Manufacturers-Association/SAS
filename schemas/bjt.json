@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "http://openconverters.com/schemas/SAS/bjt.json",
+    "$id": "https://psma.com/sas/bjt.json",
     "title": "bjt",
     "description": "BJT (npn or pnp) component data. The presence of the 'bjt' field at the top level of an SAS document discriminates the device type — there is no deviceType property.",
     "type": "object",
@@ -10,7 +10,7 @@
             "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with BJT-specific datasheetInfo.",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/manufacturerInfo"
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo"
                 },
                 {
                     "type": "object",
@@ -29,7 +29,7 @@
             "description": "Where to buy this component",
             "type": "array",
             "items": {
-                "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/distributorInfo"
+                "$ref": "https://psma.com/peas/utils.json#/$defs/distributorInfo"
             }
         }
     },
@@ -81,7 +81,7 @@
                     "description": "I_C max in Amperes"
                 },
                 "dcCurrentGain": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance",
                     "description": "h_FE"
                 },
                 "saturationVoltage": {

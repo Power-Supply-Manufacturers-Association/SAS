@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "http://openconverters.com/schemas/SAS/SAS.json",
+    "$id": "https://psma.com/sas/SAS.json",
     "title": "SAS",
     "description": "Semiconductor Agnostic Structure (SAS). A document carries inputs, exactly one of {mosfet, diode, igbt, bjt} (the field name is the discriminator), and outputs.",
     "type": "object",

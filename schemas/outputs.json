@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "http://openconverters.com/schemas/SAS/outputs.json",
+    "$id": "https://psma.com/sas/outputs.json",
     "$comment": "SPDX-License-Identifier: Apache-2.0",
     "title": "outputs",
     "description": "Outputs computed for one operating point of a semiconductor. Each named block is independently optional; every block carries the PEAS outputBase {origin, methodUsed} provenance shell. The top-level SAS document holds an array of these — outputs[i] aligns positionally with inputs.operatingPoints[i].",
@@ -40,7 +40,7 @@
         },
         "isolationCheck": {
             "description": "Insulation coordination figures, for isolated parts (gate drivers, optocouplers).",
-            "$ref": "http://openconverters.com/schemas/PEAS/outputs/insulationCoordination.json"
+            "$ref": "https://psma.com/peas/outputs/insulationCoordination.json"
         }
     },
     "required": [],
@@ -49,7 +49,7 @@
             "title": "conductionLossesOutput",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
+                    "$ref": "https://psma.com/peas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -78,7 +78,7 @@
                             "type": "number"
                         },
                         "conditions": {
-                            "$ref": "http://openconverters.com/schemas/PEAS/outputs/measurementCondition.json"
+                            "$ref": "https://psma.com/peas/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -91,7 +91,7 @@
             "title": "switchingLossesOutput",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
+                    "$ref": "https://psma.com/peas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -123,7 +123,7 @@
                         },
                         "conditions": {
                             "description": "V_DS, I_D, R_g, T_j at which the switching energies were extracted.",
-                            "$ref": "http://openconverters.com/schemas/PEAS/outputs/measurementCondition.json"
+                            "$ref": "https://psma.com/peas/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -136,7 +136,7 @@
             "title": "reverseRecoveryLossesOutput",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
+                    "$ref": "https://psma.com/peas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -162,7 +162,7 @@
                             "minimum": 0
                         },
                         "conditions": {
-                            "$ref": "http://openconverters.com/schemas/PEAS/outputs/measurementCondition.json"
+                            "$ref": "https://psma.com/peas/outputs/measurementCondition.json"
                         }
                     },
                     "required": [
@@ -175,7 +175,7 @@
             "title": "gateDriveEnergyOutput",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
+                    "$ref": "https://psma.com/peas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -211,7 +211,7 @@
             "title": "totalPowerDissipationOutput",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
+                    "$ref": "https://psma.com/peas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -256,7 +256,7 @@
             "title": "junctionTemperatureOutput",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
+                    "$ref": "https://psma.com/peas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -295,7 +295,7 @@
             "description": "Safe Operating Area check. Compares the operating-point trajectory in the V-I plane against the device's SOA contour and reports whether it stays inside.",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
+                    "$ref": "https://psma.com/peas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
@@ -379,14 +379,14 @@
             "title": "lifetimeOutput",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/outputs/outputBase.json"
+                    "$ref": "https://psma.com/peas/outputs/outputBase.json"
                 },
                 {
                     "type": "object",
                     "properties": {
                         "predictedHours": {
                             "description": "Predicted lifetime under the operating point, in hours.",
-                            "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance"
+                            "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
                         },
                         "thermalCycles": {
                             "description": "Predicted number of thermal cycles to wear-out under the operating point.",
@@ -407,7 +407,7 @@
                             ]
                         },
                         "conditions": {
-                            "$ref": "http://openconverters.com/schemas/PEAS/outputs/measurementCondition.json"
+                            "$ref": "https://psma.com/peas/outputs/measurementCondition.json"
                         }
                     },
                     "required": [

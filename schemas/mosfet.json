@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "http://openconverters.com/schemas/SAS/mosfet.json",
+    "$id": "https://psma.com/sas/mosfet.json",
     "title": "mosfet",
     "description": "MOSFET (Si, SiC, GaN, GaAs) component data. The presence of the 'mosfet' field at the top level of an SAS document discriminates the device type — there is no deviceType property.",
     "type": "object",
@@ -10,7 +10,7 @@
             "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with MOSFET-specific datasheetInfo.",
             "allOf": [
                 {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/manufacturerInfo"
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo"
                 },
                 {
                     "type": "object",
@@ -29,7 +29,7 @@
             "description": "Where to buy this component",
             "type": "array",
             "items": {
-                "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/distributorInfo"
+                "$ref": "https://psma.com/peas/utils.json#/$defs/distributorInfo"
             }
         }
     },
@@ -115,7 +115,7 @@
                     "description": "I_D for R_DS(on) spec in Amperes"
                 },
                 "gateThresholdVoltage": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/dimensionWithTolerance",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance",
                     "description": "V_GS(th) in Volts"
                 },
                 "inputCapacitance": {
@@ -253,39 +253,39 @@
             "additionalProperties": false,
             "properties": {
                 "rdsOnVsTj": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "R_DS(on) vs Tj"
                 },
                 "rdsOnVsId": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "R_DS(on) vs I_D"
                 },
                 "cissVsVds": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "C_iss vs V_DS"
                 },
                 "cossVsVds": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "C_oss vs V_DS"
                 },
                 "crssVsVds": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "C_rss vs V_DS"
                 },
                 "gateCharge": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "V_GS vs Q_g"
                 },
                 "bodyDiodeVf": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "V_SD vs I_SD"
                 },
                 "soa": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "Safe Operating Area"
                 },
                 "thermalImpedance": {
-                    "$ref": "http://openconverters.com/schemas/PEAS/utils.json#/$defs/curve",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
                     "description": "Z_th(j-c) vs pulse width"
                 }
             }
