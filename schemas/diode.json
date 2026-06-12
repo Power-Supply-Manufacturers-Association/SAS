@@ -137,9 +137,7 @@
             },
             "required": [
                 "reverseVoltage",
-                "forwardVoltage",
-                "forwardCurrent",
-                "reverseRecoveryCharge"
+                "forwardCurrent"
             ]
         },
         "modelParams": {

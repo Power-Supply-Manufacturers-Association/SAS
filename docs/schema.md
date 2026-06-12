@@ -266,7 +266,7 @@ Electrical characteristics specific to diodes.
 | `reverseVoltage` | number | **Yes** | V | V_RRM -- repetitive peak reverse voltage |
 | `forwardCurrent` | number | **Yes** | A | I_F(AV) -- average forward current |
 | `surgeCurrent` | number | No | A | I_FSM -- non-repetitive surge current |
-| `forwardVoltage` | number | **Yes** | V | V_F -- forward voltage drop |
+| `forwardVoltage` | number | No | V | V_F -- forward voltage drop |
 | `forwardVoltageAt` | number | No | A | I_F at which V_F is specified |
 | `reverseLeakageCurrent` | number | No | A | I_R -- reverse leakage current |
 | `reverseRecoveryTime` | number | No | s | t_rr -- reverse recovery time |
