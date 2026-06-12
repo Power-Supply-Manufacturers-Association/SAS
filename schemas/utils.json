@@ -30,7 +30,7 @@
                 },
                 "subType": {
                     "type": "string",
-                    "description": "Per-device-type subtype. MOSFET: nChannel/pChannel. Diode: schottky/sicSchottky/ultrafast/fastRecovery/fast/standard/zener/tvs. IGBT: nChannel. BJT: npn/pnp."
+                    "description": "Per-device-type subtype. MOSFET: nChannel/pChannel. Diode: schottky/sicSchottky/ultrafast/fastRecovery/fast/standard/rectifier/zener/tvs/esd (zener and esd switch the required electrical fields — see diode.json). IGBT: nChannel. BJT: npn/pnp."
                 },
                 "case": {
                     "type": "string",

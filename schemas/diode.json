@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://psma.com/sas/diode.json",
     "title": "diode",
-    "description": "Diode (Schottky, ultrafast, SiC Schottky, Zener, TVS) component data. The presence of the 'diode' field at the top level of an SAS document discriminates the device type — there is no deviceType property.",
+    "description": "Diode (Schottky, ultrafast, SiC Schottky, Zener, TVS, ESD protection) component data. The presence of the 'diode' field at the top level of an SAS document discriminates the device type — there is no deviceType property. part.subType further discriminates zener/esd, which have their own required electrical fields.",
     "type": "object",
     "additionalProperties": false,
     "properties": {
@@ -67,10 +67,96 @@
             "required": [
                 "part",
                 "electrical"
+            ],
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "part": {
+                                "properties": {
+                                    "subType": {
+                                        "const": "zener"
+                                    }
+                                },
+                                "required": [
+                                    "subType"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "part"
+                        ]
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "required": [
+                                    "breakdownVoltage",
+                                    "powerDissipation"
+                                ]
+                            }
+                        }
+                    },
+                    "else": {
+                        "if": {
+                            "properties": {
+                                "part": {
+                                    "properties": {
+                                        "subType": {
+                                            "const": "esd"
+                                        }
+                                    },
+                                    "required": [
+                                        "subType"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "part"
+                            ]
+                        },
+                        "then": {
+                            "properties": {
+                                "electrical": {
+                                    "required": [
+                                        "standoffVoltage"
+                                    ],
+                                    "anyOf": [
+                                        {
+                                            "required": [
+                                                "peakPulseCurrent"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "peakPulsePower"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "esdVoltageContact"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "else": {
+                            "properties": {
+                                "electrical": {
+                                    "required": [
+                                        "reverseVoltage",
+                                        "forwardCurrent"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
             ]
         },
         "electrical": {
-            "description": "Diode electrical characteristics — every field is relevant to diodes.",
+            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact).",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -124,21 +210,37 @@
                 },
                 "breakdownVoltage": {
                     "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance",
-                    "description": "V_BR for Zener/TVS in Volts"
+                    "description": "V_BR for Zener/TVS/ESD in Volts. For zeners this IS the zener voltage V_Z (min/nom/max from the datasheet table, specified at zenerTestCurrent) — there is deliberately no separate zenerVoltage field."
+                },
+                "zenerTestCurrent": {
+                    "type": "number",
+                    "description": "I_ZT in Amperes — test current at which V_Z (breakdownVoltage) is specified"
+                },
+                "zenerImpedance": {
+                    "type": "number",
+                    "description": "Z_ZT in Ohms — dynamic impedance at I_ZT"
                 },
                 "standoffVoltage": {
                     "type": "number",
-                    "description": "V_WM working voltage for TVS in Volts"
+                    "description": "V_RWM working voltage for TVS/ESD in Volts"
                 },
                 "peakPulseCurrent": {
                     "type": "number",
-                    "description": "I_PP for TVS in Amperes"
+                    "description": "I_PP for TVS/ESD in Amperes (datasheet-stated waveform, typically 8/20 us or IEC 61000-4-5)"
+                },
+                "peakPulsePower": {
+                    "type": "number",
+                    "description": "P_PP for TVS/ESD in Watts (datasheet-stated waveform, e.g. 10/1000 us or 8/20 us)"
+                },
+                "esdVoltageContact": {
+                    "type": "number",
+                    "description": "IEC 61000-4-2 contact discharge rating in Volts"
+                },
+                "esdVoltageAir": {
+                    "type": "number",
+                    "description": "IEC 61000-4-2 air discharge rating in Volts"
                 }
-            },
-            "required": [
-                "reverseVoltage",
-                "forwardCurrent"
-            ]
+            }
         },
         "modelParams": {
             "description": "SPICE model parameters for diode.",
