@@ -128,6 +128,8 @@ Basic part identification, shared across all semiconductor types.
 | `technology` | string (enum) | Yes | -- | `"Si"`, `"SiC"`, `"GaN"`, `"GaAs"` |
 | `subType` | string or null (enum) | No | -- | Device subtype (see [subType values](#subtype-values)) |
 | `case` | string | Yes | -- | Package code (e.g., "TO-220", "SOT-23", "TO-263-3 (D2PAK)") |
+| `package` | string or null | No | -- | Manufacturer's exact package designation (e.g. "PG-TDSON-8"); complements the generic `case` code |
+| `qualification` | string or null | No | -- | Qualification grade as stated by the manufacturer (e.g. "Industrial", "Automotive") |
 | `matchcodeDescription` | string or null | No | -- | Additional description or matchcode |
 
 `additionalProperties: false`

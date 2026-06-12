@@ -36,6 +36,20 @@
                     "type": "string",
                     "description": "Package code (TO-220, SOT-23, etc.)"
                 },
+                "package": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Manufacturer's exact package designation as printed in the datasheet (e.g. Infineon PG-TDSON-8, PG-TO220-3). Complements case, which holds the generic industry code."
+                },
+                "qualification": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "Qualification grade as stated by the manufacturer (e.g. Industrial, Automotive (AEC-Q101), Standard). Free-form string - vendor vocabularies differ."
+                },
                 "matchcodeDescription": {
                     "type": [
                         "string",
