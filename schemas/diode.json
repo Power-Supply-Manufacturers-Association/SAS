@@ -142,12 +142,53 @@
                             }
                         },
                         "else": {
-                            "properties": {
-                                "electrical": {
-                                    "required": [
-                                        "reverseVoltage",
-                                        "forwardCurrent"
-                                    ]
+                            "if": {
+                                "properties": {
+                                    "part": {
+                                        "properties": {
+                                            "subType": {
+                                                "const": "tvs"
+                                            }
+                                        },
+                                        "required": [
+                                            "subType"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "part"
+                                ]
+                            },
+                            "then": {
+                                "properties": {
+                                    "electrical": {
+                                        "required": [
+                                            "standoffVoltage",
+                                            "clampingVoltage"
+                                        ],
+                                        "anyOf": [
+                                            {
+                                                "required": [
+                                                    "peakPulseCurrent"
+                                                ]
+                                            },
+                                            {
+                                                "required": [
+                                                    "peakPulsePower"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            },
+                            "else": {
+                                "properties": {
+                                    "electrical": {
+                                        "required": [
+                                            "reverseVoltage",
+                                            "forwardCurrent"
+                                        ]
+                                    }
                                 }
                             }
                         }
@@ -156,7 +197,7 @@
             ]
         },
         "electrical": {
-            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact).",
+            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM).",
             "type": "object",
             "additionalProperties": false,
             "properties": {
