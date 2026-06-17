@@ -77,7 +77,7 @@ def registry(schemas):
 @pytest.fixture(scope="session")
 def sas_validator(schemas, registry):
     return Draft202012Validator(
-        schemas["http://openconverters.com/schemas/SAS/SAS.json"],
+        schemas["https://psma.com/sas/SAS.json"],
         registry=registry,
     )
 

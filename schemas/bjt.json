@@ -7,22 +7,37 @@
     "additionalProperties": false,
     "properties": {
         "manufacturerInfo": {
-            "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with BJT-specific datasheetInfo.",
-            "allOf": [
-                {
-                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo"
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/name"
                 },
-                {
-                    "type": "object",
-                    "properties": {
-                        "datasheetInfo": {
-                            "$ref": "#/$defs/datasheetInfo"
-                        }
-                    },
-                    "required": [
-                        "datasheetInfo"
-                    ]
+                "reference": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/reference"
+                },
+                "status": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/status"
+                },
+                "description": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/description"
+                },
+                "orderCode": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/orderCode"
+                },
+                "datasheetUrl": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/datasheetUrl"
+                },
+                "spiceModel": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/spiceModel"
+                },
+                "datasheetInfo": {
+                    "$ref": "#/$defs/datasheetInfo"
                 }
+            },
+            "required": [
+                "name",
+                "datasheetInfo"
             ]
         },
         "distributorsInfo": {
@@ -53,9 +68,6 @@
                 },
                 "mechanical": {
                     "$ref": "./utils.json#/$defs/mechanical"
-                },
-                "business": {
-                    "$ref": "./utils.json#/$defs/business"
                 }
             },
             "required": [

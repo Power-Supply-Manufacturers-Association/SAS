@@ -232,5 +232,6 @@
             ]
         }
     ],
-    "$defs": {}
+    "$defs": {},
+    "unevaluatedProperties": false
 }

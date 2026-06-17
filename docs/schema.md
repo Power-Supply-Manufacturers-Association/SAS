@@ -3,7 +3,7 @@
 Complete field-by-field documentation for the Semiconductor Agnostic Structure schema.
 
 **Schema version**: JSON Schema 2020-12
-**Base URI**: `http://openconverters.com/schemas/SAS/`
+**Base URI**: `https://psma.com/sas/`
 
 ---
 

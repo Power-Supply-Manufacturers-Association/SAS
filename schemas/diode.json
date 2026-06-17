@@ -7,22 +7,37 @@
     "additionalProperties": false,
     "properties": {
         "manufacturerInfo": {
-            "description": "Manufacturer-specific information — extends PEAS manufacturerInfo with diode-specific datasheetInfo.",
-            "allOf": [
-                {
-                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo"
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/name"
                 },
-                {
-                    "type": "object",
-                    "properties": {
-                        "datasheetInfo": {
-                            "$ref": "#/$defs/datasheetInfo"
-                        }
-                    },
-                    "required": [
-                        "datasheetInfo"
-                    ]
+                "reference": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/reference"
+                },
+                "status": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/status"
+                },
+                "description": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/description"
+                },
+                "orderCode": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/orderCode"
+                },
+                "datasheetUrl": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/datasheetUrl"
+                },
+                "spiceModel": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/spiceModel"
+                },
+                "datasheetInfo": {
+                    "$ref": "#/$defs/datasheetInfo"
                 }
+            },
+            "required": [
+                "name",
+                "datasheetInfo"
             ]
         },
         "distributorsInfo": {
@@ -53,9 +68,6 @@
                 },
                 "mechanical": {
                     "$ref": "./utils.json#/$defs/mechanical"
-                },
-                "business": {
-                    "$ref": "./utils.json#/$defs/business"
                 },
                 "modelParams": {
                     "$ref": "#/$defs/modelParams"
@@ -186,6 +198,7 @@
                                     "electrical": {
                                         "required": [
                                             "reverseVoltage",
+                                            "forwardVoltage",
                                             "forwardCurrent"
                                         ]
                                     }
@@ -197,7 +210,7 @@
             ]
         },
         "electrical": {
-            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM).",
+            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardVoltage (V_F, the defining rectifier conduction parameter) + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM).",
             "type": "object",
             "additionalProperties": false,
             "properties": {

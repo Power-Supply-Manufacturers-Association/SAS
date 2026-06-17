@@ -5,189 +5,78 @@
     "description": "Shared sub-schemas reused by every SAS per-type document (mosfet, diode, igbt, bjt). Component-specific electricals, modelParams and curves live in the per-type files.",
     "$defs": {
         "part": {
-            "description": "Basic part identification — shared across all semiconductor types. The discriminator (mosfet/diode/igbt/bjt) is the field name in the document, not a property here.",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "partNumber": {
-                    "type": "string"
+            "description": "Part identification — shared across all semiconductor types. Extends the PEAS datasheetInfoPartBase with semiconductor-specific fields.",
+            "allOf": [
+                {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/datasheetInfoPartBase"
                 },
-                "series": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "technology": {
-                    "type": "string",
-                    "enum": [
-                        "Si",
-                        "SiC",
-                        "GaN",
-                        "GaAs",
-                        "Ge"
-                    ]
-                },
-                "subType": {
-                    "type": "string",
-                    "description": "Per-device-type subtype. MOSFET: nChannel/pChannel. Diode: schottky/sicSchottky/ultrafast/fastRecovery/fast/standard/rectifier/zener/tvs/esd (zener, tvs and esd each switch the required electrical fields — see diode.json). IGBT: nChannel. BJT: npn/pnp."
-                },
-                "case": {
-                    "type": "string",
-                    "description": "Package code (TO-220, SOT-23, etc.)"
-                },
-                "package": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "Manufacturer's exact package designation as printed in the datasheet (e.g. Infineon PG-TDSON-8, PG-TO220-3). Complements case, which holds the generic industry code."
-                },
-                "qualification": {
-                    "type": [
-                        "string",
-                        "null"
-                    ],
-                    "description": "Qualification grade as stated by the manufacturer (e.g. Industrial, Automotive (AEC-Q101), Standard). Free-form string - vendor vocabularies differ."
-                },
-                "matchcodeDescription": {
-                    "type": [
-                        "string",
-                        "null"
+                {
+                    "type": "object",
+                    "properties": {
+                        "partNumber": {},
+                        "series": {},
+                        "case": {},
+                        "description": {},
+                        "technology": {
+                            "type": "string",
+                            "enum": [
+                                "Si",
+                                "SiC",
+                                "GaN",
+                                "GaAs",
+                                "Ge"
+                            ]
+                        },
+                        "subType": {
+                            "type": "string",
+                            "description": "Per-device-type subtype. MOSFET: nChannel/pChannel. Diode: schottky/sicSchottky/ultrafast/fastRecovery/fast/standard/rectifier/zener/tvs/esd. IGBT: nChannel. BJT: npn/pnp."
+                        },
+                        "package": {
+                            "type": "string",
+                            "description": "Manufacturer's exact package designation (e.g. Infineon PG-TDSON-8). Complements case, which holds the generic industry code."
+                        },
+                        "qualification": {
+                            "type": "string",
+                            "description": "Qualification grade (e.g. Industrial, Automotive (AEC-Q101))."
+                        },
+                        "matchcodeDescription": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "technology"
                     ]
                 }
-            },
-            "required": [
-                "partNumber",
-                "technology"
             ]
         },
         "thermal": {
-            "description": "Thermal characteristics — shared across all semiconductor types.",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "thermalResistanceJunctionCase": {
-                    "type": "number",
-                    "description": "R_th(j-c) in K/W"
-                },
-                "thermalResistanceJunctionAmbient": {
-                    "type": "number",
-                    "description": "R_th(j-a) in K/W"
-                },
-                "thermalResistanceCaseSink": {
-                    "type": "number",
-                    "description": "R_th(c-s) in K/W"
-                },
-                "junctionTemperatureMax": {
-                    "type": "number",
-                    "description": "T_j max in Celsius"
-                },
-                "junctionTemperatureMin": {
-                    "type": "number",
-                    "description": "T_j min in Celsius"
-                },
-                "fosterNetwork": {
-                    "description": "Foster RC network for transient thermal impedance",
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                            "resistance": {
-                                "type": "number",
-                                "description": "K/W"
-                            },
-                            "timeConstant": {
-                                "type": "number",
-                                "description": "seconds"
-                            }
-                        },
-                        "required": [
-                            "resistance",
-                            "timeConstant"
-                        ]
-                    }
-                }
-            }
+            "$ref": "https://psma.com/peas/utils.json#/$defs/datasheetInfoThermalSemiconductor"
         },
         "mechanical": {
-            "description": "Mechanical specs — shared across all semiconductor types.",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "assemblyType": {
-                    "description": "PCB mounting / assembly type",
-                    "$ref": "https://psma.com/peas/utils.json#/$defs/connectionType"
+            "description": "Mechanical specs — extends PEAS datasheetInfoMechanical with a package case field.",
+            "allOf": [
+                {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/datasheetInfoMechanical"
                 },
-                "case": {
-                    "type": "string",
-                    "description": "Package name (TO-220, SOT-23, etc.)"
-                },
-                "length": {
-                    "description": "Body length in meters",
-                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
-                },
-                "width": {
-                    "description": "Body width in meters",
-                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
-                },
-                "height": {
-                    "description": "Body height in meters",
-                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
-                },
-                "weight": {
-                    "type": "number",
-                    "description": "kg"
+                {
+                    "type": "object",
+                    "properties": {
+                        "length": {},
+                        "width": {},
+                        "height": {},
+                        "diameter": {},
+                        "weight": {},
+                        "shapeType": {},
+                        "assemblyType": {},
+                        "case": {
+                            "type": "string",
+                            "description": "Package name (TO-220, SOT-23, etc.) — mirrors part.case for convenience."
+                        }
+                    },
+                    "additionalProperties": false
                 }
-            }
-        },
-        "business": {
-            "description": "Commercial info — shared across all semiconductor types.",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "packaging": {
-                    "type": [
-                        "string",
-                        "null"
-                    ]
-                },
-                "vpe": {
-                    "type": [
-                        "integer",
-                        "null"
-                    ],
-                    "description": "Units per package"
-                },
-                "moq": {
-                    "type": [
-                        "integer",
-                        "null"
-                    ],
-                    "description": "Minimum order quantity"
-                },
-                "leadTime": {
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "description": "weeks"
-                },
-                "stock": {
-                    "type": [
-                        "integer",
-                        "null"
-                    ]
-                },
-                "cost": {
-                    "type": [
-                        "number",
-                        "null"
-                    ],
-                    "description": "unit cost"
-                }
-            }
+            ]
         }
     }
 }
