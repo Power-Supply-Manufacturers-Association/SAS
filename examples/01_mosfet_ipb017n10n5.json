@@ -164,7 +164,10 @@
         "name": "Digi-Key",
         "reference": "IPB017N10N5-ND",
         "link": "https://www.digikey.com/en/products/detail/infineon/IPB017N10N5/5817556",
-        "cost": 2.45,
+        "cost": {
+          "value": 2.45,
+          "currency": "USD"
+        },
         "stock": 15000,
         "packaging": "Tape and Reel",
         "vpe": 800,

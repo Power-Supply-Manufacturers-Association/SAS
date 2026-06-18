@@ -143,7 +143,10 @@
       {
         "name": "Digi-Key",
         "reference": "497-2478-5-ND",
-        "cost": 1.15,
+        "cost": {
+          "value": 1.15,
+          "currency": "USD"
+        },
         "stock": 25000,
         "packaging": "Tube",
         "vpe": 50,

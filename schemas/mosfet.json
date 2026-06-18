@@ -31,6 +31,9 @@
                 "spiceModel": {
                     "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/spiceModel"
                 },
+                "family": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/family"
+                },
                 "datasheetInfo": {
                     "$ref": "#/$defs/datasheetInfo"
                 }
