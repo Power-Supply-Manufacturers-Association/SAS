@@ -65,70 +65,89 @@ Every SAS document has three parts, matching the PEAS pattern:
 +----------------+     +------------------+     +----------------+
 ```
 
-### The oneOf Discriminator Pattern
+### The field-name discriminator
 
-SAS uses a JSON Schema `oneOf` discriminator on the `deviceType` field to select device-specific sections. The `part.deviceType` field determines which `electrical`, `modelParams`, and `curves` definitions apply:
+`SAS.json` carries `inputs`, `outputs`, and **exactly one** of
+`{mosfet, diode, igbt, bjt}` — enforced by a top-level `oneOf`. **The field name
+*is* the discriminator; there is no `deviceType` property.** Each device field
+`$ref`s its own schema file, so a MOSFET document simply has no `diode` key and
+vice versa:
 
 ```
-datasheetInfo
-  +-- part (shared: partNumber, deviceType, technology, case)
-  +-- thermal (shared: R_th, T_j range, Foster network)
-  +-- mechanical (shared: package dims, assembly type)
-  +-- business (shared: cost, MOQ, packaging)
-  +-- oneOf:
-       +-- deviceType: "mosfet"  -> mosfetElectrical + mosfetModelParams + mosfetCurves
-       +-- deviceType: "diode"   -> diodeElectrical  + diodeModelParams  + diodeCurves
-       +-- deviceType: "igbt"    -> igbtElectrical   + igbtModelParams   + igbtCurves
-       +-- deviceType: "bjt"     -> bjtElectrical
+SAS.json
+  +-- inputs           ./inputs.json
+  +-- oneOf (exactly one of):
+  |     +-- mosfet     ./mosfet.json
+  |     +-- diode      ./diode.json
+  |     +-- igbt       ./igbt.json
+  |     +-- bjt        ./bjt.json
+  +-- outputs[]        ./outputs.json  (aligned positionally with inputs.operatingPoints)
 ```
 
-This means a MOSFET file never has empty diode fields, and a diode file never has empty MOSFET fields. Each device type only carries the fields that are relevant to it.
+Each device file has the same outer shape — `manufacturerInfo` (+ nested
+`datasheetInfo`) and `distributorsInfo` — and its `datasheetInfo` carries the
+**device-specific** sections directly (no `mosfetElectrical`/`diodeElectrical`
+prefixes — the file it lives in already fixes the device type):
+
+```
+<device>.json                       (mosfet | diode | igbt | bjt)
+  +-- manufacturerInfo
+  |     +-- name, reference, status, family, datasheetUrl, spiceModel, ...
+  |     +-- datasheetInfo
+  |           +-- part         (required)  partNumber, technology, subType, case
+  |           +-- electrical   (required)  device-specific ratings
+  |           +-- thermal                  R_th, T_j range, Foster network
+  |           +-- mechanical               package dims, assembly type
+  |           +-- modelParams              SPICE parameters
+  |           +-- curves                   digitized datasheet graphs
+  +-- distributorsInfo
+```
+
+This means a MOSFET file never has empty diode fields, and a diode file never has
+empty MOSFET fields — each device type only carries the fields relevant to it.
 
 ```mermaid
 classDiagram
     class SAS {
         +inputs
-        +semiconductor
+        +oneOf~mosfet|diode|igbt|bjt~
         +outputs
+    }
+    class device {
+        +manufacturerInfo
+        +distributorsInfo
     }
     class datasheetInfo {
         +part
+        +electrical
         +thermal
         +mechanical
-        +business
+        +modelParams
+        +curves
     }
     class MOSFET {
-        +mosfetElectrical
-        +mosfetModelParams
-        +mosfetCurves
         drainSourceVoltage
         onResistance
         gateCharge
     }
     class Diode {
-        +diodeElectrical
-        +diodeModelParams
-        +diodeCurves
         reverseVoltage
         forwardVoltage
     }
     class IGBT {
-        +igbtElectrical
-        +igbtModelParams
-        +igbtCurves
         collectorEmitterVoltage
         turnOnEnergy
     }
     class BJT {
-        +bjtElectrical
         collectorEmitterVoltage
         dcCurrentGain
     }
-    SAS --> datasheetInfo
-    datasheetInfo --> MOSFET : deviceType = mosfet
-    datasheetInfo --> Diode : deviceType = diode
-    datasheetInfo --> IGBT : deviceType = igbt
-    datasheetInfo --> BJT : deviceType = bjt
+    SAS --> device : field name = mosfet|diode|igbt|bjt
+    device --> datasheetInfo
+    datasheetInfo --> MOSFET : in mosfet.json
+    datasheetInfo --> Diode : in diode.json
+    datasheetInfo --> IGBT : in igbt.json
+    datasheetInfo --> BJT : in bjt.json
 ```
 
 ```mermaid
@@ -245,8 +264,15 @@ The Foster network allows accurate transient thermal simulation -- essential for
 ```
 SAS/
 +-- schemas/
-|   +-- SAS.json              Top-level: inputs + semiconductor + outputs
-|   +-- semiconductor.json    Device data with oneOf discriminator
+|   +-- SAS.json              Top-level: inputs + (one of mosfet/diode/igbt/bjt) + outputs
+|   +-- mosfet.json           MOSFET device data
+|   +-- diode.json            Diode device data
+|   +-- igbt.json             IGBT device data
+|   +-- bjt.json              BJT device data
+|   +-- inputs.json           Design requirements + operating points
+|   +-- inputs/
+|   |   +-- designRequirements.json
+|   +-- outputs.json          Per-operating-point computed results
 |   +-- utils.json            Shared types: dimensionWithTolerance, curve
 |
 +-- examples/
