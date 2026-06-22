@@ -7,6 +7,7 @@
     "additionalProperties": false,
     "properties": {
         "manufacturerInfo": {
+            "title": "diodeManufacturerInfo",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -51,11 +52,13 @@
             }
         }
     },
-    "required": [
-        "manufacturerInfo"
+    "anyOf": [
+        { "required": ["manufacturerInfo"] },
+        { "maxProperties": 0 }
     ],
     "$defs": {
         "datasheetInfo": {
+            "title": "diodeDatasheetInfo",
             "description": "All information extracted from the diode datasheet.",
             "type": "object",
             "additionalProperties": false,
@@ -213,6 +216,7 @@
             ]
         },
         "electrical": {
+            "title": "diodeElectrical",
             "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardVoltage (V_F, the defining rectifier conduction parameter) + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM).",
             "type": "object",
             "additionalProperties": false,
@@ -300,6 +304,7 @@
             }
         },
         "modelParams": {
+            "title": "diodeModelParams",
             "description": "SPICE model parameters for diode.",
             "type": "object",
             "additionalProperties": false,
@@ -343,6 +348,7 @@
             }
         },
         "curves": {
+            "title": "diodeCurves",
             "description": "Diode characteristic curves from datasheet.",
             "type": "object",
             "additionalProperties": false,

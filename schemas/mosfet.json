@@ -7,6 +7,7 @@
     "additionalProperties": false,
     "properties": {
         "manufacturerInfo": {
+            "title": "mosfetManufacturerInfo",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -51,11 +52,13 @@
             }
         }
     },
-    "required": [
-        "manufacturerInfo"
+    "anyOf": [
+        { "required": ["manufacturerInfo"] },
+        { "maxProperties": 0 }
     ],
     "$defs": {
         "datasheetInfo": {
+            "title": "mosfetDatasheetInfo",
             "description": "All information extracted from the MOSFET datasheet.",
             "type": "object",
             "additionalProperties": false,
@@ -85,6 +88,7 @@
             ]
         },
         "electrical": {
+            "title": "mosfetElectrical",
             "description": "MOSFET electrical characteristics — every field is relevant to MOSFETs.",
             "type": "object",
             "additionalProperties": false,
@@ -211,6 +215,7 @@
             ]
         },
         "modelParams": {
+            "title": "mosfetModelParams",
             "description": "SPICE model parameters for MOSFET.",
             "type": "object",
             "additionalProperties": false,
@@ -262,6 +267,7 @@
             }
         },
         "curves": {
+            "title": "mosfetCurves",
             "description": "MOSFET characteristic curves from datasheet.",
             "type": "object",
             "additionalProperties": false,

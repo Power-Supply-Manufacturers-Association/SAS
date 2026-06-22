@@ -5,6 +5,7 @@
     "description": "Shared sub-schemas reused by every SAS per-type document (mosfet, diode, igbt, bjt). Component-specific electricals, modelParams and curves live in the per-type files.",
     "$defs": {
         "part": {
+            "title": "semiconductorPart",
             "description": "Part identification — shared across all semiconductor types. Extends the PEAS datasheetInfoPartBase with semiconductor-specific fields.",
             "allOf": [
                 {
@@ -51,9 +52,11 @@
             ]
         },
         "thermal": {
+            "title": "semiconductorThermal",
             "$ref": "https://psma.com/peas/utils.json#/$defs/datasheetInfoThermalSemiconductor"
         },
         "mechanical": {
+            "title": "semiconductorMechanical",
             "description": "Mechanical specs — extends PEAS datasheetInfoMechanical with a package case field.",
             "allOf": [
                 {

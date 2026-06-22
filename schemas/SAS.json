@@ -40,9 +40,9 @@
             }
         }
     },
-    "required": [
-        "inputs",
-        "outputs"
+    "anyOf": [
+        { "required": ["inputs", "outputs"] },
+        { "maxProperties": 1 }
     ],
     "oneOf": [
         {

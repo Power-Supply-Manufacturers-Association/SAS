@@ -1,2 +1,9 @@
+# CMake build trees
+build/
+build-wasm/
+cmake-build-*/
+*.o
+*.a
+*.so
 __pycache__/
-*.pyc
+.DS_Store
