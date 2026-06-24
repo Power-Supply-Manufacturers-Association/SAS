@@ -23,7 +23,6 @@ namespace {
 // so Vf = 0.8334 V yields IS = 1e-14 — identical to MKF's DIDEAL.
 constexpr double IDEAL_SW_RON  = 0.01;     // ohm  (MKF SW1 RON)
 constexpr double IDEAL_SW_VTH  = 2.5;      // V    (MKF SW1 VT; gate threshold of the modeled switch)
-constexpr double IDEAL_D_VF    = 0.8334;   // V -> IS = exp(-Vf/0.025852) = 1e-14 (MKF DIDEAL)
 
 json pin_port_net(const std::string& net, const std::string& comp,
                   const std::string& pin, const std::string& port) {
@@ -138,7 +137,7 @@ json diode_leaf(const json& peas, const PEAS::Fidelity& fidelity, const std::str
         electrical = peas.at("semiconductor").at("diode").at("manufacturerInfo")
                          .at("datasheetInfo").at("electrical");
     } else {
-        electrical["forwardVoltage"] = IDEAL_D_VF;   // ideal: IS=1e-14 at 1 A (matches MKF DIDEAL)
+        electrical["forwardVoltage"] = IDEAL_DIODE_VF_REF;   // single source: SasConverter.hpp   // ideal: IS=1e-14 at 1 A (matches MKF DIDEAL)
     }
 
     json ports = json::array();
