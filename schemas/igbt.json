@@ -50,12 +50,21 @@
             "items": {
                 "$ref": "https://psma.com/peas/utils.json#/$defs/distributorInfo"
             }
+        },
+        "spiceModel": {
+            "description": "Device-body SPICE .model card for a simulation-sourced part (no datasheet). Faithful home that does not require manufacturerInfo.",
+            "$ref": "./utils.json#/$defs/spiceModel"
         }
     },
     "anyOf": [
         {
             "required": [
                 "manufacturerInfo"
+            ]
+        },
+        {
+            "required": [
+                "spiceModel"
             ]
         },
         {

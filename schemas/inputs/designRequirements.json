@@ -118,10 +118,7 @@
                             "minimum": 0
                         }
                     },
-                    "required": [
-                        "ratedDrainSourceVoltage",
-                        "ratedContinuousDrainCurrent"
-                    ]
+                    "required": []
                 },
                 {
                     "description": "Diode-specific requirements",
@@ -160,10 +157,7 @@
                             "minimum": 0
                         }
                     },
-                    "required": [
-                        "ratedReverseVoltage",
-                        "ratedForwardCurrent"
-                    ]
+                    "required": []
                 },
                 {
                     "description": "IGBT-specific requirements",
@@ -192,10 +186,7 @@
                             "minimum": 0
                         }
                     },
-                    "required": [
-                        "ratedCollectorEmitterVoltage",
-                        "ratedCollectorCurrent"
-                    ]
+                    "required": []
                 },
                 {
                     "description": "BJT-specific requirements",
@@ -224,10 +215,7 @@
                             "minimum": 0
                         }
                     },
-                    "required": [
-                        "ratedCollectorEmitterVoltage",
-                        "ratedCollectorCurrent"
-                    ]
+                    "required": []
                 }
             ]
         }

@@ -80,6 +80,38 @@
                     "additionalProperties": false
                 }
             ]
+        },
+        "spiceModel": {
+            "title": "spiceModel",
+            "description": "The device's SPICE .model card, carried as structured data for simulator-agnostic round-trip (ngspice and LTspice consume .model cards identically). This is the canonical home for a device whose source is a simulation model rather than a datasheet — it lives at the device-body top level so it does not require the manufacturerInfo/datasheetInfo chain. Nothing is fabricated: a bare card such as '.model Red D' yields modelType 'D' and an empty parameters object.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "modelType"
+            ],
+            "properties": {
+                "modelName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Model name exactly as it appears in the .model card (e.g. '1N4148', 'Red')."
+                },
+                "modelType": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "SPICE model type keyword following the name in a .model card (e.g. 'D' for diode, 'NPN'/'PNP' for BJT, 'VDMOS'/'NMOS'/'PMOS' for MOSFET, 'NIGBT' for IGBT)."
+                },
+                "parameters": {
+                    "type": "object",
+                    "description": "SPICE .model parameters as name -> value, SI-resolved (numbers, or strings for non-numeric flags). Empty object when the card carries only type defaults.",
+                    "additionalProperties": {
+                        "type": [
+                            "number",
+                            "string",
+                            "boolean"
+                        ]
+                    }
+                }
+            }
         }
     }
 }
