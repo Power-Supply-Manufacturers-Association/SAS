@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://psma.com/sas/inputs/designRequirements.json",
-    "$comment": "SPDX-License-Identifier: Apache-2.0",
+    "$comment": "SPDX-License-Identifier: MIT",
     "title": "designRequirements",
     "description": "The list of requirements that a given semiconductor must comply with. Built on top of the PEAS designRequirementsBase mixin, with semiconductor-specific common fields and a deviceType-discriminated oneOf for per-type required ratings (mirrors the same discriminator already present in semiconductor.json).",
     "allOf": [

@@ -79,7 +79,22 @@
             "additionalProperties": false,
             "properties": {
                 "part": {
-                    "$ref": "./utils.json#/$defs/part"
+                    "allOf": [
+                        {
+                            "$ref": "./utils.json#/$defs/part"
+                        },
+                        {
+                            "$comment": "Device-specific narrowing of the shared part def: subType must come from this closed enum (protects the exact-string conditionals, e.g. diode zener/tvs/esd required sets).",
+                            "properties": {
+                                "subType": {
+                                    "enum": [
+                                        "npn",
+                                        "pnp"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
                 },
                 "electrical": {
                     "$ref": "#/$defs/electrical"

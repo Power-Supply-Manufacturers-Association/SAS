@@ -251,22 +251,20 @@ def test_design_requirements_device_type_required(sas_validator, mosfet_doc):
     assert_invalid(sas_validator, mosfet_doc)
 
 
-def test_design_requirements_mosfet_requires_voltage_and_current(sas_validator, mosfet_doc):
-    bad = copy.deepcopy(mosfet_doc)
-    del bad["inputs"]["designRequirements"]["ratedDrainSourceVoltage"]
-    assert_invalid(sas_validator, bad)
-    bad = copy.deepcopy(mosfet_doc)
-    del bad["inputs"]["designRequirements"]["ratedContinuousDrainCurrent"]
-    assert_invalid(sas_validator, bad)
+def test_design_requirements_mosfet_rated_fields_optional(sas_validator, mosfet_doc):
+    # Deliberately seed-friendly (commit 1540d54): a pre-sourcing seed with only
+    # deviceType must validate; rated* fields are optional.
+    ok = copy.deepcopy(mosfet_doc)
+    del ok["inputs"]["designRequirements"]["ratedDrainSourceVoltage"]
+    del ok["inputs"]["designRequirements"]["ratedContinuousDrainCurrent"]
+    assert_valid(sas_validator, ok)
 
 
-def test_design_requirements_diode_requires_voltage_and_current(sas_validator, diode_doc):
-    bad = copy.deepcopy(diode_doc)
-    del bad["inputs"]["designRequirements"]["ratedReverseVoltage"]
-    assert_invalid(sas_validator, bad)
-    bad = copy.deepcopy(diode_doc)
-    del bad["inputs"]["designRequirements"]["ratedForwardCurrent"]
-    assert_invalid(sas_validator, bad)
+def test_design_requirements_diode_rated_fields_optional(sas_validator, diode_doc):
+    ok = copy.deepcopy(diode_doc)
+    del ok["inputs"]["designRequirements"]["ratedReverseVoltage"]
+    del ok["inputs"]["designRequirements"]["ratedForwardCurrent"]
+    assert_valid(sas_validator, ok)
 
 
 def test_unknown_device_type_in_design_requirements_rejected(sas_validator, mosfet_doc):

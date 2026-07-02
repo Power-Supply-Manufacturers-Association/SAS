@@ -30,7 +30,7 @@ Every valid SAS document is also a valid PEAS document. SAS is a sibling to MAS 
 
 ### SAS/data/ vs TAS/data/
 
-An important distinction: **SAS/data/** stores manufacturing building blocks -- semiconductor dies and packages. These are the raw components that manufacturers combine into finished products. **Finished semiconductor components** (the parts you actually order and solder) go in **TAS/data/**. Think of SAS/data/ as the bill of materials for the semiconductor fab, and TAS/data/ as the distributor catalog.
+An important distinction: **SAS/data/** is reserved for manufacturing building blocks -- semiconductor dies and packages -- and is **currently empty** (the former seed records were finished orderable parts and were moved out; those parts live in **TAS/data/** alongside the ~29k other catalogued semiconductors). **Finished semiconductor components** (the parts you actually order and solder) always go in **TAS/data/**: think of SAS/data/ as the bill of materials for the semiconductor fab, and TAS/data/ as the distributor catalog.
 
 ### The Problem SAS Solves
 
@@ -39,7 +39,7 @@ An important distinction: **SAS/data/** stores manufacturing building blocks -- 
 | MOSFET specs scattered across datasheets and spreadsheets | **One file** with all electrical, thermal, and mechanical data |
 | Manual extraction of SPICE parameters from datasheets | **modelParams** section ready for simulation |
 | No machine-readable format for characteristic curves | **curves** section with digitized datasheet graphs |
-| Different formats for MOSFETs vs diodes vs IGBTs | **One schema** with device-type-specific sections via `oneOf` |
+| Different formats for MOSFETs vs diodes vs IGBTs | **One schema family** with a per-device file selected by field name (`oneOf` over `mosfet`/`diode`/`igbt`/`bjt`) |
 | Ambiguous parameter conditions (R_DS(on) at which V_GS?) | **Explicit test conditions** stored alongside every spec |
 
 ---
@@ -98,10 +98,19 @@ prefixes — the file it lives in already fixes the device type):
   |           +-- electrical   (required)  device-specific ratings
   |           +-- thermal                  R_th, T_j range, Foster network
   |           +-- mechanical               package dims, assembly type
-  |           +-- modelParams              SPICE parameters
-  |           +-- curves                   digitized datasheet graphs
-  +-- distributorsInfo
+  |           +-- modelParams              SPICE parameters   (not bjt)
+  |           +-- curves                   digitized graphs   (not bjt)
+  |           +-- provenance               data-source trail
+  +-- distributorsInfo                cost/stock/MOQ/packaging per distributor
+  +-- spiceModel                      structured .model card, for parts whose
+                                      only source is a simulation model
 ```
+
+A device body must carry `manufacturerInfo` **or** the device-body `spiceModel`
+(or be empty). `part.subType` is narrowed by each device file to a **closed
+per-device enum**: mosfet `nChannel`/`pChannel`/`powerBlock`, diode
+`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`zener`/`tvs`/`esd`,
+igbt `nChannel`, bjt `npn`/`pnp`.
 
 This means a MOSFET file never has empty diode fields, and a diode file never has
 empty MOSFET fields — each device type only carries the fields relevant to it.
@@ -154,43 +163,48 @@ classDiagram
 flowchart LR
     DS["Manufacturer<br/>Datasheet PDF"] --> Extract["Parameter<br/>Extraction"]
     Extract --> Validate["Validate against<br/>SAS schema"]
-    Validate --> NDJSON["TAS/data/<br/>mosfets.ndjson<br/>diodes.ndjson<br/>igbts.ndjson"]
+    Validate --> NDJSON["TAS/data/<br/>mosfets.ndjson<br/>diodes.ndjson<br/>igbts.ndjson<br/>bjts.ndjson"]
     NDJSON --> Select["Component<br/>Selection"]
     Select --> TAS["TAS Converter<br/>Design Document"]
 ```
+
+Note the TAS catalog records are **PEAS-wrapped**: each NDJSON line is
+`{"semiconductor": {"mosfet": {...}}}` (or `diode`/`igbt`/`bjt`), i.e. the SAS
+device body nested under PEAS's `semiconductor` discriminator — not a bare SAS
+document.
 
 ---
 
 ## Device Type Coverage
 
-### MOSFET (Si, SiC, GaN)
+### MOSFET (Si, SiC, GaN, GaAs)
 
-- **mosfetElectrical** -- V_DS, R_DS(on), I_D, gate charge (Q_g, Q_gs, Q_gd), capacitances (C_iss, C_oss, C_rss), switching times, body diode specs, avalanche energy, figure of merit
-- **mosfetModelParams** -- SPICE Level 3 parameters: VTO, KP, LAMBDA, RD, RS, CGS, CGD, CDS, IS, N
-- **mosfetCurves** -- R_DS(on) vs T_j, R_DS(on) vs I_D, C_iss/C_oss/C_rss vs V_DS, gate charge curve, body diode V_F, SOA, thermal impedance
+- **electrical** -- V_DS, R_DS(on), I_D, V_GS(th), gate charge (Q_g, Q_gs, Q_gd), capacitances (C_iss, C_oss, C_rss), switching times, body diode specs, avalanche energy, figure of merit
+- **modelParams** -- SPICE Level 3 parameters: VTO, KP, LAMBDA, RD, RS, CGS, CGD, CDS, IS, N
+- **curves** -- R_DS(on) vs T_j, R_DS(on) vs I_D, C_iss/C_oss/C_rss vs V_DS, gate charge curve, body diode V_F, SOA, thermal impedance
 
-### Diode (Schottky, SiC Schottky, Ultrafast, Standard, Zener, TVS)
+### Diode (Rectifier, Schottky, SiC Schottky, Fast/Ultrafast, Zener, TVS, ESD)
 
-- **diodeElectrical** -- V_RRM, I_F(AV), V_F, I_FSM, t_rr, Q_rr, C_j, plus Zener/TVS fields (V_BR, V_C, V_WM, I_PP)
-- **diodeModelParams** -- SPICE parameters: IS, N, RS, CJ0, VJ, M, TT, BV, IBV
-- **diodeCurves** -- V_F vs I_F, V_F vs T_j, I_R vs V_R, C_j vs V_R, thermal impedance, SOA
+- **electrical** -- V_RRM, I_F(AV), V_F, I_FSM, t_rr, Q_rr, C_j, plus Zener fields (V_BR = V_Z, I_ZT, Z_ZT) and TVS/ESD fields (V_RWM, V_C, I_PP, P_PP, IEC 61000-4-2 contact/air ratings)
+- **modelParams** -- SPICE parameters: IS, N, RS, CJ0, VJ, M, TT, BV, IBV
+- **curves** -- V_F vs I_F, V_F vs T_j, I_R vs V_R, C_j vs V_R, thermal impedance, SOA
 
 ### IGBT
 
-- **igbtElectrical** -- V_CE, V_CE(sat), I_C, E_on, E_off, Q_g, V_GE(th), C_ies, short-circuit time
-- **igbtModelParams** -- SPICE parameters: VTO, KP, EON, EOFF
-- **igbtCurves** -- V_CE(sat) vs I_C, E_on vs I_C, E_off vs I_C, thermal impedance, SOA
+- **electrical** -- V_CE, V_CE(sat), I_C, E_on, E_off, Q_g, V_GE(th), C_ies, short-circuit time
+- **modelParams** -- SPICE parameters: VTO, KP, EON, EOFF
+- **curves** -- V_CE(sat) vs I_C, E_on vs I_C, E_off vs I_C, thermal impedance, SOA
 
 ### BJT
 
-- **bjtElectrical** -- V_CEO, V_CBO, I_C, h_FE, V_CE(sat), f_T, P_D
+- **electrical** -- V_CEO, V_CBO, I_C, h_FE, V_CE(sat), f_T, P_D
 - No modelParams or curves sections defined (BJTs are rarely used in new power designs)
 
 ---
 
 ## SPICE Model Parameters
 
-Each device type has a dedicated `modelParams` section containing the parameters needed to build a SPICE simulation model:
+MOSFETs, diodes, and IGBTs have a dedicated `modelParams` section containing the parameters needed to build a SPICE simulation model:
 
 ```json
 "modelParams": {
@@ -209,6 +223,8 @@ Each device type has a dedicated `modelParams` section containing the parameters
 ```
 
 These values can be used directly in ngspice `.MODEL` statements or other SPICE simulators.
+
+Separately, every device body (all four types) accepts a top-level `spiceModel` — a structured `.model` card (`modelName`, `modelType`, `parameters`) that serves as the canonical home for parts whose only source is a simulation model rather than a datasheet.
 
 ---
 
@@ -266,27 +282,30 @@ SAS/
 +-- schemas/
 |   +-- SAS.json              Top-level: inputs + (one of mosfet/diode/igbt/bjt) + outputs
 |   +-- mosfet.json           MOSFET device data
-|   +-- diode.json            Diode device data
+|   +-- diode.json            Diode device data (per-subType required-field rules)
 |   +-- igbt.json             IGBT device data
 |   +-- bjt.json              BJT device data
-|   +-- inputs.json           Design requirements + operating points
+|   +-- inputs.json           Operating points + design requirements
 |   +-- inputs/
 |   |   +-- designRequirements.json
 |   +-- outputs.json          Per-operating-point computed results
-|   +-- utils.json            Shared types: dimensionWithTolerance, curve
+|   +-- utils.json            Shared SAS defs: part, thermal, mechanical, spiceModel
+|                             (dimensionWithTolerance, curve, etc. come from PEAS utils)
 |
 +-- examples/
-|   +-- 01_mosfet_ipb017n10n5.json   100V Si n-channel MOSFET
-|   +-- 02_diode_stps30l60ct.json    60V Si Schottky diode
+|   +-- 01_mosfet_ipb017n10n5.json   100V Si n-channel MOSFET (reference document)
+|   +-- 02_diode_stps30l60ct.json    60V Si Schottky diode    (reference document)
 |
-+-- data/
-|   +-- mosfets.ndjson        6 MOSFET die/package records
-|   +-- diodes.ndjson         1 diode die/package record
-|   +-- igbts.ndjson          Empty (pending)
++-- src/                      C++ converter layer (semiconductor PEAS -> CIAS)
++-- tests/                    pytest schema tests + C++ converter tests
 |
 +-- docs/
     +-- schema.md             Detailed field-by-field schema reference
 ```
+
+There is no populated `data/` directory in SAS (see
+[SAS/data/ vs TAS/data/](#sasdata-vs-tasdata) above): finished parts live in
+`TAS/data/`.
 
 ---
 
@@ -299,13 +318,13 @@ File: `examples/01_mosfet_ipb017n10n5.json`
 A 100V / 1.7 mOhm Si n-channel MOSFET in the OptiMOS 5 family, packaged in TO-263-3 (D2PAK).
 
 Key features demonstrated:
-- Complete electrical section with all MOSFET-specific fields: V_DS=100V, R_DS(on)=1.7mOhm at V_GS=10V/I_D=100A, gate charge breakdown (Q_g, Q_gs, Q_gd), capacitances at specified V_DS, body diode specs, figure of merit
+- Complete electrical section with all MOSFET-specific fields: V_DS=100V, R_DS(on)=1.7mOhm at V_GS=10V/I_D=100A, V_GS(th) as min/nom/max, gate charge breakdown (Q_g, Q_gs, Q_gd), capacitances at specified V_DS, body diode specs, figure of merit
 - SPICE Level 3 model parameters ready for simulation
 - Two characteristic curves: R_DS(on) vs T_j and C_oss vs V_DS
 - Thermal data: R_th(j-c)=0.7 K/W, T_j range -55 to 175C
-- Mechanical dimensions in SI units (meters, kg)
-- Business data: cost, MOQ, packaging type
-- Distributor info with Digi-Key stock and pricing
+- Mechanical dimensions as `dimensionWithTolerance` objects in metres, `assemblyType: "smt"`
+- Distributor info with Digi-Key stock, `{value, currency}` pricing, MOQ, and packaging (commercial data lives per-distributor -- there is no `business` section)
+- A full `inputs` block: one operating point (drain port, rectangular waveforms) plus seed-friendly `designRequirements` (`deviceType: "mosfet"`, optional rated fields)
 
 ### Example 2: Diode -- ST STPS30L60CT
 
@@ -314,10 +333,10 @@ File: `examples/02_diode_stps30l60ct.json`
 A 60V / 30A Si Schottky diode in TO-220AB package.
 
 Key features demonstrated:
-- Diode-specific electrical section: V_RRM=60V, I_F(AV)=30A, V_F=0.42V at I_F=15A, surge current, junction capacitance
+- Diode-specific electrical section: V_RRM=60V, I_F(AV)=30A, V_F=0.42V at I_F=15A, surge current, junction capacitance (`subType: "schottky"` puts it in the rectifier family, so V_RRM/V_F/I_F are the required trio)
 - SPICE diode model parameters: IS, N, RS, CJ0, VJ, M, BV
 - Two characteristic curves: V_F vs I_F and C_j vs V_R
-- Through-hole assembly type (THT)
+- Through-hole assembly type (`assemblyType: "tht"`)
 
 ---
 
@@ -327,10 +346,11 @@ Key features demonstrated:
 
 | Section | Key Fields |
 |---------|------------|
-| **part** | partNumber, deviceType, technology, subType, case |
+| **part** | partNumber, technology, subType (per-device closed enum), case, package, qualification |
 | **thermal** | R_th(j-c), R_th(j-a), R_th(c-s), T_j min/max, fosterNetwork |
-| **mechanical** | assemblyType (SMT/THT/Chassis), case, length, width, height, weight |
-| **business** | packaging, vpe, moq, leadTime, stock, cost |
+| **mechanical** | assemblyType (PEAS connectionType: smt/tht/chassis/...), case, length, width, height, weight |
+| **provenance** | data-source trail: source, sourceName, sourceUrl, retrievedDate, fields |
+| **distributorsInfo** | per-distributor commercial data: cost {value, currency}, stock, packaging, vpe, moq, leadTime |
 
 ### Device-Specific Sections
 
@@ -345,15 +365,15 @@ Key features demonstrated:
 | **Gate charge** | Q_g, Q_gs, Q_gd | -- | Q_g | -- |
 | **Reverse recovery** | t_rr, Q_rr (body diode) | t_rr, Q_rr | -- | -- |
 | **Current gain** | -- | -- | -- | h_FE (dcCurrentGain) |
-| **SPICE params** | mosfetModelParams | diodeModelParams | igbtModelParams | -- |
-| **Curves** | mosfetCurves | diodeCurves | igbtCurves | -- |
+| **SPICE params** | modelParams | modelParams | modelParams | -- |
+| **Curves** | curves | curves | curves | -- |
 
 ### Required Fields by Device Type
 
 | Device Type | Required Electrical Fields |
 |-------------|--------------------------|
-| **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent |
-| **diode** | reverseVoltage, forwardVoltage, forwardCurrent |
+| **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge |
+| **diode** | depends on `part.subType`: rectifier family (or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
 | **bjt** | collectorEmitterVoltage, collectorCurrent |
 
@@ -361,13 +381,11 @@ Key features demonstrated:
 
 ## Data Files
 
-The `data/` directory contains NDJSON files (one JSON object per line) with manufacturing building blocks:
-
-| File | Records | Description |
-|------|---------|-------------|
-| `mosfets.ndjson` | 6 | MOSFET dies and packages |
-| `diodes.ndjson` | 1 | Diode dies and packages |
-| `igbts.ndjson` | 0 | IGBT dies and packages (pending) |
+SAS ships **no part data**: the `data/` directory is empty by design. It is reserved for
+manufacturing building blocks (semiconductor dies and packages), none of which have been
+catalogued yet. All finished, orderable semiconductors live in `TAS/data/`
+(`mosfets.ndjson`, `diodes.ndjson`, `igbts.ndjson`, `bjts.ndjson`) as PEAS-wrapped
+`{"semiconductor": {...}}` records validated against these SAS schemas.
 
 ---
 
@@ -379,7 +397,7 @@ See [docs/schema.md](docs/schema.md) for the complete field-by-field schema refe
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License -- see [LICENSE](LICENSE).
 
 ---
 

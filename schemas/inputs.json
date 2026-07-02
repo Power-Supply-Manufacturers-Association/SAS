@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://psma.com/sas/inputs.json",
-    "$comment": "SPDX-License-Identifier: Apache-2.0",
+    "$comment": "SPDX-License-Identifier: MIT",
     "title": "inputs",
     "description": "The description of the inputs that can be used to design or evaluate a Semiconductor. Mirrors the MAS / CAS / RAS inputs structure (operatingPoints[] + designRequirements). Operating points use the PEAS multiPortOperatingPoint template since semiconductors are typically three- or four-terminal devices (gate/drain/source, anode/cathode, base/collector/emitter).",
     "type": "object",

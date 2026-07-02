@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://psma.com/sas/outputs.json",
-    "$comment": "SPDX-License-Identifier: Apache-2.0",
+    "$comment": "SPDX-License-Identifier: MIT",
     "title": "outputs",
     "description": "Outputs computed for one operating point of a semiconductor. Each named block is independently optional; every block carries the PEAS outputBase {origin, methodUsed} provenance shell. The top-level SAS document holds an array of these — outputs[i] aligns positionally with inputs.operatingPoints[i].",
     "type": "object",
@@ -85,7 +85,8 @@
                         "totalConductionLosses"
                     ]
                 }
-            ]
+            ],
+            "unevaluatedProperties": false
         },
         "switchingLossesOutput": {
             "title": "switchingLossesOutput",
@@ -130,7 +131,8 @@
                         "energyPerCycle"
                     ]
                 }
-            ]
+            ],
+            "unevaluatedProperties": false
         },
         "reverseRecoveryLossesOutput": {
             "title": "reverseRecoveryLossesOutput",
@@ -169,7 +171,8 @@
                         "averagePower"
                     ]
                 }
-            ]
+            ],
+            "unevaluatedProperties": false
         },
         "gateDriveEnergyOutput": {
             "title": "gateDriveEnergyOutput",
@@ -205,7 +208,8 @@
                         "averagePower"
                     ]
                 }
-            ]
+            ],
+            "unevaluatedProperties": false
         },
         "totalPowerDissipationOutput": {
             "title": "totalPowerDissipationOutput",
@@ -250,7 +254,8 @@
                         "total"
                     ]
                 }
-            ]
+            ],
+            "unevaluatedProperties": false
         },
         "junctionTemperatureOutput": {
             "title": "junctionTemperatureOutput",
@@ -288,7 +293,8 @@
                         "junctionTemperature"
                     ]
                 }
-            ]
+            ],
+            "unevaluatedProperties": false
         },
         "soaCheckOutput": {
             "title": "soaCheckOutput",
@@ -373,7 +379,8 @@
                         "passes"
                     ]
                 }
-            ]
+            ],
+            "unevaluatedProperties": false
         },
         "lifetimeOutput": {
             "title": "lifetimeOutput",
@@ -414,7 +421,8 @@
                         "predictedHours"
                     ]
                 }
-            ]
+            ],
+            "unevaluatedProperties": false
         }
     },
     "additionalProperties": false

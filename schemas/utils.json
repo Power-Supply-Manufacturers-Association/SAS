@@ -30,7 +30,7 @@
                         },
                         "subType": {
                             "type": "string",
-                            "description": "Per-device-type subtype. MOSFET: nChannel/pChannel. Diode: schottky/sicSchottky/ultrafast/fastRecovery/fast/standard/rectifier/zener/tvs/esd. IGBT: nChannel. BJT: npn/pnp."
+                            "description": "Per-device-type subtype. The legal values are NARROWED BY EACH DEVICE SCHEMA (mosfet/diode/igbt/bjt.json) to a closed enum; this shared def only fixes the type. Optional: omit when unknown."
                         },
                         "package": {
                             "type": "string",
