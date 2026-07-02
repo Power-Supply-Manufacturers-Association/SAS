@@ -1,0 +1,121 @@
+{
+  "inputs": {
+    "operatingPoints": [
+      {
+        "name": "nominal",
+        "conditions": {
+          "ambientTemperature": 25
+        },
+        "excitationsPerPort": [
+          {
+            "port": "phaseOutput",
+            "excitation": {
+              "frequency": 20000,
+              "voltage": {
+                "processed": {
+                  "label": "rectangular",
+                  "peak": 800,
+                  "offset": 400
+                }
+              },
+              "current": {
+                "processed": {
+                  "label": "rectangular",
+                  "peak": 400,
+                  "offset": 200
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "designRequirements": {
+      "name": "800V DC-link traction inverter phase leg",
+      "deviceType": "module",
+      "moduleTopology": "halfBridge",
+      "ratedBlockingVoltage": 1200,
+      "ratedContinuousCurrent": 300,
+      "allowedSwitchTechnologies": [
+        "sicMosfet"
+      ],
+      "minimumIsolationVoltage": 2500,
+      "requireIntegratedNtc": true,
+      "maximumJunctionTemperature": 175
+    }
+  },
+  "module": {
+    "manufacturerInfo": {
+      "name": "Infineon",
+      "reference": "FF2MR12W3M1H_B11",
+      "status": "production",
+      "family": "CoolSiC EasyPACK",
+      "datasheetUrl": "https://www.infineon.com/dgdl/Infineon-FF2MR12W3M1H_B11-DataSheet-v01_10-EN.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "FF2MR12W3M1H_B11",
+          "series": "EasyDUAL 3B",
+          "technology": "SiC",
+          "subType": "halfBridge",
+          "case": "EasyDUAL 3B",
+          "package": "EasyPACK"
+        },
+        "electrical": {
+          "topology": "halfBridge",
+          "switchTechnology": "sicMosfet",
+          "numberOfSwitches": 2,
+          "switch": {
+            "drainSourceVoltage": 1200,
+            "gateSourceVoltageMax": 23,
+            "continuousDrainCurrent": 400,
+            "pulsedDrainCurrent": 800,
+            "onResistance": 0.00144,
+            "onResistanceVgs": 18,
+            "onResistanceId": 400,
+            "gateThresholdVoltage": {
+              "minimum": 3.45,
+              "nominal": 4.3,
+              "maximum": 5.15
+            },
+            "totalGateCharge": 1.6e-06,
+            "inputCapacitance": 4.84e-08,
+            "outputCapacitance": 2.4e-09,
+            "reverseTransferCapacitance": 1.58e-10,
+            "capacitanceMeasurementVds": 800,
+            "turnOnDelay": 1.08e-07,
+            "riseTime": 1.37e-07,
+            "turnOffDelay": 1.36e-07,
+            "fallTime": 3.22e-08,
+            "bodyDiodeForwardVoltage": 3.98,
+            "bodyDiodeContinuousCurrent": 160
+          },
+          "switchingEnergy": {
+            "turnOnEnergy": 0.0177,
+            "turnOffEnergy": 0.00283,
+            "testVoltage": 600,
+            "testCurrent": 400,
+            "junctionTemperature": 25
+          },
+          "isolationVoltage": 3000,
+          "ntcIntegrated": true,
+          "ntcRatedResistance": 5000,
+          "ntcBValue": 3433
+        },
+        "thermal": {
+          "thermalResistanceJunctionCase": 0.128,
+          "junctionTemperatureMax": 175,
+          "junctionTemperatureMin": -40
+        },
+        "mechanical": {
+          "assemblyType": "pin",
+          "case": "EasyDUAL 3B",
+          "terminalStyle": "pressFit",
+          "weight": 0.078
+        }
+      }
+    }
+  },
+  "outputs": [
+    {}
+  ]
+}

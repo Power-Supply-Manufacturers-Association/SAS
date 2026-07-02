@@ -18,7 +18,8 @@
                         "mosfet",
                         "diode",
                         "igbt",
-                        "bjt"
+                        "bjt",
+                        "module"
                     ]
                 },
                 "maximumJunctionTemperature": {
@@ -213,6 +214,52 @@
                             "description": "Minimum required DC current gain h_FE",
                             "type": "number",
                             "minimum": 0
+                        }
+                    },
+                    "required": []
+                },
+                {
+                    "description": "Power-module-specific requirements",
+                    "properties": {
+                        "deviceType": {
+                            "const": "module"
+                        },
+                        "moduleTopology": {
+                            "description": "Required module circuit topology. $refs the part-side anchor in module.json so the two enums cannot drift. Named moduleTopology because the PEAS designRequirementsBase already carries a converter-level 'topology' field.",
+                            "$ref": "../module.json#/$defs/topology"
+                        },
+                        "allowedSwitchTechnologies": {
+                            "description": "Subset of switch die technologies acceptable for this design (part-side anchor: module.json switchTechnology).",
+                            "type": "array",
+                            "items": {
+                                "$ref": "../module.json#/$defs/switchTechnology"
+                            },
+                            "minItems": 1,
+                            "uniqueItems": true
+                        },
+                        "ratedBlockingVoltage": {
+                            "description": "Required minimum blocking voltage rating per switch (V_DS / V_CES), in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "ratedContinuousCurrent": {
+                            "description": "Required minimum continuous current rating per switch (I_D / I_C), in A",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumSwitchingLossPerCycle": {
+                            "description": "Maximum allowed switching energy E_on + E_off per cycle per switch, in J",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "minimumIsolationVoltage": {
+                            "description": "Required minimum baseplate isolation test voltage V_isol (RMS, 50/60 Hz, 1 min), in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "requireIntegratedNtc": {
+                            "description": "Whether the module must integrate an NTC temperature-sense thermistor.",
+                            "type": "boolean"
                         }
                     },
                     "required": []

@@ -13,7 +13,7 @@
 
 ## What is SAS?
 
-**SAS is a standardized way to describe semiconductor components** -- MOSFETs, diodes, IGBTs, and BJTs -- used in power electronics. It captures everything from absolute maximum ratings and electrical characteristics to SPICE model parameters and characteristic curves, all in a single machine-readable JSON file.
+**SAS is a standardized way to describe semiconductor components** -- MOSFETs, diodes, IGBTs, BJTs, and multi-die power modules -- used in power electronics. It captures everything from absolute maximum ratings and electrical characteristics to SPICE model parameters and characteristic curves, all in a single machine-readable JSON file.
 
 SAS is part of the **OpenConverters** family of agnostic structures:
 
@@ -22,7 +22,7 @@ PEAS (Power Electronics Agnostic Structure) -- Universal container
  |
  +-- MAS (Magnetic Agnostic Structure) -- Inductors, transformers, chokes
  +-- CAS (Capacitor Agnostic Structure) -- Capacitors
- +-- SAS (Semiconductor Agnostic Structure) -- MOSFETs, diodes, IGBTs, BJTs
+ +-- SAS (Semiconductor Agnostic Structure) -- MOSFETs, diodes, IGBTs, BJTs, power modules
  +-- RAS (Resistor Agnostic Structure) -- Resistors
 ```
 
@@ -39,7 +39,7 @@ An important distinction: **SAS/data/** is reserved for manufacturing building b
 | MOSFET specs scattered across datasheets and spreadsheets | **One file** with all electrical, thermal, and mechanical data |
 | Manual extraction of SPICE parameters from datasheets | **modelParams** section ready for simulation |
 | No machine-readable format for characteristic curves | **curves** section with digitized datasheet graphs |
-| Different formats for MOSFETs vs diodes vs IGBTs | **One schema family** with a per-device file selected by field name (`oneOf` over `mosfet`/`diode`/`igbt`/`bjt`) |
+| Different formats for MOSFETs vs diodes vs IGBTs | **One schema family** with a per-device file selected by field name (`oneOf` over `mosfet`/`diode`/`igbt`/`bjt`/`module`) |
 | Ambiguous parameter conditions (R_DS(on) at which V_GS?) | **Explicit test conditions** stored alongside every spec |
 
 ---
@@ -68,7 +68,7 @@ Every SAS document has three parts, matching the PEAS pattern:
 ### The field-name discriminator
 
 `SAS.json` carries `inputs`, `outputs`, and **exactly one** of
-`{mosfet, diode, igbt, bjt}` — enforced by a top-level `oneOf`. **The field name
+`{mosfet, diode, igbt, bjt, module}` — enforced by a top-level `oneOf`. **The field name
 *is* the discriminator; there is no `deviceType` property.** Each device field
 `$ref`s its own schema file, so a MOSFET document simply has no `diode` key and
 vice versa:
@@ -81,6 +81,7 @@ SAS.json
   |     +-- diode      ./diode.json
   |     +-- igbt       ./igbt.json
   |     +-- bjt        ./bjt.json
+  |     +-- module     ./module.json   (multi-die power module)
   +-- outputs[]        ./outputs.json  (aligned positionally with inputs.operatingPoints)
 ```
 
@@ -90,7 +91,7 @@ Each device file has the same outer shape — `manufacturerInfo` (+ nested
 prefixes — the file it lives in already fixes the device type):
 
 ```
-<device>.json                       (mosfet | diode | igbt | bjt)
+<device>.json                       (mosfet | diode | igbt | bjt | module)
   +-- manufacturerInfo
   |     +-- name, reference, status, family, datasheetUrl, spiceModel, ...
   |     +-- datasheetInfo
@@ -110,7 +111,8 @@ A device body must carry `manufacturerInfo` **or** the device-body `spiceModel`
 (or be empty). `part.subType` is narrowed by each device file to a **closed
 per-device enum**: mosfet `nChannel`/`pChannel`/`powerBlock`, diode
 `rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`zener`/`tvs`/`esd`,
-igbt `nChannel`, bjt `npn`/`pnp`.
+igbt `nChannel`, bjt `npn`/`pnp`, module (mirrors its `electrical.topology` enum:
+`halfBridge`, `fullBridge`, `sixpack`, ...).
 
 This means a MOSFET file never has empty diode fields, and a diode file never has
 empty MOSFET fields — each device type only carries the fields relevant to it.
@@ -119,7 +121,7 @@ empty MOSFET fields — each device type only carries the fields relevant to it.
 classDiagram
     class SAS {
         +inputs
-        +oneOf~mosfet|diode|igbt|bjt~
+        +oneOf~mosfet|diode|igbt|bjt|module~
         +outputs
     }
     class device {
@@ -151,7 +153,7 @@ classDiagram
         collectorEmitterVoltage
         dcCurrentGain
     }
-    SAS --> device : field name = mosfet|diode|igbt|bjt
+    SAS --> device : field name = mosfet|diode|igbt|bjt|module
     device --> datasheetInfo
     datasheetInfo --> MOSFET : in mosfet.json
     datasheetInfo --> Diode : in diode.json
@@ -199,6 +201,13 @@ document.
 
 - **electrical** -- V_CEO, V_CBO, I_C, h_FE, V_CE(sat), f_T, P_D
 - No modelParams or curves sections defined (BJTs are rarely used in new power designs)
+
+### Power Module (Si IGBT, Si/SiC MOSFET, GaN HEMT dies)
+
+- **electrical** -- `topology` (halfBridge, fullBridge, sixpack, boost, buck, chopper, singleSwitch, dualCommonSource, dualIndependent, asymmetricBridge, sixpackWithBrake, pim, threeLevel — derived from the Digi-Key IGBT-module Configuration filter + the Vincotech topology catalog), `switchTechnology` (siliconIgbt / siliconMosfet / sicMosfet / ganHemt), `numberOfSwitches`, per-switch ratings **reusing the discrete shapes by `$ref`** (`switch` is `mosfet.json`'s or `igbt.json`'s electrical block, pinned by switchTechnology), separate co-pack `diode` ratings (`diode.json`'s electrical block), loop-measured `switchingEnergy` (E_on/E_off + test conditions), baseplate `isolationVoltage`, integrated NTC (`ntcIntegrated`, R25, B-value)
+- **mechanical** -- adds `terminalStyle` (screw / pressFit / solderPin / spring / busbar)
+- **curves** -- R_DS(on) vs T_j, V_CE(sat) vs I_C, E_on/E_off vs I, diode V_F, thermal impedance, SOA
+- No modelParams section (a single .model card cannot describe a multi-die module)
 
 ---
 
@@ -285,6 +294,7 @@ SAS/
 |   +-- diode.json            Diode device data (per-subType required-field rules)
 |   +-- igbt.json             IGBT device data
 |   +-- bjt.json              BJT device data
+|   +-- module.json           Multi-die power module data (topology + per-switch $refs)
 |   +-- inputs.json           Operating points + design requirements
 |   +-- inputs/
 |   |   +-- designRequirements.json
@@ -295,6 +305,7 @@ SAS/
 +-- examples/
 |   +-- 01_mosfet_ipb017n10n5.json   100V Si n-channel MOSFET (reference document)
 |   +-- 02_diode_stps30l60ct.json    60V Si Schottky diode    (reference document)
+|   +-- 03_module_ff2mr12w3m1h.json  1200V SiC half-bridge module (reference document)
 |
 +-- src/                      C++ converter layer (semiconductor PEAS -> CIAS)
 +-- tests/                    pytest schema tests + C++ converter tests
@@ -338,6 +349,27 @@ Key features demonstrated:
 - Two characteristic curves: V_F vs I_F and C_j vs V_R
 - Through-hole assembly type (`assemblyType: "tht"`)
 
+### Example 3: Power Module -- Infineon FF2MR12W3M1H_B11
+
+File: `examples/03_module_ff2mr12w3m1h.json`
+
+A 1200V / 1.44 mOhm CoolSiC MOSFET half-bridge in the EasyDUAL 3B (EasyPACK) housing with
+PressFIT terminals and an integrated NTC.
+
+Key features demonstrated:
+- `topology: "halfBridge"`, `switchTechnology: "sicMosfet"`, `numberOfSwitches: 2`
+- The `switch` block reuses the **mosfet electrical shape by $ref**: V_DS=1200V,
+  R_DS(on)=1.44mOhm at V_GS=18V/I_D=400A, V_GS(th) as min/nom/max, capacitances at 800V,
+  switching times, body diode specs
+- Module-level data a discrete part does not have: `switchingEnergy` (E_on=17.7mJ,
+  E_off=2.83mJ at 600V/400A, measured in the module's own commutation loop),
+  `isolationVoltage: 3000` (V RMS), `ntcIntegrated: true` with R25=5kOhm and B25/100=3433K
+- Baseplate-less module thermal: the datasheet's R_th(j-s)=0.128 K/W per switch stored in
+  `thermalResistanceJunctionCase`
+- `terminalStyle: "pressFit"` in the module-specific mechanical section
+- A `module` designRequirements branch: `moduleTopology`, `allowedSwitchTechnologies`,
+  `ratedBlockingVoltage`, `minimumIsolationVoltage`, `requireIntegratedNtc`
+
 ---
 
 ## Quick Reference: Fields by Device Type
@@ -376,6 +408,7 @@ Key features demonstrated:
 | **diode** | depends on `part.subType`: rectifier family (or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
 | **bjt** | collectorEmitterVoltage, collectorCurrent |
+| **module** | topology, switchTechnology, numberOfSwitches, switch (whose own required set is the mosfet or igbt one above, per switchTechnology) |
 
 ---
 

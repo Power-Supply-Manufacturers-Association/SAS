@@ -165,7 +165,7 @@ json sas_to_cias(const json& peas, const PEAS::Fidelity& fidelity, const std::st
     const auto& semi = peas.at("semiconductor");
     if (semi.contains("mosfet")) return mosfet_leaf(peas, fidelity, name);
     if (semi.contains("diode"))  return diode_leaf(peas, fidelity, name);
-    throw std::runtime_error("SAS: only mosfet/diode supported in the slice (igbt/bjt = Phase 3)");
+    throw std::runtime_error("SAS: only mosfet/diode supported in the slice (igbt/bjt = Phase 3; module lowering not implemented)");
 }
 
 } // namespace SAS

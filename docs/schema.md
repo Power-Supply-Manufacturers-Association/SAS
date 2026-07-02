@@ -9,15 +9,16 @@ SAS builds on PEAS: shared primitives (`dimensionWithTolerance`, `curve`, `manuf
 `distributorInfo`, `provenance`, the `datasheetInfo*` mixins, `outputBase`) are `$ref`ed from
 `https://psma.com/peas/...`, so validating an SAS document requires the PEAS repo checked out
 alongside SAS. The reference documents for this schema are
-[`examples/01_mosfet_ipb017n10n5.json`](../examples/01_mosfet_ipb017n10n5.json) and
-[`examples/02_diode_stps30l60ct.json`](../examples/02_diode_stps30l60ct.json).
+[`examples/01_mosfet_ipb017n10n5.json`](../examples/01_mosfet_ipb017n10n5.json),
+[`examples/02_diode_stps30l60ct.json`](../examples/02_diode_stps30l60ct.json) and
+[`examples/03_module_ff2mr12w3m1h.json`](../examples/03_module_ff2mr12w3m1h.json).
 
 ---
 
 ## Table of Contents
 
 - [Top-Level Structure (SAS.json)](#top-level-structure)
-- [Device Documents (mosfet.json, diode.json, igbt.json, bjt.json)](#device-documents)
+- [Device Documents (mosfet.json, diode.json, igbt.json, bjt.json, module.json)](#device-documents)
   - [manufacturerInfo](#manufacturerinfo)
   - [distributorsInfo](#distributorsinfo)
   - [datasheetInfo](#datasheetinfo)
@@ -41,6 +42,11 @@ alongside SAS. The reference documents for this schema are
   - [igbtCurves](#igbtcurves)
 - [BJT Sections](#bjt-sections)
   - [bjtElectrical](#bjtelectrical)
+- [Power Module Sections](#power-module-sections)
+  - [moduleElectrical](#moduleelectrical)
+  - [moduleSwitchingEnergy](#moduleswitchingenergy)
+  - [moduleMechanical](#modulemechanical)
+  - [moduleCurves](#modulecurves)
 - [Inputs (inputs.json)](#inputs)
   - [designRequirements](#designrequirements)
 - [Outputs (outputs.json)](#outputs)
@@ -56,7 +62,7 @@ alongside SAS. The reference documents for this schema are
 
 **File**: `schemas/SAS.json`
 
-An SAS document carries `inputs`, **exactly one** of `{mosfet, diode, igbt, bjt}`, and
+An SAS document carries `inputs`, **exactly one** of `{mosfet, diode, igbt, bjt, module}`, and
 `outputs`. **The field name is the discriminator** — there is no `deviceType` property
 anywhere in the component data, and a `deviceType` key inside `part` is rejected
 (`additionalProperties: false`).
@@ -68,11 +74,12 @@ anywhere in the component data, and a `deviceType` key inside `part` is rejected
 | `diode` | [diode.json](#device-documents) | oneOf | Diode (Schottky, ultrafast, SiC Schottky, Zener, TVS, ESD) |
 | `igbt` | [igbt.json](#device-documents) | oneOf | IGBT |
 | `bjt` | [bjt.json](#device-documents) | oneOf | BJT (npn or pnp) |
+| `module` | [module.json](#power-module-sections) | oneOf | Multi-die power module (half-bridge, full-bridge, sixpack, chopper, ...) |
 | `outputs` | array of [outputs](#outputs) | See below | Computed results; `outputs[i]` aligns positionally with `inputs.operatingPoints[i]` |
 
 Structural rules:
 
-- `oneOf`: exactly one of `mosfet` / `diode` / `igbt` / `bjt` must be present.
+- `oneOf`: exactly one of `mosfet` / `diode` / `igbt` / `bjt` / `module` must be present.
 - `anyOf`: either **both** `inputs` and `outputs` are present (a full design document), or
   the document has **only** the device field (`maxProperties: 1` — a bare part record).
 - `additionalProperties: false` — no extra fields allowed at the top level.
@@ -81,9 +88,10 @@ Structural rules:
 
 ## Device Documents
 
-**Files**: `schemas/mosfet.json`, `schemas/diode.json`, `schemas/igbt.json`, `schemas/bjt.json`
+**Files**: `schemas/mosfet.json`, `schemas/diode.json`, `schemas/igbt.json`, `schemas/bjt.json`,
+`schemas/module.json`
 
-All four device files share the same outer shape:
+All five device files share the same outer shape:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -477,6 +485,82 @@ Closed object. No `modelParams` or `curves` sections are defined for BJTs.
 
 ---
 
+## Power Module Sections
+
+**File**: `schemas/module.json` (`$defs`)
+
+A power module is a multi-die part: several switch positions (plus optional co-pack diodes
+and an NTC) in one isolated package. The circuit arrangement is carried by
+`electrical.topology`, the die technology by `electrical.switchTechnology`, and the
+per-switch ratings **reuse the discrete device shapes by `$ref`** — same physics, same field
+names. `datasheetInfo` carries the same `part` / `thermal` / `provenance` sections as the
+other devices (`part.subType`, when present, mirrors `electrical.topology`); `mechanical` is
+module-specific (adds `terminalStyle`). No `modelParams` section is defined (a single
+`.model` card cannot describe a multi-die module); the device-body `spiceModel` remains
+available for subcircuit-sourced parts.
+
+For **baseplate-less modules** (e.g. Infineon EasyPACK) the datasheet quotes a
+junction-to-heatsink R_th(j-s); store it in `thermal.thermalResistanceJunctionCase` (the
+module bottom *is* the heatsink interface). R_th values are per switch position.
+
+### moduleElectrical
+
+Closed object. **Required**: `topology`, `switchTechnology`, `numberOfSwitches`, `switch`.
+
+| Field | Type | Required | Unit | Description |
+|-------|------|----------|------|-------------|
+| `topology` | string (enum) | **Yes** | -- | Circuit arrangement of the dies — see [moduleTopology](#moduletopology) |
+| `switchTechnology` | string (enum) | **Yes** | -- | Die technology: `siliconIgbt`, `siliconMosfet`, `sicMosfet`, `ganHemt`. Implies `part.technology` (`Si`/`SiC`/`GaN`) |
+| `numberOfSwitches` | integer (>= 1) | **Yes** | -- | Main switch positions (2 = half-bridge, 4 = full-bridge, 6 = sixpack). Paralleled dies in one position count as one switch |
+| `switch` | [mosfetElectrical](#mosfetelectrical) or [igbtElectrical](#igbtelectrical) | **Yes** | -- | Ratings of ONE switch position. The shape is pinned by `switchTechnology` (`if`/`then`): `siliconIgbt` -> `igbt.json#/$defs/electrical`; `siliconMosfet` / `sicMosfet` / `ganHemt` -> `mosfet.json#/$defs/electrical` |
+| `diode` | [diodeElectrical](#diodeelectrical) | No | -- | Separate co-pack / freewheeling diode ratings per switch position (typical for IGBT modules). MOSFET modules that only characterize the body diode use `switch.bodyDiode*` instead |
+| `switchingEnergy` | [moduleSwitchingEnergy](#moduleswitchingenergy) | No | -- | Loop-measured per-switch E_on / E_off with test conditions |
+| `isolationVoltage` | number | No | V | V_isol baseplate-to-terminals, RMS at 50/60 Hz for 1 min |
+| `ntcIntegrated` | boolean | No | -- | Whether the module integrates an NTC thermistor |
+| `ntcRatedResistance` | number | No | Ohm | NTC R25 at 25 C. **Only allowed when `ntcIntegrated` is `true`** |
+| `ntcBValue` | number | No | K | NTC B-value (B25/100 preferred). **Only allowed when `ntcIntegrated` is `true`** |
+
+### moduleSwitchingEnergy
+
+Closed; no required fields. Module switching energies are measured in the module's own
+commutation loop (they depend on the module stray inductance), so they are module-level
+data — this block is their canonical home. For IGBT-technology modules, leave the
+`switch` block's own `turnOnEnergy` / `turnOffEnergy` unset.
+
+| Field | Type | Required | Unit | Description |
+|-------|------|----------|------|-------------|
+| `turnOnEnergy` | number | No | J | E_on per pulse at the stated test conditions |
+| `turnOffEnergy` | number | No | J | E_off per pulse at the stated test conditions |
+| `reverseRecoveryEnergy` | number | No | J | E_rr of the commutating diode per pulse |
+| `testVoltage` | number | No | V | DC-link voltage of the switching test |
+| `testCurrent` | number | No | A | Switched current of the switching test |
+| `junctionTemperature` | number | No | C | Junction temperature of the switching test |
+
+### moduleMechanical
+
+Same shape as the shared [mechanical](#mechanical) section (PEAS `datasheetInfoMechanical`
+plus `case`), with one extra field:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `terminalStyle` | string (enum) | No | Power/auxiliary terminal technology: `screw` (SEMITRANS, 62 mm), `pressFit` (Infineon Easy PressFIT), `solderPin` (Vincotech flow), `spring` (MiniSKiiP/SKiiP), `busbar` |
+
+### moduleCurves
+
+All fields are PEAS [curve](#curve) objects, all optional, per switch position.
+
+| Field | X-axis | Y-axis | Description |
+|-------|--------|--------|-------------|
+| `rdsOnVsTj` | T_j (C) | R_DS(on) (Ohm) | On-resistance vs junction temperature (FET-die modules) |
+| `vceVsIc` | I_C (A) | V_CE(sat) (V) | Saturation voltage vs collector current (IGBT-die modules) |
+| `eonVsIc` | I (A) | E_on (J) | Turn-on energy vs switched current |
+| `eoffVsIc` | I (A) | E_off (J) | Turn-off energy vs switched current |
+| `diodeVf` | I_F (A) | V_F (V) | Co-pack / body diode forward characteristic |
+| `thermalImpedance` | pulse width (s) | Z_th(j-c) (K/W) | Transient thermal impedance |
+| `soa` | V (V) | I (A) | Safe Operating Area boundary |
+
+---
+
 ## Inputs
 
 **File**: `schemas/inputs.json`
@@ -503,7 +587,7 @@ Common fields (semiconductor layer + PEAS base):
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `deviceType` | string (enum) | **Yes** | `"mosfet"`, `"diode"`, `"igbt"`, `"bjt"` — selects the per-type branch below |
+| `deviceType` | string (enum) | **Yes** | `"mosfet"`, `"diode"`, `"igbt"`, `"bjt"`, `"module"` — selects the per-type branch below |
 | `maximumJunctionTemperature` | number | No | Maximum allowed junction temperature, in Celsius |
 | `maximumPowerDissipation` | number (>= 0) | No | Maximum allowed continuous power dissipation, in W |
 | `role` | string (enum) | No | Semiconductor role in the converter: `mainSwitch`, `synchronousRectifier`, `freewheelingDiode`, `clampDiode`, `bootstrapDiode`, `lineRectifier`, `bridgeRectifier`, `bodyDiode`, `inrushLimiter`, `esdProtection`, `tvs`, `zenerReference`, `smallSignal` |
@@ -527,6 +611,7 @@ Per-`deviceType` optional fields (`oneOf`, discriminated by `deviceType`; every 
 | `diode` | `ratedReverseVoltage` (V), `ratedForwardCurrent` (A), `maximumForwardVoltage` (V), `maximumReverseRecoveryCharge` (C), `maximumReverseRecoveryTime` (s), `maximumReverseLeakage` (A) |
 | `igbt` | `ratedCollectorEmitterVoltage` (V), `ratedCollectorCurrent` (A), `maximumSaturationVoltage` (V), `maximumSwitchingLossPerCycle` (J) |
 | `bjt` | `ratedCollectorEmitterVoltage` (V), `ratedCollectorCurrent` (A), `maximumSaturationVoltage` (V), `minimumDcCurrentGain` (--) |
+| `module` | `moduleTopology` (enum, `$ref`s the part-side anchor `module.json#/$defs/topology` — named `moduleTopology` because the PEAS base already carries a converter-level `topology`), `allowedSwitchTechnologies` (array, anchor `module.json#/$defs/switchTechnology`), `ratedBlockingVoltage` (V, per switch), `ratedContinuousCurrent` (A, per switch), `maximumSwitchingLossPerCycle` (J, per switch), `minimumIsolationVoltage` (V), `requireIntegratedNtc` (boolean) |
 
 ---
 
@@ -637,9 +722,9 @@ canonical definition lives in `PEAS/schemas/utils.json#/$defs/provenance` (mirro
 ### The device discriminator (no enum)
 
 The device type of the component data is **not** an enum field — it is the name of the
-top-level field: `mosfet`, `diode`, `igbt`, or `bjt`. The only `deviceType` enum in SAS is
-in `inputs.designRequirements` (values `mosfet` / `diode` / `igbt` / `bjt`), where it states
-the *required* device type. There is no `jfet` value anywhere.
+top-level field: `mosfet`, `diode`, `igbt`, `bjt`, or `module`. The only `deviceType` enum
+in SAS is in `inputs.designRequirements` (values `mosfet` / `diode` / `igbt` / `bjt` /
+`module`), where it states the *required* device type. There is no `jfet` value anywhere.
 
 ### technology
 
@@ -652,6 +737,42 @@ Semiconductor material technology (`part.technology`, required).
 | `"GaN"` | Gallium Nitride |
 | `"GaAs"` | Gallium Arsenide |
 | `"Ge"` | Germanium |
+
+### moduleTopology
+
+`module` circuit arrangement (`electrical.topology`, required; also the `moduleTopology`
+requirement field and the module `part.subType` narrowing). Value set derived from the
+vendor survey (2026-07-02): Digi-Key's IGBT-module **Configuration** parametric filter and
+the Vincotech by-topology catalog.
+
+| Value | Vendor filter names covered |
+|-------|-----------------------------|
+| `"singleSwitch"` | Single, Single Switch (one switch + freewheeling diode) |
+| `"chopper"` | Single Chopper, Dual Brake Chopper (switch + series diode) |
+| `"boost"` | Boost Chopper, Dual Boost Chopper; Vincotech Booster |
+| `"buck"` | Buck Chopper, Dual Buck Chopper |
+| `"halfBridge"` | Half Bridge, Half Bridge Inverter |
+| `"fullBridge"` | Full Bridge, Full Bridge Inverter; H-bridge / fourpack |
+| `"dualCommonSource"` | Dual Common Source; Dual Common Emitter (IGBT) |
+| `"dualIndependent"` | 2 Independent, Dual, Dual Parallel (isolated positions) |
+| `"asymmetricBridge"` | Asymmetrical Bridge (SRM drives) |
+| `"sixpack"` | Three Phase Inverter (3x half-bridge) |
+| `"sixpackWithBrake"` | Three Phase Inverter with Brake; sevenpack |
+| `"pim"` | Vincotech PIM (CIB): rectifier + brake + sixpack |
+| `"threeLevel"` | Three Level Inverter, T-Type; NPC / MNPC / ANPC / FC |
+
+### moduleSwitchTechnology
+
+`module` die technology (`electrical.switchTechnology`, required; also the
+`allowedSwitchTechnologies` requirement items). Combines process and device kind; implies
+`part.technology` and pins the `switch` block shape.
+
+| Value | part.technology | switch shape |
+|-------|-----------------|--------------|
+| `"siliconIgbt"` | `Si` | [igbtElectrical](#igbtelectrical) |
+| `"siliconMosfet"` | `Si` | [mosfetElectrical](#mosfetelectrical) |
+| `"sicMosfet"` | `SiC` | [mosfetElectrical](#mosfetelectrical) |
+| `"ganHemt"` | `GaN` | [mosfetElectrical](#mosfetelectrical) |
 
 ### subType
 
@@ -673,6 +794,7 @@ Optional per-device subtype. Each device file narrows the shared `part.subType` 
 | `"esd"` | diode | ESD protection diode |
 | `"npn"` | bjt | NPN bipolar transistor |
 | `"pnp"` | bjt | PNP bipolar transistor |
+| [moduleTopology](#moduletopology) values | module | Mirrors `electrical.topology`; prefer omitting `subType` |
 
 When `subType` is omitted on a diode, the rectifier-family required set applies (see
 [Per-subType required fields](#per-subtype-required-fields)).

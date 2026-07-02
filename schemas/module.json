@@ -1,0 +1,378 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://psma.com/sas/module.json",
+    "title": "module",
+    "description": "Multi-die power module (half-bridge, full-bridge, sixpack, chopper, ...) component data. The presence of the 'module' field at the top level of an SAS document discriminates the device type — there is no deviceType property. The circuit arrangement is carried by electrical.topology and the die technology by electrical.switchTechnology; the per-switch ratings reuse the discrete mosfet/igbt electrical shapes by $ref (a module's switch position is the same physics as a discrete device).",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "manufacturerInfo": {
+            "title": "moduleManufacturerInfo",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/name"
+                },
+                "reference": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/reference"
+                },
+                "status": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/status"
+                },
+                "description": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/description"
+                },
+                "orderCode": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/orderCode"
+                },
+                "datasheetUrl": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/datasheetUrl"
+                },
+                "spiceModel": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/spiceModel"
+                },
+                "family": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/family"
+                },
+                "datasheetInfo": {
+                    "$ref": "#/$defs/datasheetInfo"
+                }
+            },
+            "required": [
+                "name",
+                "datasheetInfo"
+            ]
+        },
+        "distributorsInfo": {
+            "description": "Where to buy this component",
+            "type": "array",
+            "items": {
+                "$ref": "https://psma.com/peas/utils.json#/$defs/distributorInfo"
+            }
+        },
+        "spiceModel": {
+            "description": "Device-body SPICE .model card for a simulation-sourced part (no datasheet). Faithful home that does not require manufacturerInfo.",
+            "$ref": "./utils.json#/$defs/spiceModel"
+        }
+    },
+    "anyOf": [
+        {
+            "required": [
+                "manufacturerInfo"
+            ]
+        },
+        {
+            "required": [
+                "spiceModel"
+            ]
+        },
+        {
+            "maxProperties": 0
+        }
+    ],
+    "$defs": {
+        "topology": {
+            "title": "moduleTopology",
+            "description": "Circuit arrangement of the dies inside the module. Value set derived from what vendors actually sell: Digi-Key's IGBT-module 'Configuration' parametric filter (Half Bridge, Full Bridge (Inverter), Three Phase Inverter (+ with Brake), Single (Switch), Single/Boost/Buck Chopper, Dual Common Source/Emitter, 2 Independent, Asymmetrical Bridge, Three Level Inverter, T-Type) plus the Vincotech by-topology catalog (sixpack, sevenpack, PIM (CIB), booster, three-level NPC/MNPC/ANPC).",
+            "type": "string",
+            "enum": [
+                "singleSwitch",
+                "chopper",
+                "boost",
+                "buck",
+                "halfBridge",
+                "fullBridge",
+                "dualCommonSource",
+                "dualIndependent",
+                "asymmetricBridge",
+                "sixpack",
+                "sixpackWithBrake",
+                "pim",
+                "threeLevel"
+            ],
+            "$comment": "singleSwitch = one switch + freewheeling diode; chopper = switch + series diode (incl. brake choppers); boost/buck = boost/buck chopper cells; halfBridge = two switches totem-pole (covers 'Half Bridge Inverter'); fullBridge = H-bridge / fourpack (covers 'Full Bridge Inverter'); dualCommonSource = two switches sharing source/emitter (covers Digi-Key 'Dual, Common Emitter' for IGBTs); dualIndependent = two electrically isolated switch positions; asymmetricBridge = switch+diode asymmetric bridge leg (SRM drives); sixpack = three-phase inverter, 3x half-bridge; sixpackWithBrake = sixpack + brake chopper (sevenpack); pim = power integrated module / CIB: input rectifier + brake + sixpack; threeLevel = three-level leg, any flavour (NPC I-type, MNPC/T-type, ANPC, FC)."
+        },
+        "switchTechnology": {
+            "title": "moduleSwitchTechnology",
+            "description": "Die technology of the main switches. Combines the process (part.technology: Si/SiC/GaN) with the device kind, which for a module is not implied by the family name the way it is for the discrete mosfet/igbt files.",
+            "type": "string",
+            "enum": [
+                "siliconIgbt",
+                "siliconMosfet",
+                "sicMosfet",
+                "ganHemt"
+            ],
+            "$comment": "Consistency with the shared part def: siliconIgbt/siliconMosfet imply part.technology 'Si', sicMosfet implies 'SiC', ganHemt implies 'GaN'. siliconIgbt switches use the igbt.json electrical shape; the three FET values use the mosfet.json electrical shape (see the if/then on electrical.switch)."
+        },
+        "datasheetInfo": {
+            "title": "moduleDatasheetInfo",
+            "description": "All information extracted from the power-module datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "part": {
+                    "allOf": [
+                        {
+                            "$ref": "./utils.json#/$defs/part"
+                        },
+                        {
+                            "$comment": "Device-specific narrowing of the shared part def: subType must come from this closed enum. For modules subType mirrors electrical.topology (same value set); prefer omitting it and relying on electrical.topology.",
+                            "properties": {
+                                "subType": {
+                                    "$ref": "#/$defs/topology"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "electrical": {
+                    "$ref": "#/$defs/electrical"
+                },
+                "thermal": {
+                    "description": "Module-level thermal data. R_th values are PER SWITCH POSITION as datasheets state them; for baseplate-less modules (e.g. Infineon EasyPACK) the junction-to-case field carries the datasheet's junction-to-heatsink R_th(j-s).",
+                    "$ref": "./utils.json#/$defs/thermal"
+                },
+                "mechanical": {
+                    "$ref": "#/$defs/mechanical"
+                },
+                "curves": {
+                    "$ref": "#/$defs/curves"
+                },
+                "provenance": {
+                    "description": "Data-provenance trail (see provenance).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/provenance"
+                }
+            },
+            "required": [
+                "part",
+                "electrical"
+            ]
+        },
+        "electrical": {
+            "title": "moduleElectrical",
+            "description": "Module electrical characteristics: the circuit topology, the switch die technology, the per-switch ratings (reusing the discrete device shapes), the optional separate co-pack diode, and the module-level extras a discrete part does not have (baseplate isolation, integrated NTC, loop-measured switching energies).",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "topology": {
+                    "$ref": "#/$defs/topology"
+                },
+                "switchTechnology": {
+                    "$ref": "#/$defs/switchTechnology"
+                },
+                "numberOfSwitches": {
+                    "description": "Number of main switch positions in the module (2 for a half-bridge, 4 for a full-bridge, 6 for a sixpack, ...). Paralleled dies within one position count as one switch.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "switch": {
+                    "description": "Electrical characteristics of ONE switch position. Shape is selected by switchTechnology (see the if/then below): siliconIgbt -> igbt.json#/$defs/electrical, siliconMosfet/sicMosfet/ganHemt -> mosfet.json#/$defs/electrical. Same physics, same field names as the discrete devices.",
+                    "type": "object"
+                },
+                "diode": {
+                    "description": "Ratings of the integrated anti-parallel / freewheeling diode of ONE switch position, when the datasheet specifies a co-pack diode separately from the switch (typical for IGBT modules). For SiC/Si MOSFET modules whose datasheet only characterizes the body diode, use switch.bodyDiode* instead and omit this.",
+                    "$ref": "./diode.json#/$defs/electrical"
+                },
+                "switchingEnergy": {
+                    "$ref": "#/$defs/switchingEnergy"
+                },
+                "isolationVoltage": {
+                    "description": "Isolation test voltage V_isol between baseplate/heatsink side and terminals, RMS at 50/60 Hz for 1 min, in Volts.",
+                    "type": "number"
+                },
+                "ntcIntegrated": {
+                    "description": "Whether the module integrates an NTC temperature-sense thermistor.",
+                    "type": "boolean"
+                },
+                "ntcRatedResistance": {
+                    "description": "Rated resistance R25 of the integrated NTC at 25 °C, in Ohms.",
+                    "type": "number"
+                },
+                "ntcBValue": {
+                    "description": "B-value of the integrated NTC (B25/100 preferred when the datasheet gives several), in Kelvin.",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "topology",
+                "switchTechnology",
+                "numberOfSwitches",
+                "switch"
+            ],
+            "allOf": [
+                {
+                    "$comment": "switchTechnology pins the per-switch electrical shape: IGBT-die modules carry the igbt electrical block.",
+                    "if": {
+                        "properties": {
+                            "switchTechnology": {
+                                "const": "siliconIgbt"
+                            }
+                        },
+                        "required": [
+                            "switchTechnology"
+                        ]
+                    },
+                    "then": {
+                        "properties": {
+                            "switch": {
+                                "$ref": "./igbt.json#/$defs/electrical"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "FET-die modules (Si/SiC MOSFET, GaN HEMT) carry the mosfet electrical block.",
+                    "if": {
+                        "properties": {
+                            "switchTechnology": {
+                                "enum": [
+                                    "siliconMosfet",
+                                    "sicMosfet",
+                                    "ganHemt"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "switchTechnology"
+                        ]
+                    },
+                    "then": {
+                        "properties": {
+                            "switch": {
+                                "$ref": "./mosfet.json#/$defs/electrical"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "The NTC detail fields are only meaningful when ntcIntegrated is true.",
+                    "if": {
+                        "not": {
+                            "properties": {
+                                "ntcIntegrated": {
+                                    "const": true
+                                }
+                            },
+                            "required": [
+                                "ntcIntegrated"
+                            ]
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "ntcRatedResistance": false,
+                            "ntcBValue": false
+                        }
+                    }
+                }
+            ]
+        },
+        "switchingEnergy": {
+            "title": "moduleSwitchingEnergy",
+            "description": "Per-switch switching energies measured in the MODULE's own commutation loop (they depend on the module stray inductance, so they are module-level data, not a property of the bare die). Canonical home for module E_on/E_off — leave the igbt-shape switch block's own turnOnEnergy/turnOffEnergy unset for modules.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "turnOnEnergy": {
+                    "description": "E_on per pulse at the stated test conditions, in Joules.",
+                    "type": "number"
+                },
+                "turnOffEnergy": {
+                    "description": "E_off per pulse at the stated test conditions, in Joules.",
+                    "type": "number"
+                },
+                "reverseRecoveryEnergy": {
+                    "description": "E_rr of the commutating diode per pulse, in Joules.",
+                    "type": "number"
+                },
+                "testVoltage": {
+                    "description": "DC-link voltage at which the energies are specified, in Volts.",
+                    "type": "number"
+                },
+                "testCurrent": {
+                    "description": "Switched current at which the energies are specified, in Amperes.",
+                    "type": "number"
+                },
+                "junctionTemperature": {
+                    "description": "Junction temperature at which the energies are specified, in Celsius.",
+                    "type": "number"
+                }
+            }
+        },
+        "mechanical": {
+            "title": "moduleMechanical",
+            "description": "Mechanical specs — extends PEAS datasheetInfoMechanical with a package case field and the module terminal style.",
+            "$comment": "Mirrors ./utils.json#/$defs/mechanical (which is closed and cannot be extended from here) plus terminalStyle.",
+            "allOf": [
+                {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/datasheetInfoMechanical"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "length": {},
+                        "width": {},
+                        "height": {},
+                        "diameter": {},
+                        "weight": {},
+                        "shapeType": {},
+                        "assemblyType": {},
+                        "case": {
+                            "type": "string",
+                            "description": "Package name (SEMITRANS 2, EasyPACK 3B, 62 mm, ...) — mirrors part.case for convenience."
+                        },
+                        "terminalStyle": {
+                            "type": "string",
+                            "description": "Power/auxiliary terminal technology. Vendor survey: screw (Semikron SEMITRANS, 62 mm packages), pressFit (Infineon Easy PressFIT), solderPin (Vincotech flow), spring (MiniSKiiP/SKiiP), busbar (high-current direct-busbar terminals).",
+                            "enum": [
+                                "screw",
+                                "pressFit",
+                                "solderPin",
+                                "spring",
+                                "busbar"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "curves": {
+            "title": "moduleCurves",
+            "description": "Module characteristic curves from datasheet, per switch position.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "rdsOnVsTj": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
+                    "description": "R_DS(on) vs Tj (FET-die modules)"
+                },
+                "vceVsIc": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
+                    "description": "V_CE(sat) vs I_C (IGBT-die modules)"
+                },
+                "eonVsIc": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
+                    "description": "E_on vs switched current"
+                },
+                "eoffVsIc": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
+                    "description": "E_off vs switched current"
+                },
+                "diodeVf": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
+                    "description": "Co-pack / body diode forward characteristic V_F vs I_F"
+                },
+                "thermalImpedance": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
+                    "description": "Z_th(j-c) vs pulse width, per switch"
+                },
+                "soa": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/curve",
+                    "description": "Safe Operating Area, per switch"
+                }
+            }
+        }
+    }
+}

@@ -8,7 +8,7 @@ Covers:
   * cross-document $refs resolve (SAS + PEAS schemas registered)
   * the canonical examples validate
   * negative cases:
-      - top-level oneOf (must have exactly one of mosfet/diode/igbt/bjt)
+      - top-level oneOf (must have exactly one of mosfet/diode/igbt/bjt/module)
       - manufacturerInfo is required
       - electrical is required inside datasheetInfo
       - per-type-specific required electrical fields
@@ -40,6 +40,7 @@ SAS_SCHEMA_FILES = [
     "diode.json",
     "igbt.json",
     "bjt.json",
+    "module.json",
     "inputs/designRequirements.json",
 ]
 
@@ -92,6 +93,11 @@ def diode_doc():
     return _load(EXAMPLES_DIR / "02_diode_stps30l60ct.json")
 
 
+@pytest.fixture
+def module_doc():
+    return _load(EXAMPLES_DIR / "03_module_ff2mr12w3m1h.json")
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -135,6 +141,10 @@ def test_mosfet_example_validates(sas_validator, mosfet_doc):
 
 def test_diode_example_validates(sas_validator, diode_doc):
     assert_valid(sas_validator, diode_doc)
+
+
+def test_module_example_validates(sas_validator, module_doc):
+    assert_valid(sas_validator, module_doc)
 
 
 # ---------------------------------------------------------------------------
@@ -274,4 +284,106 @@ def test_unknown_device_type_in_design_requirements_rejected(sas_validator, mosf
 
 def test_allowed_technologies_enum(sas_validator, mosfet_doc):
     mosfet_doc["inputs"]["designRequirements"]["allowedTechnologies"] = ["unobtainium"]
+    assert_invalid(sas_validator, mosfet_doc)
+
+
+# ---------------------------------------------------------------------------
+# Power module (module.json)
+# ---------------------------------------------------------------------------
+
+def _module_electrical(module_doc):
+    return module_doc["module"]["manufacturerInfo"]["datasheetInfo"]["electrical"]
+
+
+def test_module_seed_valid(sas_validator):
+    # A bare pre-sourcing seed must validate (maxProperties: 1 at the top,
+    # empty device body allowed by maxProperties: 0).
+    assert_valid(sas_validator, {"module": {}})
+
+
+def test_module_and_mosfet_together_invalid(sas_validator, module_doc, mosfet_doc):
+    module_doc["mosfet"] = mosfet_doc["mosfet"]
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_required_electrical_fields(sas_validator, module_doc):
+    for field in ("topology", "switchTechnology", "numberOfSwitches", "switch"):
+        bad = copy.deepcopy(module_doc)
+        del _module_electrical(bad)[field]
+        assert_invalid(sas_validator, bad)
+
+
+def test_module_unknown_topology_rejected(sas_validator, module_doc):
+    _module_electrical(module_doc)["topology"] = "quadPack"
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_unknown_switch_technology_rejected(sas_validator, module_doc):
+    _module_electrical(module_doc)["switchTechnology"] = "germaniumBjt"
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_switch_shape_pinned_by_technology(sas_validator, module_doc):
+    # sicMosfet pins the mosfet electrical shape: an igbt-shaped switch block
+    # must be rejected (collectorEmitterVoltage is not a mosfet field, and the
+    # mosfet required quintet is missing).
+    _module_electrical(module_doc)["switch"] = {
+        "collectorEmitterVoltage": 1200,
+        "collectorEmitterSaturation": 1.85,
+        "continuousCollectorCurrent": 115,
+    }
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_igbt_switch_shape_accepted(sas_validator, module_doc):
+    # siliconIgbt pins the igbt electrical shape.
+    elec = _module_electrical(module_doc)
+    elec["switchTechnology"] = "siliconIgbt"
+    elec["switch"] = {
+        "collectorEmitterVoltage": 1200,
+        "collectorEmitterSaturation": 1.85,
+        "continuousCollectorCurrent": 115,
+    }
+    # sicMosfet-only requirement fields stay valid (allowedSwitchTechnologies is a
+    # requirement, not a datasheet constraint), but keep the doc self-consistent.
+    module_doc["inputs"]["designRequirements"]["allowedSwitchTechnologies"] = ["siliconIgbt"]
+    module_doc["module"]["manufacturerInfo"]["datasheetInfo"]["part"]["technology"] = "Si"
+    assert_valid(sas_validator, module_doc)
+
+
+def test_module_ntc_fields_require_ntc_integrated(sas_validator, module_doc):
+    del _module_electrical(module_doc)["ntcIntegrated"]
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_electrical_unknown_field_rejected(sas_validator, module_doc):
+    _module_electrical(module_doc)["bogus"] = 1
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_part_subtype_mirrors_topology_enum(sas_validator, module_doc):
+    module_doc["module"]["manufacturerInfo"]["datasheetInfo"]["part"]["subType"] = "nChannel"
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_terminal_style_enum(sas_validator, module_doc):
+    mech = module_doc["module"]["manufacturerInfo"]["datasheetInfo"]["mechanical"]
+    mech["terminalStyle"] = "weldTab"
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_design_requirements_seed_friendly(sas_validator, module_doc):
+    # Only deviceType is required in the module requirements branch.
+    module_doc["inputs"]["designRequirements"] = {"deviceType": "module"}
+    assert_valid(sas_validator, module_doc)
+
+
+def test_module_design_requirements_topology_enum(sas_validator, module_doc):
+    module_doc["inputs"]["designRequirements"]["moduleTopology"] = "quadPack"
+    assert_invalid(sas_validator, module_doc)
+
+
+def test_module_topology_field_rejected_on_other_device_types(sas_validator, mosfet_doc):
+    # moduleTopology belongs to the module branch only.
+    mosfet_doc["inputs"]["designRequirements"]["moduleTopology"] = "halfBridge"
     assert_invalid(sas_validator, mosfet_doc)
