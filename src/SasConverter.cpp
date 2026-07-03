@@ -49,13 +49,13 @@ json make_mosfet_atom(double ron, double vth) {
     return atom;
 }
 
-// A parasitic capacitor atom (CIAS reads capacitor...electrical.capacitance). Used for MOSFET Coss.
+// A parasitic capacitor atom for the MOSFET's Coss. CIAS now reads the value from
+// inputs.designRequirements.capacitance (the `capacitor` object is the empty discriminator it
+// dispatches on), matching CAS/RAS's ideal-passive leaf atoms.
 json make_cap_atom(double c) {
     json atom;
-    auto& mfg = atom["capacitor"]["manufacturerInfo"];
-    mfg["name"] = "parasitic";
-    mfg["datasheetInfo"]["part"]["partNumber"] = "coss";
-    mfg["datasheetInfo"]["electrical"]["capacitance"]["nominal"] = c;
+    atom["capacitor"] = json::object();
+    atom["inputs"]["designRequirements"]["capacitance"]["nominal"] = c;
     return atom;
 }
 
