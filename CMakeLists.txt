@@ -24,6 +24,10 @@ add_custom_command(
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/diode.json"
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/igbt.json"
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/bjt.json"
+            # module.json is referenced by designRequirements.json (allowedSwitchTechnologies ->
+            # module.json#/$defs/switchTechnology); feed it as a source so Windows quicktype resolves
+            # the ref by $id (it fails to fetch the relative file $ref on Windows, unlike Linux).
+            -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/module.json"
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/inputs.json"
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/inputs/designRequirements.json"
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/outputs.json"
