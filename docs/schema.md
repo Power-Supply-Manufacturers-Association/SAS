@@ -222,7 +222,10 @@ Each device file's `datasheetInfo.part` narrows `subType` to a closed enum via `
 ### mechanical
 
 `utils.json#/$defs/mechanical` — extends PEAS `datasheetInfoMechanical` with a package
-`case` field. The extension layer is closed. No required fields.
+`case` field plus optional `pinout` and `landPattern` (the **shared PEAS types**, hoisted
+2026-08: the per-terminal `(pin, name, function)` map — G/D/S, `kelvinSource` on 4-lead
+packages — and the manufacturer-recommended land pattern; no module defines its own variant
+of these types). The extension layer is closed. No required fields.
 
 | Field | Type | Required | Unit | Description |
 |-------|------|----------|------|-------------|

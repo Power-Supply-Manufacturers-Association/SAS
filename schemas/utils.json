@@ -75,6 +75,14 @@
                         "case": {
                             "type": "string",
                             "description": "Package name (TO-220, SOT-23, etc.) — mirrors part.case for convenience."
+                        },
+                        "pinout": {
+                            "description": "Per-terminal function map (shared PEAS type, hoisted 2026-08): (pin, name, function) triples — e.g. G/D/S plus kelvinSource on 4-lead packages. Same package does NOT imply same pinout (pin-swapped second sources exist).",
+                            "$ref": "https://psma.com/peas/utils.json#/$defs/pinout"
+                        },
+                        "landPattern": {
+                            "description": "Manufacturer-recommended PCB land pattern (shared PEAS type, hoisted 2026-08): pad centres, copper sizes and drills exactly as the datasheet's recommended-layout drawing publishes them.",
+                            "$ref": "https://psma.com/peas/utils.json#/$defs/landPattern"
                         }
                     },
                     "additionalProperties": false
