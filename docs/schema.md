@@ -194,7 +194,7 @@ Each device file's `datasheetInfo.part` narrows `subType` to a closed enum via `
 | Device file | Legal `subType` values |
 |-------------|------------------------|
 | `mosfet.json` | `nChannel`, `pChannel`, `powerBlock` |
-| `diode.json` | `rectifier`, `schottky`, `sicSchottky`, `fastRecovery`, `ultrafast`, `zener`, `tvs`, `esd` |
+| `diode.json` | `rectifier`, `schottky`, `sicSchottky`, `fastRecovery`, `ultrafast`, `switching`, `pin`, `zener`, `tvs`, `esd` |
 | `igbt.json` | `nChannel` |
 | `bjt.json` | `npn`, `pnp` |
 
@@ -381,7 +381,7 @@ Enforced by `if`/`then`/`else` conditionals on `part.subType` inside the diode
 | `zener` | `breakdownVoltage`, `powerDissipation` |
 | `esd` | `standoffVoltage`, plus at least one of `peakPulseCurrent` / `peakPulsePower` / `esdVoltageContact` |
 | `tvs` | `standoffVoltage`, `clampingVoltage`, plus at least one of `peakPulseCurrent` / `peakPulsePower` |
-| rectifier family (`rectifier`, `schottky`, `sicSchottky`, `fastRecovery`, `ultrafast`) — or `subType` absent | `reverseVoltage`, `forwardVoltage`, `forwardCurrent` |
+| rectifier family (`rectifier`, `schottky`, `sicSchottky`, `fastRecovery`, `ultrafast`, `switching`, `pin`) — or `subType` absent | `reverseVoltage`, `forwardVoltage`, `forwardCurrent` |
 
 TVS and ESD parts do not have a `forwardCurrent` (I_F(AV)) rating — that is a rectifier
 parameter; their forward-direction capability, when published, is the surge `surgeCurrent`
@@ -792,6 +792,8 @@ Optional per-device subtype. Each device file narrows the shared `part.subType` 
 | `"sicSchottky"` | diode | Silicon Carbide Schottky diode |
 | `"fastRecovery"` | diode | Fast recovery diode |
 | `"ultrafast"` | diode | Ultrafast recovery diode |
+| `"switching"` | diode | Small-signal / high-speed switching diode (e.g. 1N4148, BAV99) |
+| `"pin"` | diode | PIN diode (RF switching / attenuator; thick intrinsic layer) |
 | `"zener"` | diode | Zener voltage reference diode |
 | `"tvs"` | diode | Transient Voltage Suppressor |
 | `"esd"` | diode | ESD protection diode |

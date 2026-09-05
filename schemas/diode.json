@@ -93,6 +93,8 @@
                                         "sicSchottky",
                                         "fastRecovery",
                                         "ultrafast",
+                                        "switching",
+                                        "pin",
                                         "zener",
                                         "tvs",
                                         "esd"

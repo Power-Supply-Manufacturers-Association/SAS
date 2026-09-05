@@ -110,7 +110,8 @@ prefixes — the file it lives in already fixes the device type):
 A device body must carry `manufacturerInfo` **or** the device-body `spiceModel`
 (or be empty). `part.subType` is narrowed by each device file to a **closed
 per-device enum**: mosfet `nChannel`/`pChannel`/`powerBlock`, diode
-`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`zener`/`tvs`/`esd`,
+`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`/
+`zener`/`tvs`/`esd`,
 igbt `nChannel`, bjt `npn`/`pnp`, module (mirrors its `electrical.topology` enum:
 `halfBridge`, `fullBridge`, `sixpack`, ...).
 
@@ -405,7 +406,7 @@ Key features demonstrated:
 | Device Type | Required Electrical Fields |
 |-------------|--------------------------|
 | **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge |
-| **diode** | depends on `part.subType`: rectifier family (or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating |
+| **diode** | depends on `part.subType`: rectifier family (`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`, or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
 | **bjt** | collectorEmitterVoltage, collectorCurrent |
 | **module** | topology, switchTechnology, numberOfSwitches, switch (whose own required set is the mosfet or igbt one above, per switchTechnology) |
