@@ -42,6 +42,12 @@
                         },
                         "matchcodeDescription": {
                             "type": "string"
+                        },
+                        "dieConfiguration": {
+                            "$ref": "#/$defs/dieConfiguration"
+                        },
+                        "internalConnection": {
+                            "$ref": "#/$defs/internalConnection"
                         }
                     },
                     "additionalProperties": false,
@@ -50,6 +56,54 @@
                     ]
                 }
             ]
+        },
+        "dieConfiguration": {
+            "title": "dieConfiguration",
+            "description": "How many die the package holds and how their channels relate. Absent means the package holds one die, which is the overwhelming majority; state it explicitly only when the datasheet does. 'dual' = two die of the SAME channel type (onsemi SO-8FL Dual, Infineon Dual SSO8, TI two-FET power blocks); 'complementary' = one n-channel and one p-channel die in one package (YAGEO XP6C..., Vishay Si...DS). A part declaring 'dual' or 'complementary' MUST carry per-die data and MUST NOT carry a package-level electrical block — see mosfet.json.",
+            "type": "string",
+            "enum": [
+                "single",
+                "dual",
+                "complementary"
+            ]
+        },
+        "internalConnection": {
+            "title": "dieInternalConnection",
+            "description": "How the die are wired to each other INSIDE the package, when the datasheet says so. 'independent' = no internal connection between the die; 'commonDrain' / 'commonSource' = the stated terminals are bonded internally (YAGEO prints 'Common-Drain' in its own Configuration column); 'halfBridge' = the drain of one die is bonded to the source of the other, forming a switching node (Infineon 'Dual SSO8 HB', TI power blocks). Omit when the datasheet does not state the internal arrangement — do not infer it from the package or the part number.",
+            "type": "string",
+            "enum": [
+                "independent",
+                "commonDrain",
+                "commonSource",
+                "halfBridge"
+            ]
+        },
+        "dieBase": {
+            "title": "semiconductorDieBase",
+            "description": "Identity of ONE die inside a multi-die package, shared by the device schemas. Device files extend it with their own electrical/thermal blocks and seal the result with unevaluatedProperties: false (the RAS pattern); this base is deliberately unsealed so it can be extended.",
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "description": "The datasheet's own label for this die — 'Q1', 'Q2', 'Channel 1'. Unique within the part. Taken verbatim and never invented: a datasheet that does not distinguish its die gives no die entries to write.",
+                    "type": "string",
+                    "minLength": 1
+                },
+                "role": {
+                    "description": "The datasheet's functional name for the die where it gives one ('Control FET', 'Sync FET', 'High-Side'), verbatim. Free text because vendors do not share a vocabulary; it is a label, never a substitute for the electrical data.",
+                    "type": "string"
+                },
+                "pins": {
+                    "description": "Pin identifiers belonging to this die, matching entries of mechanical.pinout, so a circuit can bind to one die rather than to the package. Note what the schema cannot check: that the pinout contains these ids, that no pin is claimed by two die, and that die names are unique — those are the ingest gate's job, exactly as for CIAS component URIs.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
         },
         "thermal": {
             "title": "semiconductorThermal",

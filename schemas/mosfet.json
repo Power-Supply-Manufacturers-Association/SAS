@@ -100,6 +100,14 @@
                 "electrical": {
                     "$ref": "#/$defs/electrical"
                 },
+                "dies": {
+                    "description": "One entry per die in a multi-die package. Present INSTEAD OF the package-level electrical block, never beside it: a two-die part has no single r_DS(on), V_GS(th) or Q_g, and leaving a package-level slot open is what let one die's numbers be recorded as the part's. Order carries no meaning; die are identified by name.",
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/$defs/die"
+                    }
+                },
                 "thermal": {
                     "$ref": "./utils.json#/$defs/thermal"
                 },
@@ -118,8 +126,93 @@
                 }
             },
             "required": [
-                "part",
-                "electrical"
+                "part"
+            ],
+            "oneOf": [
+                {
+                    "required": [
+                        "electrical"
+                    ],
+                    "not": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                },
+                {
+                    "required": [
+                        "dies"
+                    ],
+                    "not": {
+                        "required": [
+                            "electrical"
+                        ]
+                    }
+                }
+            ],
+            "allOf": [
+                {
+                    "$comment": "A package that declares two die must describe them per die. This is the gate: with no package-level electrical block available, one die's numbers cannot be written as the part's.",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "dieConfiguration"
+                                ],
+                                "properties": {
+                                    "dieConfiguration": {
+                                        "enum": [
+                                            "dual",
+                                            "complementary"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                }
+            ]
+        },
+        "die": {
+            "title": "mosfetDie",
+            "description": "One MOSFET die inside a multi-die package, with the complete electrical block the discrete file already defines — the same physics and the same field names as a single-die part, stated once per die. Every die states its own values even when the datasheet prints them as equal ('Q1 = Q2 = 95'), so 'both die are 95 mOhm' and 'the part is 95 mOhm' are different documents.",
+            "unevaluatedProperties": false,
+            "allOf": [
+                {
+                    "$ref": "./utils.json#/$defs/dieBase"
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "subType",
+                        "electrical"
+                    ],
+                    "properties": {
+                        "subType": {
+                            "description": "Channel type OF THIS DIE. This is the field a complementary pair needs and the single-die shape cannot provide: the n-channel die says nChannel and the p-channel die says pChannel, in one part. 'powerBlock' is not legal here — it describes a package, not a die.",
+                            "type": "string",
+                            "enum": [
+                                "nChannel",
+                                "pChannel"
+                            ]
+                        },
+                        "electrical": {
+                            "$ref": "#/$defs/electrical"
+                        },
+                        "thermal": {
+                            "description": "Per-die thermal figures where the datasheet gives them (junction-to-case, per-die power dissipation). The package-level figure stays in datasheetInfo.thermal — one package, one R_th(j-a).",
+                            "$ref": "./utils.json#/$defs/thermal"
+                        }
+                    }
+                }
             ]
         },
         "electrical": {

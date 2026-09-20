@@ -1,0 +1,181 @@
+{
+  "mosfet": {
+    "manufacturerInfo": {
+      "name": "Infineon",
+      "reference": "IAUCN04S7L025AH",
+      "status": "production",
+      "family": "OptiMOS 7",
+      "datasheetUrl": "https://www.infineon.com/assets/row/public/documents/10/49/infineon-iaucn04s7l025ah-datasheet-en.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "IAUCN04S7L025AH",
+          "technology": "Si",
+          "case": "Dual SSO8 HB",
+          "package": "PG-TDSON-8-57",
+          "qualification": "Automotive (AEC-Q101)",
+          "description": "Asymmetric half-bridge: two N-channel OptiMOS 7 die, M1 and M2, in one PG-TDSON-8 package",
+          "dieConfiguration": "dual",
+          "internalConnection": "halfBridge"
+        },
+        "dies": [
+          {
+            "name": "M1",
+            "pins": [
+              "1",
+              "2",
+              "3",
+              "7",
+              "8"
+            ],
+            "subType": "nChannel",
+            "electrical": {
+              "drainSourceVoltage": 40.0,
+              "onResistance": 0.00256,
+              "onResistanceVgs": 10.0,
+              "onResistanceId": 50.0,
+              "continuousDrainCurrent": 100.0,
+              "pulsedDrainCurrent": 349.0,
+              "gateThresholdVoltage": {
+                "minimum": 1.2,
+                "nominal": 1.5,
+                "maximum": 1.8
+              },
+              "totalGateCharge": 2.9e-08,
+              "gateSourceCharge": 5.5e-09,
+              "gateDrainCharge": 5.1e-09,
+              "gateSourceVoltageMax": 16.0,
+              "powerDissipation": 75.0,
+              "inputCapacitance": 1.937e-09,
+              "outputCapacitance": 9.7e-10,
+              "reverseTransferCapacitance": 3.5e-11,
+              "capacitanceMeasurementVds": 20.0,
+              "turnOnDelay": 4.5e-09,
+              "riseTime": 1e-08,
+              "turnOffDelay": 2.1e-08,
+              "fallTime": 2.5e-08,
+              "bodyDiodeForwardVoltage": 0.87,
+              "bodyDiodeContinuousCurrent": 100.0,
+              "reverseRecoveryTime": 2.3e-08,
+              "reverseRecoveryCharge": 8e-09,
+              "avalancheEnergy": 0.058
+            },
+            "thermal": {
+              "thermalResistanceJunctionCase": 2.0,
+              "thermalResistanceJunctionAmbient": 41.0
+            }
+          },
+          {
+            "name": "M2",
+            "pins": [
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ],
+            "subType": "nChannel",
+            "electrical": {
+              "drainSourceVoltage": 40.0,
+              "onResistance": 0.00504,
+              "onResistanceVgs": 10.0,
+              "onResistanceId": 30.0,
+              "continuousDrainCurrent": 65.0,
+              "pulsedDrainCurrent": 149.0,
+              "gateThresholdVoltage": {
+                "minimum": 1.2,
+                "nominal": 1.5,
+                "maximum": 1.8
+              },
+              "totalGateCharge": 1.1e-08,
+              "gateSourceCharge": 2.1e-09,
+              "gateDrainCharge": 1.9e-09,
+              "gateSourceVoltageMax": 16.0,
+              "powerDissipation": 40.0,
+              "inputCapacitance": 7.04e-10,
+              "outputCapacitance": 3.49e-10,
+              "reverseTransferCapacitance": 1.6e-11,
+              "capacitanceMeasurementVds": 20.0,
+              "turnOnDelay": 2.5e-09,
+              "riseTime": 6e-09,
+              "turnOffDelay": 9e-09,
+              "fallTime": 1.2e-08,
+              "bodyDiodeForwardVoltage": 0.87,
+              "bodyDiodeContinuousCurrent": 65.0,
+              "reverseRecoveryTime": 6e-09,
+              "reverseRecoveryCharge": 5e-10,
+              "avalancheEnergy": 0.025
+            },
+            "thermal": {
+              "thermalResistanceJunctionCase": 3.7,
+              "thermalResistanceJunctionAmbient": 43.0
+            }
+          }
+        ],
+        "thermal": {
+          "junctionTemperatureMin": -55,
+          "junctionTemperatureMax": 175
+        },
+        "mechanical": {
+          "assemblyType": "smt",
+          "case": "Dual SSO8 HB",
+          "pinout": [
+            {
+              "pin": "1",
+              "name": "G1",
+              "function": "gate"
+            },
+            {
+              "pin": "2",
+              "name": "S1, D2",
+              "function": "source"
+            },
+            {
+              "pin": "3",
+              "name": "S1, D2",
+              "function": "source"
+            },
+            {
+              "pin": "4",
+              "name": "G2",
+              "function": "gate"
+            },
+            {
+              "pin": "5",
+              "name": "S2",
+              "function": "source"
+            },
+            {
+              "pin": "6",
+              "name": "S2",
+              "function": "source"
+            },
+            {
+              "pin": "7",
+              "name": "D1",
+              "function": "drain"
+            },
+            {
+              "pin": "8",
+              "name": "D1",
+              "function": "drain"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-09-21",
+            "sourceName": "Infineon IAUCN04S7L025AH data sheet Rev. 1.0",
+            "sourceUrl": "https://www.infineon.com/assets/row/public/documents/10/49/infineon-iaucn04s7l025ah-datasheet-en.pdf",
+            "retrievedDate": "2026-09-21",
+            "fields": [
+              "dies"
+            ],
+            "verificationMethod": "R_DS(on) maximum at V_GS = 10 V, T_j = 25 degC: I_D = 50 A for M1 and I_D = 30 A for M2; I_D is the V_GS = 10 V DC-current row; charges, capacitances and switching times are typical values"
+          }
+        ]
+      }
+    }
+  }
+}

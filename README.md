@@ -97,6 +97,8 @@ prefixes — the file it lives in already fixes the device type):
   |     +-- datasheetInfo
   |           +-- part         (required)  partNumber, technology, subType, case
   |           +-- electrical   (required)  device-specific ratings
+  |           +-- dies                     mosfet only: one entry per die in a
+  |           |                            multi-die package, INSTEAD OF electrical
   |           +-- thermal                  R_th, T_j range, Foster network
   |           +-- mechanical               package dims, assembly type
   |           +-- modelParams              SPICE parameters   (not bjt)
@@ -183,6 +185,7 @@ document.
 ### MOSFET (Si, SiC, GaN, GaAs)
 
 - **electrical** -- V_DS, R_DS(on), I_D, V_GS(th), gate charge (Q_g, Q_gs, Q_gd), capacitances (C_iss, C_oss, C_rss), switching times, body diode specs, avalanche energy, figure of merit
+- **dies** -- multi-die packages (duals, complementary pairs, two-FET power blocks): one entry per die, each `{name, role, pins, subType, electrical, thermal}` with the full electrical block above. Mutually exclusive with the package-level `electrical`, and **required** once `part.dieConfiguration` is `dual` or `complementary` -- so one die's R_DS(on) cannot be stored as the part's
 - **modelParams** -- SPICE Level 3 parameters: VTO, KP, LAMBDA, RD, RS, CGS, CGD, CDS, IS, N
 - **curves** -- R_DS(on) vs T_j, R_DS(on) vs I_D, C_iss/C_oss/C_rss vs V_DS, gate charge curve, body diode V_F, SOA, thermal impedance
 
@@ -371,6 +374,27 @@ Key features demonstrated:
 - A `module` designRequirements branch: `moduleTopology`, `allowedSwitchTechnologies`,
   `ratedBlockingVoltage`, `minimumIsolationVoltage`, `requireIntegratedNtc`
 
+### Example 4: Multi-die MOSFET -- Infineon IAUCN04S7L025AH
+
+File: `examples/04_mosfet_dual_iaucn04s7l025ah.json`
+
+An asymmetric 40 V half-bridge: two N-channel OptiMOS 7 die, M1 and M2, in one
+PG-TDSON-8 package. The datasheet gives every static, dynamic and thermal row in
+separate M1 and M2 columns.
+
+Key features demonstrated:
+- `part.dieConfiguration: "dual"` and `part.internalConnection: "halfBridge"`
+- **No package-level `electrical`**: the two die differ (2.56 mOhm / 100 A versus
+  5.04 mOhm / 65 A), so there is no single R_DS(on) to record as the part's -- and
+  the schema gives it nowhere to go
+- `dies[]` entries named `M1` / `M2` exactly as the datasheet names them, each with its
+  own complete electrical block and its own `thermal` (R_th(j-c) 2 versus 3.7 K/W)
+- `dies[].pins` binding each die to `mechanical.pinout`; pins 2 and 3 appear in BOTH
+  die because the datasheet bonds Source M1 to Drain M2 -- that shared pair is the
+  switching node
+- A bare part record (device field only, no `inputs`/`outputs`), which the top-level
+  `anyOf` allows
+
 ---
 
 ## Quick Reference: Fields by Device Type
@@ -379,7 +403,7 @@ Key features demonstrated:
 
 | Section | Key Fields |
 |---------|------------|
-| **part** | partNumber, technology, subType (per-device closed enum), case, package, qualification |
+| **part** | partNumber, technology, subType (per-device closed enum), case, package, qualification, dieConfiguration (`single`/`dual`/`complementary`), internalConnection (`independent`/`commonDrain`/`commonSource`/`halfBridge`) |
 | **thermal** | R_th(j-c), R_th(j-a), R_th(c-s), T_j min/max, fosterNetwork |
 | **mechanical** | assemblyType (PEAS connectionType: smt/tht/chassis/...), case, length, width, height, weight |
 | **provenance** | data-source trail: source, sourceName, sourceUrl, retrievedDate, fields |
@@ -405,7 +429,7 @@ Key features demonstrated:
 
 | Device Type | Required Electrical Fields |
 |-------------|--------------------------|
-| **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge |
+| **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge -- in `electrical` for a single-die part, or once per entry of `dies[]` for a multi-die package (each die also requires `name` and `subType`) |
 | **diode** | depends on `part.subType`: rectifier family (`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`, or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
 | **bjt** | collectorEmitterVoltage, collectorCurrent |

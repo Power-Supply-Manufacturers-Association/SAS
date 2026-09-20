@@ -10,8 +10,10 @@ SAS builds on PEAS: shared primitives (`dimensionWithTolerance`, `curve`, `manuf
 `https://psma.com/peas/...`, so validating an SAS document requires the PEAS repo checked out
 alongside SAS. The reference documents for this schema are
 [`examples/01_mosfet_ipb017n10n5.json`](../examples/01_mosfet_ipb017n10n5.json),
-[`examples/02_diode_stps30l60ct.json`](../examples/02_diode_stps30l60ct.json) and
-[`examples/03_module_ff2mr12w3m1h.json`](../examples/03_module_ff2mr12w3m1h.json).
+[`examples/02_diode_stps30l60ct.json`](../examples/02_diode_stps30l60ct.json),
+[`examples/03_module_ff2mr12w3m1h.json`](../examples/03_module_ff2mr12w3m1h.json) and
+[`examples/04_mosfet_dual_iaucn04s7l025ah.json`](../examples/04_mosfet_dual_iaucn04s7l025ah.json)
+(a two-die MOSFET package).
 
 ---
 
@@ -29,6 +31,7 @@ alongside SAS. The reference documents for this schema are
   - [spiceModel (device-body)](#spicemodel-device-body)
 - [MOSFET Sections](#mosfet-sections)
   - [mosfetElectrical](#mosfetelectrical)
+  - [mosfetDie (multi-die packages)](#mosfetdie)
   - [mosfetModelParams](#mosfetmodelparams)
   - [mosfetCurves](#mosfetcurves)
 - [Diode Sections](#diode-sections)
@@ -154,7 +157,8 @@ device-discriminating `oneOf` — the file it lives in already fixes the device 
 | Field | Type | Required | mosfet | diode | igbt | bjt |
 |-------|------|----------|--------|-------|------|-----|
 | `part` | [part](#part) | **Yes** | yes | yes | yes | yes |
-| `electrical` | per-device electrical | **Yes** | yes | yes | yes | yes |
+| `electrical` | per-device electrical | **Yes**, except on a multi-die MOSFET | yes | yes | yes | yes |
+| `dies` | array of [mosfetDie](#mosfetdie) | No (mosfet only) | yes | -- | -- | -- |
 | `thermal` | [thermal](#thermal) | No | yes | yes | yes | yes |
 | `mechanical` | [mechanical](#mechanical) | No | yes | yes | yes | yes |
 | `modelParams` | per-device modelParams | No | yes | yes | yes | -- |
@@ -163,6 +167,12 @@ device-discriminating `oneOf` — the file it lives in already fixes the device 
 
 `additionalProperties: false`. The diode `datasheetInfo` additionally carries the
 [per-subType conditional required rules](#per-subtype-required-fields).
+
+The mosfet `datasheetInfo` carries one further rule: `electrical` and `dies` are **mutually
+exclusive** (a `oneOf` — exactly one of the two must be present), and a part whose
+`part.dieConfiguration` is `dual` or `complementary` **must** carry `dies`. A package holding
+two die therefore has no slot in which one die's R_DS(on) could be recorded as the part's.
+See [mosfetDie](#mosfetdie).
 
 ---
 
@@ -188,6 +198,8 @@ field** — the device type is the top-level field name.
 | `package` | string | No | Manufacturer's exact package designation (e.g. "PG-TDSON-8"); complements the generic `case` code |
 | `qualification` | string | No | Qualification grade (e.g. "Industrial", "Automotive (AEC-Q101)") |
 | `matchcodeDescription` | string | No | Additional description or matchcode |
+| `dieConfiguration` | string (enum) | No | How many die the package holds: `single`, `dual` (two die of the same channel type), `complementary` (one n-channel and one p-channel die). Absent means one die. On a mosfet, `dual`/`complementary` makes [`dies`](#mosfetdie) required and forbids a package-level `electrical` |
+| `internalConnection` | string (enum) | No | How the die are wired inside the package, where the datasheet states it: `independent`, `commonDrain`, `commonSource`, `halfBridge`. Never inferred from the package or part number |
 
 Each device file's `datasheetInfo.part` narrows `subType` to a closed enum via `allOf`:
 
@@ -300,6 +312,28 @@ Electrical characteristics specific to MOSFETs. Closed object.
 | `reverseRecoveryTime` | number | No | s | t_rr -- body diode reverse recovery time |
 | `reverseRecoveryCharge` | number | No | C | Q_rr -- body diode reverse recovery charge |
 | `figureOfMerit` | number | No | Ohm*C | R_DS(on) x Q_g |
+
+### mosfetDie
+
+`mosfet.json#/$defs/die` — one die inside a multi-die package. Used through
+`datasheetInfo.dies[]`, which is **mutually exclusive** with the package-level
+`electrical` and has `minItems: 2`. Extends the shared `utils.json#/$defs/dieBase`
+and is sealed with `unevaluatedProperties: false`.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | **Yes** | The datasheet's own label for the die — "Q1", "Q2", "Channel 1". Verbatim, never invented; a datasheet that does not distinguish its die gives no die entries to write |
+| `role` | string | No | The datasheet's functional name where it gives one ("Control FET", "Sync FET"), verbatim |
+| `pins` | array of string | No | Pin identifiers belonging to this die, matching entries of `mechanical.pinout` |
+| `subType` | string (enum) | **Yes** | Channel type OF THIS DIE: `nChannel` or `pChannel`. `powerBlock` is not legal here — it describes a package, not a die |
+| `electrical` | [mosfetElectrical](#mosfetelectrical) | **Yes** | The complete electrical block, per die, with the same five required fields as a single-die part |
+| `thermal` | [thermal](#thermal) | No | Per-die thermal figures where the datasheet gives them; the package figure stays in `datasheetInfo.thermal` |
+
+Every die states its own values even when the datasheet prints them as equal
+("Q1 = Q2 = 95 mOhm"), so "both die are 95 mOhm" and "the part is 95 mOhm" are
+different documents. The schema cannot check that `pins` exist in `mechanical.pinout`,
+that no pin is claimed by two die, or that `name` is unique across the array — those are
+referential checks and belong to the ingest gate.
 
 ### mosfetModelParams
 

@@ -98,6 +98,11 @@ def module_doc():
     return _load(EXAMPLES_DIR / "03_module_ff2mr12w3m1h.json")
 
 
+@pytest.fixture
+def multi_die_doc():
+    return _load(EXAMPLES_DIR / "04_mosfet_dual_iaucn04s7l025ah.json")
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -387,3 +392,127 @@ def test_module_topology_field_rejected_on_other_device_types(sas_validator, mos
     # moduleTopology belongs to the module branch only.
     mosfet_doc["inputs"]["designRequirements"]["moduleTopology"] = "halfBridge"
     assert_invalid(sas_validator, mosfet_doc)
+
+
+# ---------------------------------------------------------------------------
+# Multi-die MOSFET packages (SAS-RFC 0002)
+# ---------------------------------------------------------------------------
+
+def _mosfet_di(mosfet_doc):
+    return mosfet_doc["mosfet"]["manufacturerInfo"]["datasheetInfo"]
+
+
+def _die(name, r_ds_on, sub_type="nChannel"):
+    return {
+        "name": name,
+        "subType": sub_type,
+        "electrical": {
+            "drainSourceVoltage": 30,
+            "onResistance": r_ds_on,
+            "continuousDrainCurrent": 10,
+            "gateThresholdVoltage": {"nominal": 1.5},
+            "totalGateCharge": 10e-9,
+        },
+    }
+
+
+def _make_two_die(mosfet_doc, r1=0.095, r2=0.095):
+    di = _mosfet_di(mosfet_doc)
+    di.pop("electrical")
+    di["part"]["dieConfiguration"] = "dual"
+    di["dies"] = [_die("Q1", r1), _die("Q2", r2)]
+    return mosfet_doc
+
+
+def test_two_die_document_validates(sas_validator, mosfet_doc):
+    assert_valid(sas_validator, _make_two_die(mosfet_doc, 0.0091, 0.0034))
+
+
+def test_two_equal_die_validate_and_differ_from_single_die(sas_validator, mosfet_doc):
+    """'Both die are 95 mOhm' and 'the part is 95 mOhm' must be different documents."""
+    single = copy.deepcopy(mosfet_doc)
+    single["mosfet"]["manufacturerInfo"]["datasheetInfo"]["electrical"]["onResistance"] = 0.095
+    assert_valid(sas_validator, single)
+    dual = _make_two_die(mosfet_doc, 0.095, 0.095)
+    assert_valid(sas_validator, dual)
+    assert dual != single
+
+
+def test_dual_die_configuration_forbids_package_electrical(sas_validator, mosfet_doc):
+    """THE GATE: a package declaring two die cannot carry one die's R_DS(on) as the part's."""
+    di = _mosfet_di(mosfet_doc)
+    di["part"]["dieConfiguration"] = "dual"
+    assert_invalid(sas_validator, mosfet_doc)
+
+
+def test_electrical_and_dies_together_rejected(sas_validator, mosfet_doc):
+    di = _mosfet_di(mosfet_doc)
+    di["dies"] = [_die("Q1", 0.095), _die("Q2", 0.095)]
+    assert_invalid(sas_validator, mosfet_doc)
+
+
+def test_neither_electrical_nor_dies_rejected(sas_validator, mosfet_doc):
+    _mosfet_di(mosfet_doc).pop("electrical")
+    assert_invalid(sas_validator, mosfet_doc)
+
+
+def test_dies_requires_at_least_two_entries(sas_validator, mosfet_doc):
+    doc = _make_two_die(mosfet_doc)
+    _mosfet_di(doc)["dies"] = _mosfet_di(doc)["dies"][:1]
+    assert_invalid(sas_validator, doc)
+
+
+def test_die_subtype_power_block_rejected(sas_validator, mosfet_doc):
+    doc = _make_two_die(mosfet_doc)
+    _mosfet_di(doc)["dies"][0]["subType"] = "powerBlock"
+    assert_invalid(sas_validator, doc)
+
+
+def test_die_requires_subtype_and_electrical(sas_validator, mosfet_doc):
+    doc = _make_two_die(mosfet_doc)
+    _mosfet_di(doc)["dies"][0].pop("subType")
+    assert_invalid(sas_validator, doc)
+
+
+def test_die_unknown_property_rejected(sas_validator, mosfet_doc):
+    doc = _make_two_die(mosfet_doc)
+    _mosfet_di(doc)["dies"][0]["onResistance"] = 0.095
+    assert_invalid(sas_validator, doc)
+
+
+def test_complementary_pair_carries_both_channel_types(sas_validator, mosfet_doc):
+    di = _mosfet_di(mosfet_doc)
+    di.pop("electrical")
+    di["part"]["dieConfiguration"] = "complementary"
+    di["part"]["internalConnection"] = "commonDrain"
+    di["dies"] = [_die("Q1", 0.05, "nChannel"), _die("Q2", 0.09, "pChannel")]
+    assert_valid(sas_validator, mosfet_doc)
+
+
+def test_die_configuration_enum_closed(sas_validator, mosfet_doc):
+    _mosfet_di(mosfet_doc)["part"]["dieConfiguration"] = "triple"
+    assert_invalid(sas_validator, mosfet_doc)
+
+
+def test_internal_connection_enum_closed(sas_validator, mosfet_doc):
+    _mosfet_di(mosfet_doc)["part"]["internalConnection"] = "backToBack"
+    assert_invalid(sas_validator, mosfet_doc)
+
+
+def test_single_die_configuration_does_not_require_dies(sas_validator, mosfet_doc):
+    _mosfet_di(mosfet_doc)["part"]["dieConfiguration"] = "single"
+    assert_valid(sas_validator, mosfet_doc)
+
+
+def test_multi_die_example_validates(sas_validator, multi_die_doc):
+    assert_valid(sas_validator, multi_die_doc)
+
+
+def test_multi_die_example_carries_no_package_electrical(sas_validator, multi_die_doc):
+    """The example is the whole point: two die, no package-level electrical slot."""
+    di = multi_die_doc["mosfet"]["manufacturerInfo"]["datasheetInfo"]
+    assert "electrical" not in di
+    assert len(di["dies"]) == 2
+    assert {d["electrical"]["onResistance"] for d in di["dies"]} == {0.00256, 0.00504}
+    di["electrical"] = dict(di["dies"][0]["electrical"])
+    assert_invalid(sas_validator, multi_die_doc)
