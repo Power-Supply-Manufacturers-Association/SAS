@@ -429,7 +429,7 @@ Key features demonstrated:
 
 | Device Type | Required Electrical Fields |
 |-------------|--------------------------|
-| **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge -- in `electrical` for a single-die part, or once per entry of `dies[]` for a multi-die package (each die also requires `name` and `subType`) |
+| **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge -- in `electrical` for a single-die part. A `dies[]` entry requires the same set **minus continuousDrainCurrent** (a package rating many vendors publish only per package), plus `name` and `subType` |
 | **diode** | depends on `part.subType`: rectifier family (`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`, or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
 | **bjt** | collectorEmitterVoltage, collectorCurrent |

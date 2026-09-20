@@ -282,6 +282,15 @@ Electrical characteristics specific to MOSFETs. Closed object.
 **Required**: `drainSourceVoltage`, `onResistance`, `continuousDrainCurrent`,
 `gateThresholdVoltage`, `totalGateCharge`.
 
+The field set lives in `mosfet.json#/$defs/electricalBase`, which requires the first,
+second, fourth and fifth of those; `electrical` is that base plus
+`required: ["continuousDrainCurrent"]`. The split exists because
+[`dies[].electrical`](#mosfetdie) uses the **base**: a continuous drain current is a
+package rating, and vendors such as TI publish one operating current for a package
+holding two die (SLPS666), so requiring it per die would make the faithful record
+unwritable. Everything that `$ref`s `#/$defs/electrical` — the package-level block and
+the module `switch` block — is unchanged and still requires all five.
+
 | Field | Type | Required | Unit | Description |
 |-------|------|----------|------|-------------|
 | `drainSourceVoltage` | number | **Yes** | V | V_DS max -- maximum drain-source voltage |
@@ -326,7 +335,7 @@ and is sealed with `unevaluatedProperties: false`.
 | `role` | string | No | The datasheet's functional name where it gives one ("Control FET", "Sync FET"), verbatim |
 | `pins` | array of string | No | Pin identifiers belonging to this die, matching entries of `mechanical.pinout` |
 | `subType` | string (enum) | **Yes** | Channel type OF THIS DIE: `nChannel` or `pChannel`. `powerBlock` is not legal here — it describes a package, not a die |
-| `electrical` | [mosfetElectrical](#mosfetelectrical) | **Yes** | The complete electrical block, per die, with the same five required fields as a single-die part |
+| `electrical` | [mosfetElectricalBase](#mosfetelectrical) | **Yes** | The complete electrical block, per die. Same fields as a single-die part, minus the `continuousDrainCurrent` requirement, which is a package rating — write one only where the vendor publishes it per die, and never put a package figure on a die |
 | `thermal` | [thermal](#thermal) | No | Per-die thermal figures where the datasheet gives them; the package figure stays in `datasheetInfo.thermal` |
 
 Every die states its own values even when the datasheet prints them as equal

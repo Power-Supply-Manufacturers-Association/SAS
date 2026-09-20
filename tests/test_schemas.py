@@ -516,3 +516,27 @@ def test_multi_die_example_carries_no_package_electrical(sas_validator, multi_di
     assert {d["electrical"]["onResistance"] for d in di["dies"]} == {0.00256, 0.00504}
     di["electrical"] = dict(di["dies"][0]["electrical"])
     assert_invalid(sas_validator, multi_die_doc)
+
+
+def test_die_electrical_does_not_require_continuous_drain_current(sas_validator, mosfet_doc):
+    """A continuous drain current is a PACKAGE rating: TI's power-block datasheets
+    publish one operating current for both die, so requiring it per die would make
+    the faithful record unwritable."""
+    doc = _make_two_die(mosfet_doc, 0.0091, 0.0034)
+    for die in _mosfet_di(doc)["dies"]:
+        die["electrical"].pop("continuousDrainCurrent")
+    assert_valid(sas_validator, doc)
+
+
+def test_package_electrical_still_requires_continuous_drain_current(sas_validator, mosfet_doc):
+    """The relaxation is scoped to dies[]: a single-die part still rates its I_D."""
+    _mosfet_di(mosfet_doc)["electrical"].pop("continuousDrainCurrent")
+    assert_invalid(sas_validator, mosfet_doc, contains="'continuousDrainCurrent' is a required property")
+
+
+def test_module_switch_still_requires_continuous_drain_current(sas_validator, module_doc):
+    """module.json $refs the mosfet electrical block; splitting out the base must
+    not have loosened it there."""
+    sw = module_doc["module"]["manufacturerInfo"]["datasheetInfo"]["electrical"]["switch"]
+    sw.pop("continuousDrainCurrent", None)
+    assert_invalid(sas_validator, module_doc, contains="'continuousDrainCurrent' is a required property")

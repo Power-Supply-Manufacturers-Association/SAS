@@ -1,6 +1,7 @@
 # SAS-RFC 0002 — Multi-die MOSFET packages (duals and complementary pairs)
 
-- **Status:** Proposed, awaiting owner decision. Nothing has been edited; no schema file was touched.
+- **Status:** ACCEPTED and implemented 2026-09-21, with one amendment the implementation forced
+  (the per-die `continuousDrainCurrent` requirement — see *Amendments after implementation*).
 - **Type:** Additive (non-breaking) schema change.
 - **Author:** drafted 2026-09-20
 - **Created:** 2026-09-20
@@ -160,12 +161,16 @@ So: **`dies[]`, each entry a named die with its own complete `electrical` block.
 
 **What identifies a die:** its `name`, taken verbatim from the datasheet — `Q1`, `Q2`,
 `Channel 1`. Never invented: if the datasheet does not distinguish the die, there is nothing
-to write. An optional `role` carries the datasheet's functional word (`Control FET`,
+to write. (Amended 2026-09-21: most symmetric duals distinguish their die without ever
+NAMING them, so "verbatim" has to mean the datasheet's own labelling — see
+*Amendments after implementation*.) An optional `role` carries the datasheet's functional word (`Control FET`,
 `Sync FET`) and an optional `pins[]` binds the die to the package pinout so a CIAS brick can
 wire to one die rather than to the part. JSON Schema cannot check that those pin ids exist in
 `mechanical.pinout`, nor that `name` is unique across the array (`uniqueItems` compares whole
 objects); both are referential checks, of the same kind as CIAS's component URIs, and belong
-to the ingest gate. Stated, not assumed.
+to the ingest gate. Stated, not assumed. (Amended 2026-09-21: an earlier draft of this
+paragraph also asked the gate to reject a pin claimed by two die. That rule is wrong — see
+*Amendments after implementation*.)
 
 **Per-package vs per-die:**
 
@@ -175,6 +180,7 @@ to the ingest gate. Stated, not assumed.
 | `RθJA`, mounting/soldering data | `datasheetInfo.thermal` (unchanged) | TI SLPS666 has one §5.3 for both die |
 | `RθJC`, per-die power dissipation | optional `dies[].thermal` | YAGEO publishes 1.78 W / 2.08 W per channel |
 | r_DS(on), V_GS(th), Q_g, capacitances, body diode, switching times | `dies[].electrical` (required per die) | TI SLPS666 §5.5 / §5.6; YAGEO "Channel 2" columns |
+| continuous drain current | `datasheetInfo.electrical` on a single-die part; on a die ONLY where the vendor publishes one per die | TI SLPS666 rates one package operating current and one package I_DM for both die — see *Amendments after implementation* |
 | channel type | `dies[].subType` (required per die) | the only place a complementary pair can be stated |
 
 **Why not required-by-default:** `dies` is optional and mutually exclusive with `electrical`,
@@ -272,7 +278,7 @@ New `$defs.die`:
           "type": "string",
           "enum": ["nChannel", "pChannel"]
         },
-        "electrical": { "$ref": "#/$defs/electrical" },
+        "electrical": { "$ref": "#/$defs/electricalBase" },
         "thermal": {
           "description": "Per-die thermal figures where the datasheet gives them (junction-to-case, per-die power dissipation). The package-level figure stays in datasheetInfo.thermal — one package, one R_th(j-a).",
           "$ref": "./utils.json#/$defs/thermal"
@@ -420,9 +426,10 @@ If accepted:
 2. `SAS/README.md` documents the per-device field sets and the closed `subType` enums; it gains
    the `dies[]` block and the two `part` fields in the same change, per the workspace rule that
    schema and docs move together.
-3. One example: `SAS/examples/` gains a two-die MOSFET document (`CSD86336Q3D` is the natural
-   candidate — its datasheet publishes both die in full), joining the existing single-die
-   MOSFET, diode and module examples.
+3. One example: `SAS/examples/` gains a two-die MOSFET document, joining the existing
+   single-die MOSFET, diode and module examples. (Landed as
+   `04_mosfet_dual_iaucn04s7l025ah.json`, an asymmetric Infineon half-bridge, not the
+   `CSD86336Q3D` proposed here — see *Amendments after implementation*, item 1.)
 4. The checks that measure the change, not ones that would pass either way:
    - A **real** two-die document built from TI SLPS666 (`Q1` 9.1 mΩ / 1.1 V / 2.9 nC, `Q2`
      3.4 mΩ / 1.0 V / 5.7 nC, one package-level `thermal` and `mechanical`) validated with the
@@ -445,3 +452,79 @@ If accepted:
    per-die records; the 6 TI power blocks are re-read from their datasheets; the 119 live
    single-die-of-two rows are re-sourced per die and are **not** rewritten by the schema
    change — a schema cannot supply a number the record never held.
+
+## Amendments after implementation (2026-09-21)
+
+The proposal above was implemented as written except in three places, where contact with the
+schema and with 198 real parts showed the text to be wrong. They are recorded here rather
+than silently fixed, because a proposal that stays wrong misleads whoever reads it next.
+
+### 1. `dies[].electrical` must NOT require `continuousDrainCurrent` (approved amendment)
+
+The proposal has `dies[].electrical` `$ref` `#/$defs/electrical`, whose five required fields
+include `continuousDrainCurrent`. **That makes this RFC's own showcase part unwritable.** TI
+SLPS666 — the datasheet quoted in *Evidence (d)* as the argument for the whole shape —
+publishes no per-die continuous drain current. It gives one package `Pulsed current rating,
+IDM = 60 A`, one package `Power dissipation, PD = 6 W` and, in Recommended Operating
+Conditions, one package `Operating current = 20 A`. All six TI power blocks in the corpus are
+the same, and so is every other two-FET power block checked. A required field no vendor
+publishes per die leaves exactly two options, both bad: refuse to store the part, or write the
+package figure onto a die — which is the defect this RFC exists to prevent, in a new place.
+
+So the field set was split:
+
+- `mosfet.json#/$defs/electricalBase` — all 28 properties, `additionalProperties: false`,
+  `required: [drainSourceVoltage, onResistance, gateThresholdVoltage, totalGateCharge]`.
+- `mosfet.json#/$defs/electrical` — `allOf: [ {$ref: electricalBase}, {required:
+  [continuousDrainCurrent]} ]`. Effect unchanged: the package-level block and `module.json`'s
+  `switch` block (which `$ref`s `#/$defs/electrical`) still require all five.
+- `die.electrical` `$ref`s **`electricalBase`**.
+
+A die may still carry `continuousDrainCurrent`, and 172 of the 178 migrated rows do, because
+their vendors publish one per die. The six TI rows do not, and that absence is now the honest
+record rather than an illegal one.
+
+Counter-checks run for this amendment, not assumed: the real `CSD86336Q3D` record (Q1 9.1 mΩ /
+1.1 V / 2.9 nC, Q2 3.4 mΩ / 1.0 V / 5.7 nC, no per-die I_D) is **valid after** and **invalid
+before**; with the relaxation **reverted** — `continuousDrainCurrent` put back into
+`electricalBase` — the same record is **rejected** (`'continuousDrainCurrent' is a required
+property` at `dies[0].electrical`), so the test measures the relaxation; and a *package-level*
+`electrical` missing `continuousDrainCurrent` is still rejected, before and after, so the
+relaxation is scoped to `dies[]` only.
+
+### 2. "No pin claimed by two die" is the wrong ingest-gate rule
+
+The proposal hands the gate three referential checks, one of them "that no pin is claimed by
+two die". A half-bridge breaks it by construction: Infineon IAUCN04S7L025AH prints
+`Source M1, Drain M2 | S1, D2 | 2, 3`, so pins 2 and 3 belong to **both** die — that shared
+pair *is* the switching node, and the same holds for every TI power block's VSW pins. The
+correct gate rules are: every id in `pins` exists in `mechanical.pinout`, and `name` is unique
+across `dies`. Pin exclusivity is not a rule and must not be added.
+
+### 3. "Names taken verbatim" underspecifies the common case
+
+The proposal says a die's name is taken verbatim and never invented, and that a datasheet
+which does not distinguish its die gives no die entries to write. Those two sentences leave
+out what most of the corpus actually looks like: a symmetric dual that clearly distinguishes
+its die — by terminal subscripts, a "per channel" footnote or a two-FET schematic — while
+never printing a name for either one. Of 178 migrated rows only 8 carry a name the datasheet
+prints as a die label (`Q1`/`Q2`, `M1`/`M2`).
+
+The rule that was actually applied, and that should replace the sentence: **name a die in the
+datasheet's own labelling vocabulary, and never in another document's.** In practice that gave
+`M1`/`M2` and `Q1`/`Q2` where the datasheet labels its columns that way, `FET1`/`FET2` from
+Nexperia's "Static characteristics FET1 and FET2", `CH-1`/`CH-2` and `N-CH`/`P-CH` from
+YAGEO's table headings, `channel 1`/`channel 2` where Infineon's IPG datasheets say only
+"per channel" and "one channel active", and `1`/`2` where the only distinction the datasheet
+draws is the `D1/S1/G1` versus `D2/S2/G2` subscripts on its schematic.
+
+The stricter reading still governs the case it was written for: where the evidence that the
+package holds two die comes from a DIFFERENT document than the datasheet, no die entry is
+written at all. 19 Infineon IAUCN rows are held unmigrated on exactly that ground — their
+datasheets (all Rev. 1.0, 2024-05-03 to 2026-01-22, re-checked 2026-09-21) describe a single
+MOSFET and never say "dual" or "per channel"; only an Infineon product brief does.
+
+### Not amended
+
+`subType: "powerBlock"` is retained, as *Implementation* note 5 says. The six TI rows that use
+it keep it: with `dies[]` present it describes the package, which is what it always meant.

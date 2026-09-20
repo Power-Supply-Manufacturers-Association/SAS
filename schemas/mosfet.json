@@ -205,7 +205,8 @@
                             ]
                         },
                         "electrical": {
-                            "$ref": "#/$defs/electrical"
+                            "description": "The complete electrical block, per die. It uses the shared base rather than the package-level 'electrical': continuousDrainCurrent is a package rating that several vendors publish only for the package as a whole, and a die must never be given a package figure to fill that slot.",
+                            "$ref": "#/$defs/electricalBase"
                         },
                         "thermal": {
                             "description": "Per-die thermal figures where the datasheet gives them (junction-to-case, per-die power dissipation). The package-level figure stays in datasheetInfo.thermal — one package, one R_th(j-a).",
@@ -215,9 +216,9 @@
                 }
             ]
         },
-        "electrical": {
-            "title": "mosfetElectrical",
-            "description": "MOSFET electrical characteristics — every field is relevant to MOSFETs.",
+        "electricalBase": {
+            "title": "mosfetElectricalBase",
+            "description": "MOSFET electrical characteristics — every field is relevant to MOSFETs. This base requires the four figures every MOSFET datasheet prints for a single device; the package-level continuousDrainCurrent requirement is added by 'electrical' on top of it. A DIE inside a multi-die package uses this base directly, because a continuous drain current is a package rating and several vendors publish it only per package (TI SLPS666 prints one package operating current and one pulsed I_DM for both die) — requiring it per die would make the faithful record unwritable.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -337,9 +338,22 @@
             "required": [
                 "drainSourceVoltage",
                 "onResistance",
-                "continuousDrainCurrent",
                 "gateThresholdVoltage",
                 "totalGateCharge"
+            ]
+        },
+        "electrical": {
+            "title": "mosfetElectrical",
+            "description": "MOSFET electrical characteristics of a single-die part, or of one switch position of a module: the shared base plus the package-level continuousDrainCurrent, which a whole part always rates. Unchanged in effect from before dies[] existed — the same five required fields.",
+            "allOf": [
+                {
+                    "$ref": "#/$defs/electricalBase"
+                },
+                {
+                    "required": [
+                        "continuousDrainCurrent"
+                    ]
+                }
             ]
         },
         "modelParams": {
