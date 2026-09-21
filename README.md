@@ -105,6 +105,7 @@ prefixes — the file it lives in already fixes the device type):
   |           +-- curves                   digitized graphs   (not bjt)
   |           +-- provenance               data-source trail
   +-- distributorsInfo                cost/stock/MOQ/packaging per distributor
+  +-- substitutesInfo                 successors + second sources (PEAS substituteInfo)
   +-- spiceModel                      structured .model card, for parts whose
                                       only source is a simulation model
 ```
@@ -130,6 +131,7 @@ classDiagram
     class device {
         +manufacturerInfo
         +distributorsInfo
+        +substitutesInfo
     }
     class datasheetInfo {
         +part
@@ -408,6 +410,7 @@ Key features demonstrated:
 | **mechanical** | assemblyType (PEAS connectionType: smt/tht/chassis/...), case, length, width, height, weight |
 | **provenance** | data-source trail: source, sourceName, sourceUrl, retrievedDate, fields |
 | **distributorsInfo** | per-distributor commercial data: cost {value, currency}, stock, packaging, vpe, moq, leadTime |
+| **substitutesInfo** | replacement parts (PEAS `substituteInfo`): partNumber, manufacturer, type (`successor` = this part is superseded by that one, one hop, manufacturer-stated), notes, source; evidence in `provenance` with `fields: ["substitutesInfo"]` |
 
 ### Device-Specific Sections
 

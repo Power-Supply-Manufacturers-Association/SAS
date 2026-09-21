@@ -23,6 +23,7 @@ alongside SAS. The reference documents for this schema are
 - [Device Documents (mosfet.json, diode.json, igbt.json, bjt.json, module.json)](#device-documents)
   - [manufacturerInfo](#manufacturerinfo)
   - [distributorsInfo](#distributorsinfo)
+  - [substitutesInfo](#substitutesinfo)
   - [datasheetInfo](#datasheetinfo)
 - [Shared Sections (utils.json)](#shared-sections)
   - [part](#part)
@@ -100,10 +101,12 @@ All five device files share the same outer shape:
 |-------|------|----------|-------------|
 | `manufacturerInfo` | [manufacturerInfo](#manufacturerinfo) | anyOf | Manufacturer data, including the nested `datasheetInfo` |
 | `distributorsInfo` | array of [distributorInfo](#distributorsinfo) | No | Where to buy this component |
+| `substitutesInfo` | array of [substituteInfo](#substitutesinfo) | No | Replacement parts: manufacturer-named successors and second sources |
 | `spiceModel` | [spiceModel](#spicemodel-device-body) | anyOf | Device-body SPICE `.model` card for a simulation-sourced part (no datasheet) |
 
 `anyOf`: the device body must contain `manufacturerInfo`, **or** `spiceModel`, **or** be an
-empty object (`maxProperties: 0`). The device-body `spiceModel` is the canonical home for a
+empty object (`maxProperties: 0`). A body carrying only `substitutesInfo` satisfies none of
+the three and is rejected. The device-body `spiceModel` is the canonical home for a
 part whose only source is a simulation model — it does not require the
 `manufacturerInfo`/`datasheetInfo` chain.
 
@@ -144,6 +147,28 @@ Key fields:
 | `vpe` | integer or null | Units per package / reel |
 | `moq` | integer or null | Minimum order quantity |
 | `leadTime` | number or null | Lead time in weeks |
+
+### substitutesInfo
+
+Array of PEAS `utils.json#/$defs/substituteInfo` (closed object; only `partNumber` required),
+the same type CTAS `controller.json` and COAS `converter.json` use (PEAS-RFC 0002).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `partNumber` | string (**required**) | Part number of the replacement part |
+| `manufacturer` | string or null | Its manufacturer. Omitted on a `successor` entry it means the same manufacturer as this part; it must be written when it differs |
+| `type` | string (enum) | `drop-in`, `near-equivalent`, `functional`, `upgrade`, `downgrade`, `successor` |
+| `notes` | string or null | Differences or caveats |
+| `source` | string (enum) or null | `manufacturer`, `distributor`, `cross-reference`, `engineering` |
+
+`type: "successor"` is directional: THIS part is superseded by the named one, one hop, as the
+manufacturer states it — never inferred from `status: "obsolete"` or from a part-number
+pattern. A successor that is itself superseded names its own successor on its own record, so a
+chain resolves by traversal. The named part need not exist in any catalogue; whether it
+resolves, and resolves once, is the referential pass's job — JSON Schema cannot check it. The
+evidence for the claim is an ordinary [provenance](#provenance-data-source-trail) entry with
+`fields: ["substitutesInfo"]`, carrying the same `sourceUrl`, `retrievedDate` and
+`verification` stamp as any datasheet field.
 
 Plus `country`, `distributedArea`, `phone`, `email`, `quantity`, `updatedAt`, `internal`,
 `internalNote` — see PEAS `utils.json` for the full definition. Commercial data (cost, MOQ,
