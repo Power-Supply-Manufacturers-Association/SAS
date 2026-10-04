@@ -67,7 +67,14 @@ json mosfet_leaf(const json& peas, const PEAS::Fidelity& fidelity, const std::st
         // manufacturerInfo is optional in the schema (seed parts have none); a REAL part must carry it.
         const auto& mfg = mosfet.get_manufacturer_info();
         if (!mfg) throw std::runtime_error("SAS real mosfet: manufacturerInfo.datasheetInfo missing");
-        const auto& elec = mfg->get_datasheet_info().get_electrical();
+        // SAS-RFC 0002: a multi-die package carries per-die electricals (dies[]) and NO package-level ones; a
+        // single-switch leaf cannot pick a die on the caller's behalf.
+        const auto& elecOpt = mfg->get_datasheet_info().get_electrical();
+        if (!elecOpt)
+            throw std::runtime_error("SAS real mosfet '" + name + "': datasheetInfo has no package-level electrical "
+                                     "(a multi-die package carries per-die electricals in dies[]); a single-switch "
+                                     "leaf needs one switch's values");
+        const auto& elec = *elecOpt;
         ron = elec.get_on_resistance();
         if (fidelity.allowStoredModelParams) {
             auto mp = mfg->get_datasheet_info().get_model_params();
