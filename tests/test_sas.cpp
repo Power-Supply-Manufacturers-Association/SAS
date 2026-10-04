@@ -92,3 +92,21 @@ TEST_CASE("SAS real MOSFET -> multi-atom (switch + Coss + body diode)", "[sas][r
     CHECK_MSG(SAS::sas_to_cias(doc, Fidelity(Fidelity::Origin::REQUIREMENTS)).at("components").size() == 1,
               "ideal MOSFET = single switch atom");
 }
+
+TEST_CASE("SAS real MOSFET without package-level electrical is refused, not guessed", "[sas][real][mosfet][dies]") {
+    // SAS-RFC 0002: a multi-die package carries per-die electricals (dies[]) and no package-level ones. The
+    // single-switch leaf has no die to pick on the caller's behalf, so a real-fidelity conversion throws.
+    json doc = json::parse(R"({
+        "semiconductor": { "mosfet": { "manufacturerInfo": { "name": "onsemi", "datasheetInfo": {
+            "part": { "partNumber": "DUAL-DIE-EXAMPLE", "technology": "Si" } } } } }
+    })");
+    bool threw = false;
+    std::string what;
+    try { SAS::sas_to_cias(doc, Fidelity(Fidelity::Origin::DATASHEET)); }
+    catch (const std::exception& e) { threw = true; what = e.what(); }
+    CHECK_MSG(threw, "real MOSFET without electrical throws");
+    CHECK_MSG(what.find("no package-level electrical") != std::string::npos, "the message names the gap: " << what);
+    // ideal fidelity never reads the datasheet, so it still converts
+    json ideal = SAS::sas_to_cias(doc, Fidelity(Fidelity::Origin::REQUIREMENTS));
+    CHECK_MSG(mosfet_ron(ideal) == 0.01, "ideal fidelity unaffected");
+}
