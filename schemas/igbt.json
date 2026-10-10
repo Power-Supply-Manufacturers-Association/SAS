@@ -97,6 +97,14 @@
                                     "enum": [
                                         "nChannel"
                                     ]
+                                },
+                                "internalConnection": {
+                                    "enum": [
+                                        "independent",
+                                        "commonDrain",
+                                        "commonSource",
+                                        "halfBridge"
+                                    ]
                                 }
                             }
                         }

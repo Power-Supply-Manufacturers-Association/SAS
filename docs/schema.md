@@ -223,8 +223,8 @@ field** — the device type is the top-level field name.
 | `package` | string | No | Manufacturer's exact package designation (e.g. "PG-TDSON-8"); complements the generic `case` code |
 | `qualification` | string | No | Qualification grade (e.g. "Industrial", "Automotive (AEC-Q101)") |
 | `matchcodeDescription` | string | No | Additional description or matchcode |
-| `dieConfiguration` | string (enum) | No | How many die the package holds: `single`, `dual` (two die of the same channel type), `complementary` (one n-channel and one p-channel die). Absent means one die. On a mosfet, `dual`/`complementary` makes [`dies`](#mosfetdie) required and forbids a package-level `electrical` |
-| `internalConnection` | string (enum) | No | How the die are wired inside the package, where the datasheet states it: `independent`, `commonDrain`, `commonSource`, `halfBridge`. Never inferred from the package or part number |
+| `dieConfiguration` | string (enum) | No | How many die the package holds: `single`, `dual` (two die of the same channel type), `complementary` (one n-channel and one p-channel die). Absent means one die. On a mosfet, `dual`/`complementary` makes [`dies`](#mosfetdie) required and forbids a package-level `electrical`. On a diode only `single`/`dual` are allowed, and `dual` keeps the single `electrical` block, which then describes **one** diode: every value is per diode (per leg), never the package total |
+| `internalConnection` | string (enum) | No | How the die are wired inside the package, where the datasheet states it: `independent`, `commonDrain`, `commonSource`, `halfBridge`; for diodes `independent`, `commonCathode`, `commonAnode`, `series` (BAV99-style). Never inferred from the package or part number |
 
 Each device file's `datasheetInfo.part` narrows `subType` to a closed enum via `allOf`:
 
@@ -419,7 +419,7 @@ enforced by conditionals in the diode `datasheetInfo` (next section).
 | Field | Type | Unit | Description |
 |-------|------|------|-------------|
 | `reverseVoltage` | number | V | V_RRM -- repetitive peak reverse voltage |
-| `forwardCurrent` | number | A | I_F(AV) -- average forward current |
+| `forwardCurrent` | number | A | I_F(AV) -- average forward current, per diode (per leg on a `dual` package, never the package total) |
 | `surgeCurrent` | number | A | I_FSM -- non-repetitive surge current |
 | `forwardVoltage` | number | V | V_F -- forward voltage drop |
 | `forwardVoltageAt` | number | A | I_F at which V_F is specified |

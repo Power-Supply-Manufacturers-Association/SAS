@@ -106,6 +106,21 @@
                                         "tvs",
                                         "esd"
                                     ]
+                                },
+                                "dieConfiguration": {
+                                    "enum": [
+                                        "single",
+                                        "dual"
+                                    ],
+                                    "description": "'dual' = two identical diodes in one package (center-tap rectifiers, BAT54C/A/S, BAV99). The electrical block then describes ONE diode, not the package: forwardCurrent, surgeCurrent, forwardVoltage/forwardVoltageAt, reverseLeakageCurrent, junctionCapacitance and powerDissipation are per diode, as datasheets state them 'per leg' / 'per diode'. Never divide a package total by two: record the per-diode figure the datasheet prints, or omit the field. Absent = single diode."
+                                },
+                                "internalConnection": {
+                                    "enum": [
+                                        "independent",
+                                        "commonCathode",
+                                        "commonAnode",
+                                        "series"
+                                    ]
                                 }
                             }
                         }
@@ -266,7 +281,7 @@
         },
         "electrical": {
             "title": "diodeElectrical",
-            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardVoltage (V_F, the defining rectifier conduction parameter) + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM).",
+            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardVoltage (V_F, the defining rectifier conduction parameter) + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM). For a package declared part.dieConfiguration='dual', every value here is PER DIODE (per leg), never the package total.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -276,7 +291,7 @@
                 },
                 "forwardCurrent": {
                     "type": "number",
-                    "description": "I_F(AV) in Amperes"
+                    "description": "I_F(AV) in Amperes, per diode (per leg for dual packages)"
                 },
                 "surgeCurrent": {
                     "type": "number",

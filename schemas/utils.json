@@ -69,13 +69,16 @@
         },
         "internalConnection": {
             "title": "dieInternalConnection",
-            "description": "How the die are wired to each other INSIDE the package, when the datasheet says so. 'independent' = no internal connection between the die; 'commonDrain' / 'commonSource' = the stated terminals are bonded internally (YAGEO prints 'Common-Drain' in its own Configuration column); 'halfBridge' = the drain of one die is bonded to the source of the other, forming a switching node (Infineon 'Dual SSO8 HB', TI power blocks). Omit when the datasheet does not state the internal arrangement — do not infer it from the package or the part number.",
+            "description": "How the die are wired to each other INSIDE the package, when the datasheet says so. 'independent' = no internal connection between the die; 'commonDrain' / 'commonSource' = the stated terminals are bonded internally (YAGEO prints 'Common-Drain' in its own Configuration column); 'halfBridge' = the drain of one die is bonded to the source of the other, forming a switching node (Infineon 'Dual SSO8 HB', TI power blocks). Omit when the datasheet does not state the internal arrangement — do not infer it from the package or the part number. Diode packages: 'commonCathode' / 'commonAnode' = the two cathodes / anodes are bonded to one pin (e.g. center-tap TO-220AB rectifiers such as STPS30L60CT, BAT54C / BAT54A); 'series' = the anode of one diode is bonded to the cathode of the other (BAV99, BAT54S).",
             "type": "string",
             "enum": [
                 "independent",
                 "commonDrain",
                 "commonSource",
-                "halfBridge"
+                "halfBridge",
+                "commonCathode",
+                "commonAnode",
+                "series"
             ]
         },
         "dieBase": {

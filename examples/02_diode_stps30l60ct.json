@@ -52,18 +52,18 @@
           "partNumber": "STPS30L60CT",
           "technology": "Si",
           "subType": "schottky",
-          "case": "TO-220AB"
+          "case": "TO-220AB",
+          "dieConfiguration": "dual",
+          "internalConnection": "commonCathode"
         },
         "electrical": {
           "reverseVoltage": 60,
-          "forwardCurrent": 30,
-          "surgeCurrent": 400,
+          "forwardCurrent": 15,
           "forwardVoltage": 0.42,
           "forwardVoltageAt": 15,
           "reverseLeakageCurrent": 0.0003,
           "junctionCapacitance": 1.5e-09,
-          "junctionCapacitanceVr": 5,
-          "powerDissipation": 75
+          "junctionCapacitanceVr": 5
         },
         "modelParams": {
           "is": 1e-05,

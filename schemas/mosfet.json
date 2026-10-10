@@ -99,6 +99,14 @@
                                         "pChannel",
                                         "powerBlock"
                                     ]
+                                },
+                                "internalConnection": {
+                                    "enum": [
+                                        "independent",
+                                        "commonDrain",
+                                        "commonSource",
+                                        "halfBridge"
+                                    ]
                                 }
                             }
                         }
