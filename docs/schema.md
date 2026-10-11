@@ -678,10 +678,10 @@ Per-`deviceType` optional fields (`oneOf`, discriminated by `deviceType`; every 
 
 | deviceType | Optional fields |
 |------------|-----------------|
-| `mosfet` | `ratedDrainSourceVoltage` (V), `ratedContinuousDrainCurrent` (A), `maximumOnResistance` (Ohm), `maximumGateCharge` (C), `maximumOutputCapacitance` (F), `maximumSwitchingLossPerCycle` (J), `maximumReverseRecoveryCharge` (C) |
+| `mosfet` | `channel` (`nChannel`/`pChannel`, optional; absent = either), `ratedDrainSourceVoltage` (V), `ratedContinuousDrainCurrent` (A), `maximumOnResistance` (Ohm), `maximumGateCharge` (C), `maximumOutputCapacitance` (F), `maximumSwitchingLossPerCycle` (J), `maximumReverseRecoveryCharge` (C) |
 | `diode` | `ratedReverseVoltage` (V), `ratedForwardCurrent` (A), `maximumForwardVoltage` (V), `maximumReverseRecoveryCharge` (C), `maximumReverseRecoveryTime` (s), `maximumReverseLeakage` (A) |
 | `igbt` | `ratedCollectorEmitterVoltage` (V), `ratedCollectorCurrent` (A), `maximumSaturationVoltage` (V), `maximumSwitchingLossPerCycle` (J) |
-| `bjt` | `ratedCollectorEmitterVoltage` (V), `ratedCollectorCurrent` (A), `maximumSaturationVoltage` (V), `minimumDcCurrentGain` (--) |
+| `bjt` | `polarity` (`npn`/`pnp`, optional; absent = either), `ratedCollectorEmitterVoltage` (V), `ratedCollectorCurrent` (A), `maximumSaturationVoltage` (V), `minimumDcCurrentGain` (--) |
 | `module` | `moduleTopology` (enum, `$ref`s the part-side anchor `module.json#/$defs/topology` — named `moduleTopology` because the PEAS base already carries a converter-level `topology`), `allowedSwitchTechnologies` (array, anchor `module.json#/$defs/switchTechnology`), `ratedBlockingVoltage` (V, per switch), `ratedContinuousCurrent` (A, per switch), `maximumSwitchingLossPerCycle` (J, per switch), `minimumIsolationVoltage` (V), `requireIntegratedNtc` (boolean) |
 
 ---

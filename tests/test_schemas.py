@@ -287,6 +287,34 @@ def test_unknown_device_type_in_design_requirements_rejected(sas_validator, mosf
     assert_invalid(sas_validator, mosfet_doc)
 
 
+def test_design_requirements_mosfet_channel(sas_validator, mosfet_doc):
+    for ch in ("nChannel", "pChannel"):
+        ok = copy.deepcopy(mosfet_doc)
+        ok["inputs"]["designRequirements"]["channel"] = ch
+        assert_valid(sas_validator, ok)
+    mosfet_doc["inputs"]["designRequirements"]["channel"] = "powerBlock"  # a package, not a channel
+    assert_invalid(sas_validator, mosfet_doc)
+
+
+def test_design_requirements_channel_is_mosfet_only(sas_validator, diode_doc):
+    diode_doc["inputs"]["designRequirements"]["channel"] = "nChannel"
+    assert_invalid(sas_validator, diode_doc)
+
+
+def test_design_requirements_bjt_polarity(sas_validator, mosfet_doc):
+    dr = mosfet_doc["inputs"]["designRequirements"]
+    for k in [k for k in dr if k.startswith(("rated", "maximum"))]:
+        del dr[k]
+    dr["deviceType"] = "bjt"
+    for pol in ("npn", "pnp"):
+        dr["polarity"] = pol
+        errs = [e for e in sas_validator.iter_errors(mosfet_doc) if "designRequirements" in e.json_path]
+        assert not errs, [e.message for e in errs]
+    dr["polarity"] = "nChannel"
+    errs = [e for e in sas_validator.iter_errors(mosfet_doc) if "designRequirements" in e.json_path]
+    assert errs
+
+
 def test_allowed_technologies_enum(sas_validator, mosfet_doc):
     mosfet_doc["inputs"]["designRequirements"]["allowedTechnologies"] = ["unobtainium"]
     assert_invalid(sas_validator, mosfet_doc)

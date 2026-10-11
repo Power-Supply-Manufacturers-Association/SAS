@@ -83,6 +83,14 @@
                         "deviceType": {
                             "const": "mosfet"
                         },
+                        "channel": {
+                            "description": "Required channel type, matched against the part's subType. Absent means either channel is acceptable. The voltage and current requirements below are magnitudes for both channels.",
+                            "type": "string",
+                            "enum": [
+                                "nChannel",
+                                "pChannel"
+                            ]
+                        },
                         "ratedDrainSourceVoltage": {
                             "description": "Required minimum V_DS rating, in V",
                             "type": "number",
@@ -194,6 +202,14 @@
                     "properties": {
                         "deviceType": {
                             "const": "bjt"
+                        },
+                        "polarity": {
+                            "description": "Required transistor polarity, matched against the part's subType. Absent means either polarity is acceptable. The voltage and current requirements below are magnitudes for both polarities.",
+                            "type": "string",
+                            "enum": [
+                                "npn",
+                                "pnp"
+                            ]
                         },
                         "ratedCollectorEmitterVoltage": {
                             "description": "Required minimum V_CEO rating, in V",
