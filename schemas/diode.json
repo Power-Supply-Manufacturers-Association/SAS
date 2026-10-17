@@ -112,7 +112,7 @@
                                         "single",
                                         "dual"
                                     ],
-                                    "description": "'dual' = two identical diodes in one package (center-tap rectifiers, BAT54C/A/S, BAV99). The electrical block then describes ONE diode, not the package: forwardCurrent, surgeCurrent, forwardVoltage/forwardVoltageAt, reverseLeakageCurrent, junctionCapacitance and powerDissipation are per diode, as datasheets state them 'per leg' / 'per diode'. Never divide a package total by two: record the per-diode figure the datasheet prints, or omit the field. Absent = single diode."
+                                    "description": "'dual' = two identical diodes in one package (center-tap rectifiers, BAT54C/A/S, BAV99). The electrical block then describes ONE diode, not the package: forwardCurrent, surgeCurrent, forwardVoltage/forwardVoltageAt, reverseLeakageCurrent, junctionCapacitance and powerDissipation are per diode, as datasheets state them 'per leg' / 'per diode'. Never divide a package total by two: record the per-diode figure the datasheet prints, or omit the field. Exception: where the datasheet itself states the per-diode rating as a fixed fraction of the printed package value (e.g. ROHM 'Io/2 per diode'), record that fraction; never infer a fraction when the datasheet is silent. Absent = single diode."
                                 },
                                 "internalConnection": {
                                     "enum": [
