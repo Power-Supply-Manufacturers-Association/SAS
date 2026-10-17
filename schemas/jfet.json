@@ -1,0 +1,534 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://psma.com/sas/jfet.json",
+    "title": "jfet",
+    "description": "Junction FET component data (n- or p-channel; Si small-signal and low-noise JFETs, normally-on SiC power JFETs). The presence of the 'jfet' field at the top level of an SAS document discriminates the device type.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "manufacturerInfo": {
+            "title": "jfetManufacturerInfo",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/name"
+                },
+                "reference": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/reference"
+                },
+                "status": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/status"
+                },
+                "description": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/description"
+                },
+                "orderCode": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/orderCode"
+                },
+                "datasheetUrl": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/datasheetUrl"
+                },
+                "spiceModel": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/spiceModel"
+                },
+                "family": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/family"
+                },
+                "datasheetInfo": {
+                    "$ref": "#/$defs/datasheetInfo"
+                }
+            },
+            "required": [
+                "name",
+                "datasheetInfo"
+            ]
+        },
+        "distributorsInfo": {
+            "description": "Where to buy this component",
+            "type": "array",
+            "items": {
+                "$ref": "https://psma.com/peas/utils.json#/$defs/distributorInfo"
+            }
+        },
+        "substitutesInfo": {
+            "description": "Replacement parts for this one: manufacturer-named successors and second sources. An entry with type 'successor' means THIS part is superseded by the named one, one hop, as the manufacturer states it - never inferred from a status of obsolete or from part-number similarity. The schema cannot check that the named part exists in the catalogue, or exists exactly once; that is the referential pass's job, as for CIAS component URIs. Evidence for the claim goes in the record's provenance[] with fields: [\"substitutesInfo\"], carrying the same sourceUrl, retrievedDate and verification stamp as any datasheet field.",
+            "type": "array",
+            "items": {
+                "$ref": "https://psma.com/peas/utils.json#/$defs/substituteInfo"
+            }
+        },
+        "spiceModel": {
+            "description": "Device-body SPICE .model card for a simulation-sourced part (no datasheet). Faithful home that does not require manufacturerInfo.",
+            "$ref": "./utils.json#/$defs/spiceModel"
+        }
+    },
+    "anyOf": [
+        {
+            "required": [
+                "manufacturerInfo"
+            ]
+        },
+        {
+            "required": [
+                "spiceModel"
+            ]
+        },
+        {
+            "maxProperties": 0
+        }
+    ],
+    "$defs": {
+        "datasheetInfo": {
+            "title": "jfetDatasheetInfo",
+            "description": "All information extracted from a JFET datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "part": {
+                    "allOf": [
+                        {
+                            "$ref": "./utils.json#/$defs/part"
+                        },
+                        {
+                            "$comment": "Device-specific narrowing of the shared part def: subType must come from this closed enum (protects the exact-string conditionals below).",
+                            "properties": {
+                                "subType": {
+                                    "$ref": "#/$defs/subType"
+                                },
+                                "dieConfiguration": {
+                                    "enum": [
+                                        "single",
+                                        "dual"
+                                    ],
+                                    "description": "'dual' = two JFETs in one package (monolithic matched pairs); described per die."
+                                },
+                                "internalConnection": {
+                                    "enum": [
+                                        "independent"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "electrical": {
+                    "$ref": "#/$defs/electrical"
+                },
+                "dies": {
+                    "description": "One entry per JFET die of a dual, INSTEAD OF the package-level electrical block.",
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/$defs/die"
+                    }
+                },
+                "matching": {
+                    "description": "Matching specifications between die. Only legal on a part described per die.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/matching"
+                    }
+                },
+                "thermal": {
+                    "$ref": "./utils.json#/$defs/thermal"
+                },
+                "mechanical": {
+                    "$ref": "./utils.json#/$defs/mechanical"
+                },
+                "provenance": {
+                    "description": "Data-provenance trail (see provenance).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/provenance"
+                }
+            },
+            "required": [
+                "part"
+            ],
+            "oneOf": [
+                {
+                    "required": [
+                        "electrical"
+                    ],
+                    "not": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                },
+                {
+                    "required": [
+                        "dies"
+                    ],
+                    "not": {
+                        "required": [
+                            "electrical"
+                        ]
+                    }
+                }
+            ],
+            "allOf": [
+                {
+                    "$comment": "A package that declares two or more die must describe them per die (the same gate as mosfet.json, from day one: there are no legacy rows to grandfather).",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "dieConfiguration"
+                                ],
+                                "properties": {
+                                    "dieConfiguration": {
+                                        "enum": [
+                                            "dual"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                },
+                {
+                    "$comment": "Matching relates die; it has nothing to attach to on a single-die record.",
+                    "if": {
+                        "required": [
+                            "matching"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                }
+            ]
+        },
+        "subType": {
+            "title": "jfetSubType",
+            "description": "Channel type of a junction FET. Requirement-side enums $ref this anchor.",
+            "type": "string",
+            "enum": [
+                "nChannel",
+                "pChannel"
+            ]
+        },
+        "electrical": {
+            "title": "jfetElectrical",
+            "description": "JFET electrical characteristics - small-signal and low-noise JFETs (J111, 2SK, U40x, JFE150, LSK389) and normally-on SiC power JFETs (UnitedSiC UJ3N). Values SI. Absolute-maximum voltages and currents are magnitudes; the bias quantities whose sign carries meaning (V_GS(off), test V_GS) are signed exactly as printed (negative for an n-channel part). A SiC cascode (JFET + LV MOSFET, UJ3C/UJ4C/UF3C) is normally-off and is a mosfet.json part, not this file.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "drainSourceVoltage": {
+                    "description": "V_DS / V_DSS absolute maximum (or the guaranteed V_(BR)DSS where that is the only drain rating), in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "gateDrainVoltageMax": {
+                    "description": "V_GD / V_DG absolute maximum reverse gate-drain voltage, in V - the drain rating many small-signal JFETs print instead of V_DS (J111 'V_DG 35 V').",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "gateSourceVoltageMax": {
+                    "description": "V_GS / V_GSS absolute maximum reverse gate-source voltage (or V_(BR)GSS), in V, as a magnitude. Same name as the mosfet field.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "gateForwardCurrentMax": {
+                    "description": "I_GF / I_GS absolute maximum forward gate current, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "continuousDrainCurrent": {
+                    "description": "I_D / I_DS absolute maximum drain current, in A. Same name as the mosfet field.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "saturationDrainCurrent": {
+                    "description": "I_DSS: drain current at V_GS = 0, in A (magnitude), at saturationDrainCurrentVds. Graded parts (2SK209-GR) are catalogued per orderable grade.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "saturationDrainCurrentVds": {
+                    "description": "Drain-source voltage at which saturationDrainCurrent is specified, in V, signed as printed.",
+                    "type": "number"
+                },
+                "gateSourceCutoffVoltage": {
+                    "description": "V_GS(off) / V_P / V_GSC: gate-source voltage at which the drain current falls to cutoffDrainCurrent, in V, SIGNED as printed (-1.5..-0.9 V for an n-channel part).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "cutoffDrainCurrent": {
+                    "description": "Drain current that defines gateSourceCutoffVoltage, in A (0.1 uA = 1e-7).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "cutoffDrainSourceVoltage": {
+                    "description": "Drain-source voltage at which gateSourceCutoffVoltage is specified, in V, signed as printed.",
+                    "type": "number"
+                },
+                "transconductance": {
+                    "description": "g_fs / g_m at each printed bias (see jfetTransconductance).",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/transconductance"
+                    }
+                },
+                "onResistance": {
+                    "description": "r_DS(on) at V_GS = 0 (switch JFETs, SiC JFETs), in Ohm. Same name as the mosfet field.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "gateLeakageCurrent": {
+                    "description": "I_GSS / I_G gate leakage (reverse gate current), in A (magnitude), at gateLeakageVoltage.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "gateLeakageVoltage": {
+                    "description": "Gate-source voltage at which gateLeakageCurrent is specified, in V, signed as printed.",
+                    "type": "number"
+                },
+                "inputCapacitance": {
+                    "description": "C_iss, in F, at capacitanceMeasurementVds. Same name as the mosfet field.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "reverseTransferCapacitance": {
+                    "description": "C_rss, in F. Same name as the mosfet field.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "outputCapacitance": {
+                    "description": "C_oss, in F. Same name as the mosfet field.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "capacitanceMeasurementVds": {
+                    "description": "Drain-source voltage at which the capacitances are specified, in V. Same name as the mosfet field.",
+                    "type": "number"
+                },
+                "totalGateCharge": {
+                    "description": "Q_g of a power JFET, in C. Same name as the mosfet field.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "powerDissipation": {
+                    "description": "P_D maximum, in W.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "voltageNoiseDensity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Input-referred voltage noise density e_n, in V/sqrt(Hz). Same name and unit as AAS amplifierCommon.voltageNoiseDensity and bjt.json, so one query covers op amps, matched BJTs and JFETs. Typical column."
+                },
+                "voltageNoiseDensityFrequency": {
+                    "description": "Frequency at which voltageNoiseDensity is specified, in Hz.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "voltageNoiseDensityDrainCurrent": {
+                    "description": "Drain current at which voltageNoiseDensity is specified, in A (a JFET's e_n falls with I_D).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "currentNoiseDensity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Input current noise density i_n, in A/sqrt(Hz) (the AAS name). Typical column."
+                },
+                "currentNoiseDensityFrequency": {
+                    "description": "Frequency at which currentNoiseDensity is specified, in Hz.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                }
+            },
+            "anyOf": [
+                {
+                    "required": [
+                        "drainSourceVoltage"
+                    ]
+                },
+                {
+                    "required": [
+                        "gateDrainVoltageMax"
+                    ]
+                }
+            ],
+            "dependentRequired": {
+                "saturationDrainCurrentVds": [
+                    "saturationDrainCurrent"
+                ],
+                "cutoffDrainCurrent": [
+                    "gateSourceCutoffVoltage"
+                ],
+                "cutoffDrainSourceVoltage": [
+                    "gateSourceCutoffVoltage"
+                ],
+                "gateLeakageVoltage": [
+                    "gateLeakageCurrent"
+                ],
+                "voltageNoiseDensityFrequency": [
+                    "voltageNoiseDensity"
+                ],
+                "voltageNoiseDensityDrainCurrent": [
+                    "voltageNoiseDensity"
+                ],
+                "currentNoiseDensityFrequency": [
+                    "currentNoiseDensity"
+                ]
+            }
+        },
+        "transconductance": {
+            "title": "jfetTransconductance",
+            "description": "Forward transconductance at one stated bias. JFET datasheets print it at full conduction (V_GS = 0, the classic g_fs / y_fs) and at one or more operating currents (g_m at I_D = 2 mA), so each is an entry.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "transconductance": {
+                    "description": "g_fs / g_m, in S.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "drainCurrent": {
+                    "description": "Drain current of the test, in A (magnitude). Absent with gateSourceVoltage 0 = full conduction.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "gateSourceVoltage": {
+                    "description": "Gate-source voltage of the test, in V, signed as printed (0 for full conduction).",
+                    "type": "number"
+                },
+                "drainSourceVoltage": {
+                    "description": "Drain-source voltage of the test, in V, signed as printed.",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "transconductance"
+            ],
+            "anyOf": [
+                {
+                    "required": [
+                        "drainCurrent"
+                    ]
+                },
+                {
+                    "required": [
+                        "gateSourceVoltage"
+                    ]
+                }
+            ]
+        },
+        "matching": {
+            "title": "jfetMatching",
+            "description": "One matching specification between the die of a dual JFET (LSK389, U401-U406, 2SK3557): how closely the named die agree at the stated conditions. Sits beside dies[] (a property of a pair, never of one die), like bjt.json matching. Magnitudes.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "dies": {
+                    "description": "Names (dies[].name) of the die related. Absent = any two die of the part.",
+                    "type": "array",
+                    "minItems": 2,
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "gateSourceVoltageMatch": {
+                    "description": "|V_GS1 - V_GS2| at equal drain current (the pair's offset), in V.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "gateSourceVoltageMatchDrift": {
+                    "description": "Temperature drift of the V_GS match, in V/K.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "saturationDrainCurrentMatch": {
+                    "description": "I_DSS match |1 - I_DSS1/I_DSS2| as a fraction.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "transconductanceMatch": {
+                    "description": "g_fs match |1 - g_fs1/g_fs2| as a fraction.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "gateCurrentMatch": {
+                    "description": "|I_G1 - I_G2|, in A.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "testDrainCurrent": {
+                    "description": "Drain current per die at which the matching is specified, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "testDrainGateVoltage": {
+                    "description": "Drain-gate voltage at which the matching is specified, in V.",
+                    "type": "number"
+                },
+                "testTemperature": {
+                    "description": "Ambient temperature of the test, in degC.",
+                    "type": "number"
+                }
+            },
+            "anyOf": [
+                {
+                    "required": [
+                        "gateSourceVoltageMatch"
+                    ]
+                },
+                {
+                    "required": [
+                        "gateSourceVoltageMatchDrift"
+                    ]
+                },
+                {
+                    "required": [
+                        "saturationDrainCurrentMatch"
+                    ]
+                },
+                {
+                    "required": [
+                        "transconductanceMatch"
+                    ]
+                },
+                {
+                    "required": [
+                        "gateCurrentMatch"
+                    ]
+                }
+            ]
+        },
+        "die": {
+            "title": "jfetDie",
+            "description": "One JFET die inside a multi-die package, with the complete JFET electrical block the single-device file defines: same physics, same field names, stated once per die (per-die values as the datasheet prints them 'per device' / 'each'; a package total is never divided down).",
+            "unevaluatedProperties": false,
+            "allOf": [
+                {
+                    "$ref": "./utils.json#/$defs/dieBase"
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "electrical"
+                    ],
+                    "properties": {
+                        "subType": {
+                            "description": "Type OF THIS DIE where the die of one package differ.",
+                            "$ref": "#/$defs/subType"
+                        },
+                        "electrical": {
+                            "description": "The complete JFET electrical block, per die.",
+                            "$ref": "#/$defs/electrical"
+                        },
+                        "thermal": {
+                            "description": "Per-die thermal figures where the datasheet gives them. The package figure stays in datasheetInfo.thermal.",
+                            "$ref": "./utils.json#/$defs/thermal"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

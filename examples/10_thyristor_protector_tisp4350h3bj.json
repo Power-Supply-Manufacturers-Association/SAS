@@ -1,0 +1,166 @@
+{
+  "thyristor": {
+    "manufacturerInfo": {
+      "name": "Bourns",
+      "reference": "TISP4350H3BJ",
+      "status": "production",
+      "description": "Bidirectional thyristor overvoltage protector, VDRM 275 V, V(BO) 350 V, SMB",
+      "datasheetUrl": "https://www.bourns.com/docs/Product-Datasheets/tisp4xxxh3bj.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "TISP4350H3BJ",
+          "series": "TISP4xxxH3BJ",
+          "technology": "Si",
+          "subType": "surgeProtector",
+          "case": "SMB",
+          "package": "SMBJ"
+        },
+        "electrical": {
+          "conductionDirection": "bidirectional",
+          "repetitivePeakOffStateVoltage": 275,
+          "breakoverVoltage": {
+            "maximum": 350
+          },
+          "breakoverVoltageRampRate": 750000.0,
+          "impulseBreakoverVoltage": {
+            "maximum": 362
+          },
+          "impulseBreakoverVoltageRampRate": 1000000000.0,
+          "impulseBreakoverCurrentRampRate": 20000000.0,
+          "breakoverCurrent": {
+            "minimum": 0.15,
+            "maximum": 0.6
+          },
+          "holdingCurrent": {
+            "minimum": 0.15,
+            "maximum": 0.6
+          },
+          "onStateVoltage": {
+            "maximum": 3
+          },
+          "onStateVoltageCurrent": 5,
+          "offStateCurrent": [
+            {
+              "current": {
+                "maximum": 5e-06
+              },
+              "voltage": 275,
+              "temperature": 25
+            },
+            {
+              "current": {
+                "maximum": 1e-05
+              },
+              "voltage": 275,
+              "temperature": 85
+            }
+          ],
+          "criticalRateOfRiseOffStateVoltage": {
+            "minimum": 5000000000.0
+          },
+          "criticalRateOfRiseOnStateCurrent": 400000000.0,
+          "peakPulseCurrents": [
+            {
+              "current": 500,
+              "waveform": "2/10"
+            },
+            {
+              "current": 300,
+              "waveform": "8/20"
+            },
+            {
+              "current": 250,
+              "waveform": "10/160"
+            },
+            {
+              "current": 220,
+              "waveform": "5/200"
+            },
+            {
+              "current": 200,
+              "waveform": "0.2/310"
+            },
+            {
+              "current": 200,
+              "waveform": "5/310"
+            },
+            {
+              "current": 160,
+              "waveform": "10/560"
+            },
+            {
+              "current": 100,
+              "waveform": "10/1000"
+            }
+          ],
+          "surgeOnStateCurrent": [
+            {
+              "current": 55,
+              "duration": 0.02,
+              "shape": "fullSine"
+            },
+            {
+              "current": 60,
+              "duration": 0.0167,
+              "shape": "fullSine"
+            },
+            {
+              "current": 2.1,
+              "duration": 1000,
+              "shape": "fullSine"
+            }
+          ],
+          "offStateCapacitance": [
+            {
+              "capacitance": {
+                "nominal": 5.5e-11,
+                "maximum": 6.2e-11
+              },
+              "biasVoltage": -2,
+              "frequency": 100000.0
+            },
+            {
+              "capacitance": {
+                "nominal": 2.4e-11,
+                "maximum": 2.8e-11
+              },
+              "biasVoltage": -50,
+              "frequency": 100000.0
+            }
+          ]
+        },
+        "thermal": {
+          "thermalResistanceJunctionAmbient": 113,
+          "junctionTemperatureMin": -40,
+          "junctionTemperatureMax": 150
+        },
+        "mechanical": {
+          "case": "SMB",
+          "pinout": [
+            {
+              "pin": "1",
+              "name": "R (B)",
+              "function": "mainTerminal1"
+            },
+            {
+              "pin": "2",
+              "name": "T (A)",
+              "function": "mainTerminal2"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Bourns TISP4xxxH3BJ Overvoltage Protector Series data sheet (Nov 1997, rev. Mar 2021)",
+            "sourceUrl": "https://www.bourns.com/docs/Product-Datasheets/tisp4xxxh3bj.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "V(BO) at dv/dt 750 V/ms, Rsource 300 ohm; impulse V(BO) at dv/dt <= 1000 V/us, di/dt 20 A/us; Coff at f 100 kHz, Vd 1 V rms"
+          }
+        ]
+      }
+    }
+  }
+}

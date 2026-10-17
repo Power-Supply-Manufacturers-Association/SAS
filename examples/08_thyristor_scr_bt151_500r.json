@@ -1,0 +1,127 @@
+{
+  "thyristor": {
+    "manufacturerInfo": {
+      "name": "WeEn Semiconductors",
+      "reference": "BT151-500R",
+      "status": "production",
+      "description": "SCR, 500 V, 12 A RMS, TO-220AB",
+      "datasheetUrl": "https://www.ween-semi.com/datasheet/BT151-500R.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "BT151-500R",
+          "technology": "Si",
+          "subType": "scr",
+          "case": "TO-220AB",
+          "package": "SOT78"
+        },
+        "electrical": {
+          "conductionDirection": "unidirectional",
+          "repetitivePeakOffStateVoltage": 500,
+          "repetitivePeakReverseVoltage": 500,
+          "averageOnStateCurrent": 7.5,
+          "rmsOnStateCurrent": 12,
+          "onStateCurrentTemperature": 109,
+          "onStateCurrentTemperatureReference": "case",
+          "surgeOnStateCurrent": [
+            {
+              "current": 120,
+              "duration": 0.01,
+              "shape": "halfSine"
+            },
+            {
+              "current": 132,
+              "duration": 0.0083,
+              "shape": "halfSine"
+            }
+          ],
+          "currentSquaredTime": 72,
+          "currentSquaredTimeDuration": 0.01,
+          "criticalRateOfRiseOnStateCurrent": 50000000.0,
+          "criticalRateOfRiseOffStateVoltage": {
+            "minimum": 50000000.0,
+            "nominal": 130000000.0
+          },
+          "criticalRateOfRiseOffStateVoltageTemperature": 125,
+          "gateTriggerCurrent": {
+            "nominal": 0.002,
+            "maximum": 0.015
+          },
+          "latchingCurrent": {
+            "nominal": 0.01,
+            "maximum": 0.04
+          },
+          "holdingCurrent": {
+            "nominal": 0.007,
+            "maximum": 0.02
+          },
+          "gateTriggerVoltage": {
+            "nominal": 0.6,
+            "maximum": 1.5
+          },
+          "peakGateCurrent": 2,
+          "peakGateReverseVoltage": 5,
+          "peakGatePower": 5,
+          "averageGatePower": 0.5,
+          "onStateVoltage": {
+            "nominal": 1.4,
+            "maximum": 1.75
+          },
+          "onStateVoltageCurrent": 23,
+          "offStateCurrent": [
+            {
+              "current": {
+                "nominal": 0.0001,
+                "maximum": 0.0005
+              },
+              "voltage": 500,
+              "temperature": 125
+            }
+          ],
+          "gateControlledTurnOnTime": 2e-06,
+          "circuitCommutatedTurnOffTime": 7e-05
+        },
+        "thermal": {
+          "thermalResistanceJunctionCase": 1.3,
+          "thermalResistanceJunctionAmbient": 60,
+          "junctionTemperatureMax": 125
+        },
+        "mechanical": {
+          "case": "TO-220AB",
+          "pinout": [
+            {
+              "pin": "1",
+              "name": "K",
+              "function": "cathode"
+            },
+            {
+              "pin": "2",
+              "name": "A",
+              "function": "anode"
+            },
+            {
+              "pin": "3",
+              "name": "G",
+              "function": "gate"
+            },
+            {
+              "pin": "mb",
+              "name": "A",
+              "function": "anode"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "WeEn BT151-500R product data sheet (22 February 2018)",
+            "sourceUrl": "https://www.ween-semi.com/datasheet/BT151-500R.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "Rth(j-mb) recorded as junction-case; dVD/dt gate open, Tj 125 C"
+          }
+        ]
+      }
+    }
+  }
+}

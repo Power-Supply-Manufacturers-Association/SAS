@@ -1,0 +1,516 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://psma.com/sas/optocoupler.json",
+    "title": "optocoupler",
+    "description": "Optocoupler (optically coupled isolator) component data: LED input, photo-detector output of the stated subType, galvanic isolation barrier. The presence of the 'optocoupler' field at the top level of an SAS document discriminates the device type. PhotoMOS / photorelay / SSR parts are EMAS relays; optical isolation amplifiers are CTAS.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "manufacturerInfo": {
+            "title": "optocouplerManufacturerInfo",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/name"
+                },
+                "reference": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/reference"
+                },
+                "status": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/status"
+                },
+                "description": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/description"
+                },
+                "orderCode": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/orderCode"
+                },
+                "datasheetUrl": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/datasheetUrl"
+                },
+                "spiceModel": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/spiceModel"
+                },
+                "family": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/family"
+                },
+                "datasheetInfo": {
+                    "$ref": "#/$defs/datasheetInfo"
+                }
+            },
+            "required": [
+                "name",
+                "datasheetInfo"
+            ]
+        },
+        "distributorsInfo": {
+            "description": "Where to buy this component",
+            "type": "array",
+            "items": {
+                "$ref": "https://psma.com/peas/utils.json#/$defs/distributorInfo"
+            }
+        },
+        "substitutesInfo": {
+            "description": "Replacement parts for this one: manufacturer-named successors and second sources. An entry with type 'successor' means THIS part is superseded by the named one, one hop, as the manufacturer states it - never inferred from a status of obsolete or from part-number similarity. The schema cannot check that the named part exists in the catalogue, or exists exactly once; that is the referential pass's job, as for CIAS component URIs. Evidence for the claim goes in the record's provenance[] with fields: [\"substitutesInfo\"], carrying the same sourceUrl, retrievedDate and verification stamp as any datasheet field.",
+            "type": "array",
+            "items": {
+                "$ref": "https://psma.com/peas/utils.json#/$defs/substituteInfo"
+            }
+        },
+        "spiceModel": {
+            "description": "Device-body SPICE .model card for a simulation-sourced part (no datasheet). Faithful home that does not require manufacturerInfo.",
+            "$ref": "./utils.json#/$defs/spiceModel"
+        }
+    },
+    "anyOf": [
+        {
+            "required": [
+                "manufacturerInfo"
+            ]
+        },
+        {
+            "required": [
+                "spiceModel"
+            ]
+        },
+        {
+            "maxProperties": 0
+        }
+    ],
+    "$defs": {
+        "datasheetInfo": {
+            "title": "optocouplerDatasheetInfo",
+            "description": "All information extracted from an optocoupler datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "part": {
+                    "allOf": [
+                        {
+                            "$ref": "./utils.json#/$defs/part"
+                        },
+                        {
+                            "$comment": "Device-specific narrowing of the shared part def: subType must come from this closed enum (protects the exact-string conditionals below).",
+                            "properties": {
+                                "subType": {
+                                    "$ref": "#/$defs/subType"
+                                },
+                                "technology": {
+                                    "description": "Material of the OUTPUT (detector) die, which decides the output behaviour; the emitter (GaAs / AlGaAs LED) is not recorded here."
+                                },
+                                "dieConfiguration": {
+                                    "not": {}
+                                },
+                                "internalConnection": {
+                                    "not": {}
+                                }
+                            }
+                        }
+                    ]
+                },
+                "electrical": {
+                    "$ref": "#/$defs/electrical"
+                },
+                "thermal": {
+                    "$ref": "./utils.json#/$defs/thermal"
+                },
+                "mechanical": {
+                    "$ref": "./utils.json#/$defs/mechanical"
+                },
+                "provenance": {
+                    "description": "Data-provenance trail (see provenance).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/provenance"
+                }
+            },
+            "required": [
+                "part",
+                "electrical"
+            ],
+            "allOf": [
+                {
+                    "$comment": "An isolator without its isolation voltage is not catalogue-grade: every optocoupler datasheet prints V_ISO.",
+                    "properties": {
+                        "electrical": {
+                            "properties": {
+                                "isolation": {
+                                    "required": [
+                                        "withstandVoltageRms"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "subType"
+                                ],
+                                "properties": {
+                                    "subType": {
+                                        "enum": [
+                                            "phototransistor",
+                                            "photodarlington"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "required": [
+                                    "collectorEmitterVoltage",
+                                    "currentTransferRatio"
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "Bipolar-output figures belong to a bipolar output only.",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "subType"
+                                ],
+                                "properties": {
+                                    "subType": {
+                                        "not": {
+                                            "enum": [
+                                                "phototransistor",
+                                                "photodarlington"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "not": {
+                                    "anyOf": [
+                                        {
+                                            "required": [
+                                                "collectorEmitterVoltage"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "emitterCollectorVoltage"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "collectorCurrent"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "collectorPeakCurrent"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "collectorDarkCurrent"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "saturationVoltage"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "currentTransferRatio"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "zeroCrossing and peakBlockingVoltage describe a thyristor output only.",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "subType"
+                                ],
+                                "properties": {
+                                    "subType": {
+                                        "not": {
+                                            "const": "photoThyristor"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "not": {
+                                    "anyOf": [
+                                        {
+                                            "required": [
+                                                "zeroCrossing"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "peakBlockingVoltage"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "subType": {
+            "title": "optocouplerSubType",
+            "description": "Output stage of the optocoupler - the axis that decides what the part can replace. 'phototransistor' / 'photodarlington' = bipolar photo-detector output (PC817, VO617A, 4N25 / 4N32); 'logicOutput' = photodiode + amplifier with a digital output (6N137, HCPL-2601, TLP2361); 'gateDriver' = optical IGBT/MOSFET gate driver with a push-pull output stage (TLP250, HCPL-3120, ACPL-332J); 'photoThyristor' = photo-SCR or photo-triac output, including zero-cross and random-phase triac drivers (MOC3021, MOC3063, H11C1); 'photovoltaic' = photovoltaic-cell output that generates a floating gate voltage (VOM1271, APV1121); 'linear' = photodiode-output analog coupler (HCNR201, IL300). Boundaries: a part the vendor sells as a PhotoMOS / photorelay / solid-state relay is an EMAS relay (technology solidState); an optical isolation AMPLIFIER (TLP78xx) is CTAS; magnetic and capacitive isolators are AAS digitalIsolator / CTAS. Requirement-side enums $ref this anchor.",
+            "type": "string",
+            "enum": [
+                "phototransistor",
+                "photodarlington",
+                "logicOutput",
+                "gateDriver",
+                "photoThyristor",
+                "photovoltaic",
+                "linear"
+            ]
+        },
+        "electrical": {
+            "title": "optocouplerElectrical",
+            "description": "Optocoupler electrical characteristics. ONE CHANNEL: a multi-channel part (dual / quad PC827 / PC847) states numberOfChannels and every value below is per channel, as datasheets print them. Values SI (V, A, W, s, Hz, F); current transfer ratio is a FRACTION (100 % = 1.0), never percent. Input side = the LED; output side = the detector. The isolation barrier is the shared PEAS isolationRating at electrical.isolation (the CTAS / AAS convention), not an optocoupler-local block.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "numberOfChannels": {
+                    "description": "Number of identical coupler channels in the package. Absent = 1.",
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "inputForwardCurrentMax": {
+                    "description": "I_F absolute maximum continuous LED forward current, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputReverseVoltageMax": {
+                    "description": "V_R absolute maximum LED reverse voltage, in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputSurgeCurrent": {
+                    "description": "I_FSM LED forward surge current, in A, for inputSurgeCurrentDuration.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputSurgeCurrentDuration": {
+                    "description": "Pulse duration of inputSurgeCurrent, in s.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputPowerDissipation": {
+                    "description": "LED power dissipation P_diss, in W.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputForwardVoltage": {
+                    "description": "V_F, in V, at inputForwardVoltageCurrent.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "inputForwardVoltageCurrent": {
+                    "description": "Forward current at which inputForwardVoltage is specified, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputThresholdCurrent": {
+                    "description": "Input threshold current I_FT / I_FLH / I_FT(on) of a logicOutput, gateDriver or photoThyristor coupler: the LED current that guarantees the output switches, in A (the guarantee is the maximum).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "collectorEmitterVoltage": {
+                    "description": "V_CEO absolute maximum of a transistor output, in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "emitterCollectorVoltage": {
+                    "description": "V_ECO absolute maximum of a transistor output, in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "collectorCurrent": {
+                    "description": "I_C absolute maximum continuous output current of a transistor output, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "collectorPeakCurrent": {
+                    "description": "I_CM peak output current of a transistor output, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "collectorDarkCurrent": {
+                    "description": "I_CEO (dark current) of a transistor output, in A, at collectorDarkCurrentVce.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "collectorDarkCurrentVce": {
+                    "description": "Collector-emitter voltage at which collectorDarkCurrent is specified, in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "saturationVoltage": {
+                    "description": "V_CE(sat) of a transistor output, in V, at saturationVoltageForwardCurrent / saturationVoltageCollectorCurrent.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "saturationVoltageForwardCurrent": {
+                    "description": "LED forward current of the saturationVoltage test, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "saturationVoltageCollectorCurrent": {
+                    "description": "Collector current of the saturationVoltage test, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "currentTransferRatio": {
+                    "description": "CTR = I_C / I_F as a FRACTION (a 100..200 % bin is minimum 1.0, maximum 2.0), at currentTransferRatioForwardCurrent and currentTransferRatioVce. A CTR-binned part (VO617A-3) is catalogued per orderable bin with that bin's limits.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "currentTransferRatioForwardCurrent": {
+                    "description": "LED forward current of the CTR test, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "currentTransferRatioVce": {
+                    "description": "Collector-emitter voltage of the CTR test, in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "outputPowerDissipation": {
+                    "description": "Output-side power dissipation, in W.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "totalPowerDissipation": {
+                    "description": "P_tot of the coupler (both sides), in W.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "peakBlockingVoltage": {
+                    "description": "V_DRM of a photoThyristor output, in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "zeroCrossing": {
+                    "description": "photoThyristor output only: true for a zero-cross (zero-voltage-switching) triac driver, false for a random-phase one.",
+                    "type": "boolean"
+                },
+                "outputPeakCurrent": {
+                    "description": "I_OPK peak output current of a gateDriver output stage (source or sink, the lower of the two as printed), in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "supplyVoltageMax": {
+                    "description": "Absolute maximum output-side supply voltage V_CC (logicOutput, gateDriver), in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "propagationDelayHighToLow": {
+                    "description": "t_PHL, in s.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "propagationDelayLowToHigh": {
+                    "description": "t_PLH, in s.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "dataRate": {
+                    "description": "Maximum signalling rate of a logicOutput coupler, in bit/s (Bd as printed).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "riseTime": {
+                    "description": "Output rise time t_r, in s, in the test circuit of switchingLoadResistance.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "fallTime": {
+                    "description": "Output fall time t_f, in s.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "turnOnTime": {
+                    "description": "t_on, in s.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "turnOffTime": {
+                    "description": "t_off, in s.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "switchingLoadResistance": {
+                    "description": "Load resistor R_L of the switching-time test circuit, in Ohm (the times scale with it).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "switchingSaturated": {
+                    "description": "true when the switching times are the SATURATED test (output driven into saturation), false for the non-saturated (linear) test. Vendors print both; the record carries one set.",
+                    "type": "boolean"
+                },
+                "cutoffFrequency": {
+                    "description": "Small-signal cut-off frequency f_ctr / f_c, in Hz.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "isolation": {
+                    "description": "Galvanic-isolation barrier rating (the shared PEAS isolationRating, hoisted from CTAS with its key names). V_ISO -> withstandVoltageRms + withstandVoltageDuration, V_IORM -> workingVoltage, V_IOTM -> transientVoltage, C_C / C_IO coupling capacitance -> barrierCapacitance, CMTI -> cmti.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/isolationRating"
+                }
+            },
+            "required": [
+                "isolation"
+            ],
+            "dependentRequired": {
+                "inputSurgeCurrentDuration": [
+                    "inputSurgeCurrent"
+                ],
+                "inputForwardVoltageCurrent": [
+                    "inputForwardVoltage"
+                ],
+                "collectorDarkCurrentVce": [
+                    "collectorDarkCurrent"
+                ],
+                "saturationVoltageForwardCurrent": [
+                    "saturationVoltage"
+                ],
+                "saturationVoltageCollectorCurrent": [
+                    "saturationVoltage"
+                ],
+                "currentTransferRatioForwardCurrent": [
+                    "currentTransferRatio"
+                ],
+                "currentTransferRatioVce": [
+                    "currentTransferRatio"
+                ]
+            }
+        }
+    }
+}

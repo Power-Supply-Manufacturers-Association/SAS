@@ -24,6 +24,12 @@ add_custom_command(
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/diode.json"
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/igbt.json"
             -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/bjt.json"
+            # thyristor/jfet/optocoupler are also referenced by designRequirements.json (the
+            # thyristorType/channel/outputType anchors -> <kind>.json#/$defs/subType); sourced for the
+            # same Windows $id-resolution reason as module.json below.
+            -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/thyristor.json"
+            -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/jfet.json"
+            -S "${CMAKE_CURRENT_SOURCE_DIR}/schemas/optocoupler.json"
             # module.json is referenced by designRequirements.json (allowedSwitchTechnologies ->
             # module.json#/$defs/switchTechnology); feed it as a source so Windows quicktype resolves
             # the ref by $id (it fails to fetch the relative file $ref on Windows, unlike Linux).
@@ -46,6 +52,9 @@ add_custom_command(
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/schemas/SAS.json"
             "${CMAKE_CURRENT_SOURCE_DIR}/schemas/mosfet.json"
             "${CMAKE_CURRENT_SOURCE_DIR}/schemas/diode.json"
+            "${CMAKE_CURRENT_SOURCE_DIR}/schemas/thyristor.json"
+            "${CMAKE_CURRENT_SOURCE_DIR}/schemas/jfet.json"
+            "${CMAKE_CURRENT_SOURCE_DIR}/schemas/optocoupler.json"
     COMMENT "Generating SAS.hpp via quicktype"
     VERBATIM)
 add_custom_target(sas_generated_header DEPENDS "${SAS_HPP}")

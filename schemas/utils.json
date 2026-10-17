@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://psma.com/sas/utils.json",
     "title": "SAS utils",
-    "description": "Shared sub-schemas reused by every SAS per-type document (mosfet, diode, igbt, bjt). Component-specific electricals, modelParams and curves live in the per-type files.",
+    "description": "Shared sub-schemas reused by every SAS per-type document (mosfet, diode, igbt, bjt, thyristor, jfet, optocoupler, module). Component-specific electricals, modelParams and curves live in the per-type files.",
     "$defs": {
         "part": {
             "title": "semiconductorPart",

@@ -1,0 +1,121 @@
+{
+  "optocoupler": {
+    "manufacturerInfo": {
+      "name": "Vishay",
+      "reference": "VO617A-3",
+      "status": "production",
+      "description": "Optocoupler, phototransistor output, 5300 VRMS, CTR 100-200 %, DIP-4",
+      "datasheetUrl": "https://www.vishay.com/docs/83430/vo617a.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "VO617A-3",
+          "series": "VO617A",
+          "technology": "Si",
+          "subType": "phototransistor",
+          "case": "DIP-4"
+        },
+        "electrical": {
+          "numberOfChannels": 1,
+          "inputForwardCurrentMax": 0.06,
+          "inputReverseVoltageMax": 6,
+          "inputSurgeCurrent": 1.5,
+          "inputSurgeCurrentDuration": 1e-05,
+          "inputPowerDissipation": 0.07,
+          "inputForwardVoltage": {
+            "minimum": 1.0,
+            "nominal": 1.35,
+            "maximum": 1.65
+          },
+          "inputForwardVoltageCurrent": 0.06,
+          "collectorEmitterVoltage": 80,
+          "emitterCollectorVoltage": 7,
+          "collectorCurrent": 0.05,
+          "collectorPeakCurrent": 0.1,
+          "collectorDarkCurrent": {
+            "nominal": 5e-09,
+            "maximum": 1e-07
+          },
+          "collectorDarkCurrentVce": 10,
+          "saturationVoltage": {
+            "nominal": 0.25,
+            "maximum": 0.4
+          },
+          "saturationVoltageForwardCurrent": 0.005,
+          "saturationVoltageCollectorCurrent": 0.001,
+          "currentTransferRatio": {
+            "minimum": 1.0,
+            "maximum": 2.0
+          },
+          "currentTransferRatioForwardCurrent": 0.005,
+          "currentTransferRatioVce": 5,
+          "outputPowerDissipation": 0.15,
+          "totalPowerDissipation": 0.2,
+          "riseTime": {
+            "nominal": 2e-06
+          },
+          "fallTime": {
+            "nominal": 2e-06
+          },
+          "turnOnTime": {
+            "nominal": 3e-06
+          },
+          "turnOffTime": {
+            "nominal": 2.3e-06
+          },
+          "switchingLoadResistance": 75,
+          "switchingSaturated": false,
+          "cutoffFrequency": 190000.0,
+          "isolation": {
+            "withstandVoltageRms": 5300,
+            "withstandVoltageDuration": 60,
+            "workingVoltage": 890,
+            "transientVoltage": 8000,
+            "barrierCapacitance": 4e-13,
+            "creepage": 0.007,
+            "clearance": 0.007,
+            "distanceThroughInsulation": 0.0004,
+            "comparativeTrackingIndex": 175,
+            "materialGroup": "IIIa",
+            "pollutionDegree": "PD2"
+          }
+        },
+        "mechanical": {
+          "case": "DIP-4",
+          "pinout": [
+            {
+              "pin": "1",
+              "name": "A",
+              "function": "anode"
+            },
+            {
+              "pin": "2",
+              "name": "C",
+              "function": "cathode"
+            },
+            {
+              "pin": "3",
+              "name": "E",
+              "function": "emitter"
+            },
+            {
+              "pin": "4",
+              "name": "C",
+              "function": "collector"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Vishay VO617A data sheet, document 83430 Rev. 2.8 (22-Jan-2025)",
+            "sourceUrl": "https://www.vishay.com/docs/83430/vo617a.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "CTR at IF 5 mA, VCE 5 V; non-saturated switching at IF 5 mA, VCC 5 V, RL 75 ohm; RIO given only at 115 C and 175 C"
+          }
+        ]
+      }
+    }
+  }
+}

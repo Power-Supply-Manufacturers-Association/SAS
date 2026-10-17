@@ -13,7 +13,7 @@
 
 ## What is SAS?
 
-**SAS is a standardized way to describe semiconductor components** -- MOSFETs, diodes, IGBTs, BJTs, and multi-die power modules -- used in power electronics. It captures everything from absolute maximum ratings and electrical characteristics to SPICE model parameters and characteristic curves, all in a single machine-readable JSON file.
+**SAS is a standardized way to describe semiconductor components** -- MOSFETs, diodes, IGBTs, BJTs, thyristors (SCR, triac, sidac, diac, thyristor surge protectors), JFETs, optocouplers and multi-die power modules -- used in power electronics. It captures everything from absolute maximum ratings and electrical characteristics to SPICE model parameters and characteristic curves, all in a single machine-readable JSON file.
 
 SAS is part of the **OpenConverters** family of agnostic structures:
 
@@ -22,7 +22,7 @@ PEAS (Power Electronics Agnostic Structure) -- Universal container
  |
  +-- MAS (Magnetic Agnostic Structure) -- Inductors, transformers, chokes
  +-- CAS (Capacitor Agnostic Structure) -- Capacitors
- +-- SAS (Semiconductor Agnostic Structure) -- MOSFETs, diodes, IGBTs, BJTs, power modules
+ +-- SAS (Semiconductor Agnostic Structure) -- MOSFETs, diodes, IGBTs, BJTs, thyristors, JFETs, optocouplers, power modules
  +-- RAS (Resistor Agnostic Structure) -- Resistors
 ```
 
@@ -68,7 +68,7 @@ Every SAS document has three parts, matching the PEAS pattern:
 ### The field-name discriminator
 
 `SAS.json` carries `inputs`, `outputs`, and **exactly one** of
-`{mosfet, diode, igbt, bjt, module}` — enforced by a top-level `oneOf`. **The field name
+`{mosfet, diode, igbt, bjt, thyristor, jfet, optocoupler, module}` — enforced by a top-level `oneOf`. **The field name
 *is* the discriminator; there is no `deviceType` property.** Each device field
 `$ref`s its own schema file, so a MOSFET document simply has no `diode` key and
 vice versa:
@@ -81,6 +81,9 @@ SAS.json
   |     +-- diode      ./diode.json
   |     +-- igbt       ./igbt.json
   |     +-- bjt        ./bjt.json
+  |     +-- thyristor  ./thyristor.json   (SCR, triac, sidac, diac, surge protector)
+  |     +-- jfet       ./jfet.json
+  |     +-- optocoupler ./optocoupler.json
   |     +-- module     ./module.json   (multi-die power module)
   +-- outputs[]        ./outputs.json  (aligned positionally with inputs.operatingPoints)
 ```
@@ -91,7 +94,7 @@ Each device file has the same outer shape — `manufacturerInfo` (+ nested
 prefixes — the file it lives in already fixes the device type):
 
 ```
-<device>.json                       (mosfet | diode | igbt | bjt | module)
+<device>.json                       (mosfet | diode | igbt | bjt | thyristor | jfet | optocoupler | module)
   +-- manufacturerInfo
   |     +-- name, reference, status, family, datasheetUrl, spiceModel, ...
   |     +-- datasheetInfo
@@ -214,6 +217,26 @@ document.
 - **packagePowerDissipation** -- only beside `dies`: the package total P_tot; each die keeps its per-transistor P_D
 - No modelParams or curves sections defined (BJTs are rarely used in new power designs)
 
+### Thyristor (SCR, triac, sidac, diac, thyristor surge protector)
+
+- **part.subType** -- `scr` / `triac` / `sidac` / `diac` / `surgeProtector` (a part sold as a protector is a `surgeProtector` even when its silicon is a sidac). Thyristor modules and press-pack discs are not this file
+- **electrical** -- V_DRM, V_RRM, conduction direction, I_T(RMS) / I_T(AV) + the case/ambient/lead temperature they are rated at, I_TSM as an array `{current, duration, shape: halfSine|fullSine}`, I^2t + duration, di/dt, dV/dt (gate open) + T_j, I_GT, V_GT, I_L, I_H, gate ratings, V_T + current, off-state leakage per condition, t_gt, t_q, isolated-tab V_isol / C_isol; triac only: per-quadrant gate figures (Q1..Q4), dI_com/dt, dV_com/dt; breakover devices: V_(BO) + ramp, impulse V_(BO) + dv/dt and di/dt, I_(BO), breakback; protectors: `peakPulseCurrents[]` `{current, waveform}` (one per printed impulse, waveform required, PEAS `surgeWaveform`), C_off per bias. A/us is stored as A/s
+- **headline ratings per member** -- scr: V_DRM + an on-state current; triac: V_DRM + I_T(RMS); sidac/diac: V_(BO); surgeProtector: V_DRM + V_(BO) + peakPulseCurrents
+- **dies** -- multi-line protectors: required once `part.dieConfiguration` is `dual`/`array`, mutually exclusive with the package `electrical`
+- Pinout: triac MT1/MT2 use the PEAS pin functions `mainTerminal1` / `mainTerminal2`
+
+### JFET (n- or p-channel; Si, SiC)
+
+- **electrical** -- V_DS and/or V_GD (one is required), V_GS max, I_GF max, I_D max, I_DSS + V_DS, V_GS(off) signed as printed + its I_D and V_DS, transconductance per bias (`{transconductance, drainCurrent, gateSourceVoltage, drainSourceVoltage}`), r_DS(on), I_GSS + voltage, C_iss/C_rss/C_oss, Q_g (power JFETs), P_D, e_n and i_n with their conditions (mosfet and AAS/bjt field names)
+- **dies + matching** -- duals (LSK389, U401-U406): per-die blocks plus V_GS / I_DSS / g_fs / I_G matching, the BJT pattern
+- SiC cascodes (UJ3C/UJ4C/UF3C) are normally-off and stay `mosfet`; normally-on SiC JFETs (UJ3N) are `jfet` with technology `SiC`
+
+### Optocoupler
+
+- **part.subType** -- the output stage: `phototransistor`, `photodarlington`, `logicOutput`, `gateDriver` (optical gate-drive couplers such as TLP250 / HCPL-3120), `photoThyristor`, `photovoltaic`, `linear`. PhotoMOS / photorelays / SSRs are EMAS relays; optical isolation amplifiers are CTAS
+- **electrical** (per channel; `numberOfChannels` for multi-channel parts) -- LED input (I_F, V_R, I_FSM + duration, P_diss, V_F + current, threshold current), transistor output (V_CEO, V_ECO, I_C, I_CM, I_CEO, V_CE(sat), **CTR as a fraction**, 100 % = 1.0), thyristor output (V_DRM, zero crossing), gate-driver / logic output (I_OPK, V_CC max, t_PHL, t_PLH, data rate), switching times + test load, cut-off frequency
+- **isolation** (required, with V_ISO required) -- the shared PEAS `isolationRating` (the CTAS key names: withstandVoltageRms + duration, workingVoltage, transientVoltage, barrierCapacitance, cmti, creepage, clearance, ...)
+
 ### Power Module (Si IGBT, Si/SiC MOSFET, GaN HEMT dies)
 
 - **electrical** -- `topology` (halfBridge, fullBridge, sixpack, boost, buck, chopper, singleSwitch, dualCommonSource, dualIndependent, asymmetricBridge, sixpackWithBrake, pim, threeLevel — derived from the Digi-Key IGBT-module Configuration filter + the Vincotech topology catalog), `switchTechnology` (siliconIgbt / siliconMosfet / sicMosfet / ganHemt), `numberOfSwitches`, per-switch ratings **reusing the discrete shapes by `$ref`** (`switch` is `mosfet.json`'s or `igbt.json`'s electrical block, pinned by switchTechnology), separate co-pack `diode` ratings (`diode.json`'s electrical block), loop-measured `switchingEnergy` (E_on/E_off + test conditions), baseplate `isolationVoltage`, integrated NTC (`ntcIntegrated`, R25, B-value)
@@ -301,11 +324,14 @@ The Foster network allows accurate transient thermal simulation -- essential for
 ```
 SAS/
 +-- schemas/
-|   +-- SAS.json              Top-level: inputs + (one of mosfet/diode/igbt/bjt) + outputs
+|   +-- SAS.json              Top-level: inputs + (one of mosfet/diode/igbt/bjt/thyristor/jfet/optocoupler/module) + outputs
 |   +-- mosfet.json           MOSFET device data
 |   +-- diode.json            Diode device data (per-subType required-field rules)
 |   +-- igbt.json             IGBT device data
 |   +-- bjt.json              BJT device data
+|   +-- thyristor.json        Thyristor device data (SCR, triac, sidac, diac, surge protector)
+|   +-- jfet.json             JFET device data
+|   +-- optocoupler.json      Optocoupler device data (isolation = PEAS isolationRating)
 |   +-- module.json           Multi-die power module data (topology + per-switch $refs)
 |   +-- inputs.json           Operating points + design requirements
 |   +-- inputs/
@@ -322,6 +348,11 @@ SAS/
 |   +-- 05_tvs_ptvs1_022c_h.json     22V TVS diode, 1 kA 8/20 us, with pulse waveforms
 |   +-- 06_bjt_dual_matched_ssm2212.json  dual matched NPN pair (dies[] + matching[])
 |   +-- 07_bjt_prebiased_dual_pumh11.json  pre-biased NPN/NPN pair (per-die biasResistors)
+|   +-- 08_thyristor_scr_bt151_500r.json   500 V / 12 A SCR
+|   +-- 09_thyristor_triac_bta16_600b.json 600 V / 16 A isolated-tab 4Q triac (MT1/MT2 pinout)
+|   +-- 10_thyristor_protector_tisp4350h3bj.json  bidirectional telecom surge protector, 8 impulse ratings
+|   +-- 11_optocoupler_vo617a_3.json      phototransistor optocoupler, CTR 100..200 % bin, 5300 V RMS
+|   +-- 12_jfet_jfe150.json                low-noise n-channel JFET
 |
 +-- src/                      C++ converter layer (semiconductor PEAS -> CIAS)
 +-- tests/                    pytest schema tests + C++ converter tests
@@ -438,6 +469,29 @@ Key features demonstrated:
   no `outputCurrentMax`; V_I +40 / -10 V -> `inputVoltageMax` 40, `inputReverseVoltageMax` 10
 - P_tot 200 mW per transistor on each die, 300 mW per device in `packagePowerDissipation`
 
+### Examples 8-12: Thyristors, an optocoupler and a JFET
+
+Files: `examples/08_thyristor_scr_bt151_500r.json` (WeEn BT151-500R, data sheet 22 Feb 2018),
+`examples/09_thyristor_triac_bta16_600b.json` (WeEn BTA16-600B, Rev.02 30 May 2023),
+`examples/10_thyristor_protector_tisp4350h3bj.json` (Bourns TISP4350H3BJ, rev. Mar 2021),
+`examples/11_optocoupler_vo617a_3.json` (Vishay VO617A-3, doc 83430 Rev 2.8) and
+`examples/12_jfet_jfe150.json` (TI JFE150, SLPS732B). Every value is read from the cited
+datasheet; each record carries its `provenance`.
+
+Key features demonstrated:
+- BT151: I_TSM printed twice (120 A / 10 ms, 132 A / 8.3 ms half sine) as two
+  `surgeOnStateCurrent` entries; dV/dt with the gate open only (the R_GK = 100 Ohm figure is left out);
+  leakage at 125 C as an `offStateCurrent` entry
+- BTA16: per-quadrant I_GT / I_L in `quadrantRatings` (Q1..Q4), dI_com/dt, the isolated tab
+  (V_isol 2500 V RMS, C_isol 10 pF) and an MT1/MT2/G pinout; R_th(j-h) is not recorded (it is
+  junction-to-heatsink, not junction-to-case)
+- TISP4350H3BJ: eight impulse ratings in `peakPulseCurrents[]`, including 5/310, 5/200 and 0.2/310,
+  and C_off at -2 V and -50 V
+- VO617A-3: the 100..200 % CTR bin stored as `{minimum 1.0, maximum 2.0}`; the isolation block maps
+  V_ISO 5300 V RMS / 60 s, V_IORM 890 V and V_IOTM 8000 V with no new key
+- JFE150: V_GS(off) signed as printed (-1.5..-0.9 V), g_fs at V_GS = 0 and g_m at 2 mA as two
+  `transconductance` entries, e_n with its frequency and drain current
+
 ---
 
 ## Quick Reference: Fields by Device Type
@@ -477,6 +531,9 @@ Key features demonstrated:
 | **diode** | depends on `part.subType`: rectifier family (`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`, or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating. Each pulse rating may state its waveform (`peakPulseCurrentWaveform`, `peakPulsePowerWaveform`, `clampingWaveform` + `clampingCurrent`; PEAS `surgeWaveform` enum), and a waveform requires its value |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
 | **bjt** | collectorEmitterVoltage, collectorCurrent -- in `electrical` for a single-die part, and in every `dies[]` entry (plus `name` and `subType`) for a multi-die one |
+| **thyristor** | depends on `part.subType`: scr -> repetitivePeakOffStateVoltage + rmsOnStateCurrent or averageOnStateCurrent; triac -> repetitivePeakOffStateVoltage, rmsOnStateCurrent; sidac/diac -> breakoverVoltage; surgeProtector -> repetitivePeakOffStateVoltage, breakoverVoltage, peakPulseCurrents (each with its waveform) |
+| **jfet** | drainSourceVoltage or gateDrainVoltageMax |
+| **optocoupler** | `electrical` itself, with isolation.withstandVoltageRms (V_ISO); phototransistor/photodarlington also collectorEmitterVoltage, currentTransferRatio |
 | **module** | topology, switchTechnology, numberOfSwitches, switch (whose own required set is the mosfet or igbt one above, per switchTechnology) |
 
 ---
@@ -486,7 +543,8 @@ Key features demonstrated:
 SAS ships **no part data**: the `data/` directory is empty by design. It is reserved for
 manufacturing building blocks (semiconductor dies and packages), none of which have been
 catalogued yet. All finished, orderable semiconductors live in `TAS/data/`
-(`mosfets.ndjson`, `diodes.ndjson`, `igbts.ndjson`, `bjts.ndjson`) as PEAS-wrapped
+(`mosfets.ndjson`, `diodes.ndjson`, `igbts.ndjson`, `bjts.ndjson`, `thyristors.ndjson`,
+`jfets.ndjson`, `optocouplers.ndjson`) as PEAS-wrapped
 `{"semiconductor": {...}}` records validated against these SAS schemas.
 
 ---

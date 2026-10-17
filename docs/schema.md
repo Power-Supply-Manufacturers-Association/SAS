@@ -13,16 +13,22 @@ alongside SAS. The reference documents for this schema are
 [`examples/02_diode_stps30l60ct.json`](../examples/02_diode_stps30l60ct.json),
 [`examples/03_module_ff2mr12w3m1h.json`](../examples/03_module_ff2mr12w3m1h.json),
 [`examples/04_mosfet_dual_iaucn04s7l025ah.json`](../examples/04_mosfet_dual_iaucn04s7l025ah.json)
-(a two-die MOSFET package) and
+(a two-die MOSFET package),
 [`examples/05_tvs_ptvs1_022c_h.json`](../examples/05_tvs_ptvs1_022c_h.json)
-(a TVS diode rated at 8/20 us, with its pulse waveforms stated).
+(a TVS diode rated at 8/20 us, with its pulse waveforms stated), and the thyristor / JFET /
+optocoupler records
+[`examples/08_thyristor_scr_bt151_500r.json`](../examples/08_thyristor_scr_bt151_500r.json),
+[`examples/09_thyristor_triac_bta16_600b.json`](../examples/09_thyristor_triac_bta16_600b.json),
+[`examples/10_thyristor_protector_tisp4350h3bj.json`](../examples/10_thyristor_protector_tisp4350h3bj.json),
+[`examples/11_optocoupler_vo617a_3.json`](../examples/11_optocoupler_vo617a_3.json) and
+[`examples/12_jfet_jfe150.json`](../examples/12_jfet_jfe150.json).
 
 ---
 
 ## Table of Contents
 
 - [Top-Level Structure (SAS.json)](#top-level-structure)
-- [Device Documents (mosfet.json, diode.json, igbt.json, bjt.json, module.json)](#device-documents)
+- [Device Documents (mosfet.json, diode.json, igbt.json, bjt.json, thyristor.json, jfet.json, optocoupler.json, module.json)](#device-documents)
   - [manufacturerInfo](#manufacturerinfo)
   - [distributorsInfo](#distributorsinfo)
   - [substitutesInfo](#substitutesinfo)
@@ -51,6 +57,22 @@ alongside SAS. The reference documents for this schema are
   - [bjtBiasResistors (pre-biased transistors)](#bjtbiasresistors)
 - [bjtDie (multi-die packages)](#bjtdie)
   - [bjtMatching](#bjtmatching)
+- [Thyristor Sections](#thyristor-sections)
+  - [thyristorElectrical](#thyristorelectrical)
+  - [triacQuadrantRating](#triacquadrantrating)
+  - [thyristorSurgeOnStateCurrent](#thyristorsurgeonstatecurrent)
+  - [thyristorPeakPulseCurrent](#thyristorpeakpulsecurrent)
+  - [thyristorOffStateCurrent](#thyristoroffstatecurrent)
+  - [thyristorOffStateCapacitance](#thyristoroffstatecapacitance)
+  - [thyristorDie](#thyristordie)
+- [JFET Sections](#jfet-sections)
+  - [jfetElectrical](#jfetelectrical)
+  - [jfetTransconductance](#jfettransconductance)
+  - [jfetDie](#jfetdie)
+  - [jfetMatching](#jfetmatching)
+- [Optocoupler Sections](#optocoupler-sections)
+  - [optocouplerElectrical](#optocouplerelectrical)
+  - [Optocoupler isolation](#optocoupler-isolation)
 - [Power Module Sections](#power-module-sections)
   - [moduleElectrical](#moduleelectrical)
   - [moduleSwitchingEnergy](#moduleswitchingenergy)
@@ -71,7 +93,7 @@ alongside SAS. The reference documents for this schema are
 
 **File**: `schemas/SAS.json`
 
-An SAS document carries `inputs`, **exactly one** of `{mosfet, diode, igbt, bjt, module}`, and
+An SAS document carries `inputs`, **exactly one** of `{mosfet, diode, igbt, bjt, thyristor, jfet, optocoupler, module}`, and
 `outputs`. **The field name is the discriminator** — there is no `deviceType` property
 anywhere in the component data, and a `deviceType` key inside `part` is rejected
 (`additionalProperties: false`).
@@ -83,12 +105,16 @@ anywhere in the component data, and a `deviceType` key inside `part` is rejected
 | `diode` | [diode.json](#device-documents) | oneOf | Diode (Schottky, ultrafast, SiC Schottky, Zener, TVS, ESD) |
 | `igbt` | [igbt.json](#device-documents) | oneOf | IGBT |
 | `bjt` | [bjt.json](#device-documents) | oneOf | BJT (npn or pnp) |
+| `thyristor` | [thyristor.json](#thyristor-sections) | oneOf | Thyristor: SCR, triac, sidac, diac, thyristor surge protector |
+| `jfet` | [jfet.json](#jfet-sections) | oneOf | Junction FET (n- or p-channel; Si, SiC) |
+| `optocoupler` | [optocoupler.json](#optocoupler-sections) | oneOf | Optocoupler (LED input, photo-detector output, isolation barrier) |
 | `module` | [module.json](#power-module-sections) | oneOf | Multi-die power module (half-bridge, full-bridge, sixpack, chopper, ...) |
 | `outputs` | array of [outputs](#outputs) | See below | Computed results; `outputs[i]` aligns positionally with `inputs.operatingPoints[i]` |
 
 Structural rules:
 
-- `oneOf`: exactly one of `mosfet` / `diode` / `igbt` / `bjt` / `module` must be present.
+- `oneOf`: exactly one of `mosfet` / `diode` / `igbt` / `bjt` / `thyristor` / `jfet` / `optocoupler` /
+  `module` must be present.
 - `anyOf`: either **both** `inputs` and `outputs` are present (a full design document), or
   the document has **only** the device field (`maxProperties: 1` — a bare part record).
 - `additionalProperties: false` — no extra fields allowed at the top level.
@@ -98,9 +124,9 @@ Structural rules:
 ## Device Documents
 
 **Files**: `schemas/mosfet.json`, `schemas/diode.json`, `schemas/igbt.json`, `schemas/bjt.json`,
-`schemas/module.json`
+`schemas/thyristor.json`, `schemas/jfet.json`, `schemas/optocoupler.json`, `schemas/module.json`
 
-All five device files share the same outer shape:
+All eight device files share the same outer shape:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -196,6 +222,12 @@ device-discriminating `oneOf` — the file it lives in already fixes the device 
 | `modelParams` | per-device modelParams | No | yes | yes | yes | -- |
 | `curves` | per-device curves | No | yes | yes | yes | -- |
 | `provenance` | [provenance](#provenance-data-source-trail) | No | yes | yes | yes | yes |
+
+The thyristor, JFET and optocoupler `datasheetInfo` are described in their own sections
+([thyristor](#thyristor-sections), [jfet](#jfet-sections), [optocoupler](#optocoupler-sections)):
+thyristor and jfet carry `part`, `electrical` XOR `dies[]`, `thermal`, `mechanical`, `provenance`
+(jfet adds `matching[]`); optocoupler carries `part`, `electrical` (required), `thermal`,
+`mechanical`, `provenance`. None of the three defines `modelParams` or `curves`.
 
 `additionalProperties: false`. The diode `datasheetInfo` additionally carries the
 [per-subType conditional required rules](#per-subtype-required-fields).
@@ -693,6 +725,320 @@ See `examples/06_bjt_dual_matched_ssm2212.json`.
 
 ---
 
+## Thyristor Sections
+
+**File**: `schemas/thyristor.json` (`$defs`)
+
+One file for the whole four-layer family, because SCR, triac, sidac, diac and thyristor surge
+protective device (TSPD) share one vocabulary (V_DRM, I_TSM, I_H, V_T, dV/dt) and datasheets name
+them with the same symbols. `part.subType` is the closed enum `scr` | `triac` | `sidac` | `diac` |
+`surgeProtector` (`$defs/subType`, the anchor the requirement-side `thyristorType` `$ref`s). A part
+sold as a protector is a `surgeProtector` even when its silicon is a sidac. Thyristor MODULES and
+press-pack discs (Infineon TT/TD/DD, Vishay VS-..RIA) are not this file.
+
+`datasheetInfo`: `part` required; exactly one of package-level `electrical` or `dies[]`
+(minItems 2). Rules (each an `allOf` member of `datasheetInfo`):
+
+- **Multi-die gate**: `part.dieConfiguration` `dual` or `array` requires `dies[]` (multi-line telecom
+  protectors such as Bourns TISP61xx). `part.internalConnection` is narrowed to `independent`,
+  `commonAnode`, `commonCathode`, `series`.
+- **Triac-only fields**: `quadrantRatings`, `criticalRateOfChangeCommutatingCurrent` and
+  `criticalRateOfRiseCommutatingVoltage` are refused on any other member.
+- **Headline ratings per member**: `scr` needs `repetitivePeakOffStateVoltage` plus
+  `rmsOnStateCurrent` or `averageOnStateCurrent`; `triac` needs `repetitivePeakOffStateVoltage` +
+  `rmsOnStateCurrent`; `sidac` / `diac` need `breakoverVoltage`; `surgeProtector` needs
+  `repetitivePeakOffStateVoltage` + `breakoverVoltage` + `peakPulseCurrents`.
+- `isolationCapacitance` requires `isolationVoltage`; every rate / test-condition field requires
+  the value it qualifies (`dependentRequired`).
+
+Pinout: a triac's main terminals use the PEAS pin functions `mainTerminal1` / `mainTerminal2`
+(MT1/MT2, also the two symmetrical terminals of a bidirectional protector); an SCR uses `anode` /
+`cathode` / `gate`. See `examples/08_thyristor_scr_bt151_500r.json`,
+`examples/09_thyristor_triac_bta16_600b.json` and `examples/10_thyristor_protector_tisp4350h3bj.json`.
+
+### thyristorElectrical
+
+Closed object. Every value SI: V, A, s, A/s (50 A/us = 5e7), V/s, A^2 s, F, W. Voltages and currents
+are magnitudes (a bidirectional part printing +-350 V stores 350). Littelfuse SIDACtor V_S / I_S are
+the same quantities as Bourns V(BO) / I(BO) and map to `breakoverVoltage` / `breakoverCurrent`.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `conductionDirection` | string (enum: `unidirectional`, `bidirectional`) | No | Whether the device blocks and conducts in one direction or both. Inherent for scr (unidirectional) and triac/diac (bidirectional); state it for sidacs and surge protectors, which come in both. |
+| `repetitivePeakOffStateVoltage` | number | No | V_DRM: repetitive peak off-state voltage, in V (magnitude). For a surge protector this is its stand-off rating (the line voltage it never clamps). (exclusiveMinimum 0) |
+| `repetitivePeakReverseVoltage` | number | No | V_RRM: repetitive peak reverse voltage of an SCR, in V. (exclusiveMinimum 0) |
+| `rmsOnStateCurrent` | number | No | I_T(RMS): RMS on-state current, in A, at onStateCurrentTemperature. (exclusiveMinimum 0) |
+| `averageOnStateCurrent` | number | No | I_T(AV): average on-state current (half-sine conduction), in A, at onStateCurrentTemperature. (exclusiveMinimum 0) |
+| `onStateCurrentTemperature` | number | No | Reference temperature at which rmsOnStateCurrent / averageOnStateCurrent are rated, in degC ('T_mb <= 109 C' is 109). |
+| `onStateCurrentTemperatureReference` | string (enum: `case`, `ambient`, `lead`) | No | Which temperature onStateCurrentTemperature is: 'case' (T_c, and the T_mb mounting base of TO-220 class packages), 'ambient' or 'lead'. |
+| `surgeOnStateCurrent` | array of [surgeOnStateCurrent](#thyristorsurgeonstatecurrent) | No | I_TSM ratings (see thyristorSurgeOnStateCurrent). (minItems 1) |
+| `currentSquaredTime` | number | No | I^2t for fusing, in A^2 s. (exclusiveMinimum 0) |
+| `currentSquaredTimeDuration` | number | No | Pulse duration at which currentSquaredTime is stated, in s (0.01 for 10 ms). (exclusiveMinimum 0) |
+| `criticalRateOfRiseOnStateCurrent` | number | No | dI_T/dt (di/dt) maximum, in A/s (50 A/us = 5e7). (exclusiveMinimum 0) |
+| `criticalRateOfRiseOffStateVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | dV_D/dt with the gate OPEN, in V/s: the datasheet minimum (and typical where printed). A figure printed only with a gate-cathode resistor is not this value and is left out. |
+| `criticalRateOfRiseOffStateVoltageTemperature` | number | No | Junction temperature at which criticalRateOfRiseOffStateVoltage is specified, in degC. |
+| `criticalRateOfChangeCommutatingCurrent` | number | No | dI_com/dt of a triac: the rate of fall of current at commutation it survives without retriggering, in A/s (2 A/ms = 2000). Triac only. (exclusiveMinimum 0) |
+| `criticalRateOfRiseCommutatingVoltage` | number | No | dV_com/dt of a triac, in V/s. Triac only. (exclusiveMinimum 0) |
+| `gateTriggerCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_GT of an SCR (or of a triac that prints one figure for all quadrants), in A. |
+| `gateTriggerVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V_GT, in V. |
+| `latchingCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_L, in A. |
+| `holdingCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_H, in A. |
+| `quadrantRatings` | array of [quadrantRating](#triacquadrantrating) | No | Per-quadrant gate figures of a triac (see triacQuadrantRating). Triac only. (minItems 1) |
+| `peakGateCurrent` | number | No | I_GM, in A. (exclusiveMinimum 0) |
+| `peakGateReverseVoltage` | number | No | V_RGM, in V. (exclusiveMinimum 0) |
+| `peakGatePower` | number | No | P_GM, in W. (exclusiveMinimum 0) |
+| `averageGatePower` | number | No | P_G(AV), in W. (exclusiveMinimum 0) |
+| `onStateVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V_T (V_TM), in V, at onStateVoltageCurrent. |
+| `onStateVoltageCurrent` | number | No | On-state current at which onStateVoltage is specified, in A. (exclusiveMinimum 0) |
+| `offStateCurrent` | array of [offStateCurrent](#thyristoroffstatecurrent) | No | Leakage at each printed condition (see thyristorOffStateCurrent). (minItems 1) |
+| `gateControlledTurnOnTime` | number | No | t_gt, in s (typical as printed). (exclusiveMinimum 0) |
+| `circuitCommutatedTurnOffTime` | number | No | t_q, in s (typical as printed). (exclusiveMinimum 0) |
+| `isolationVoltage` | number | No | Isolation test voltage V_isol between the insulated mounting tab / heatsink and the terminals of an isolated-tab package, RMS at 50/60 Hz, in V - the same quantity and name as module.json isolationVoltage. Present only on an isolated-tab part. (exclusiveMinimum 0) |
+| `isolationCapacitance` | number | No | C_isol between the terminals and the external heatsink of an isolated-tab package, in F. (exclusiveMinimum 0) |
+| `breakoverVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V_(BO) (Littelfuse V_S) at the slow ramp of breakoverVoltageRampRate, in V (magnitude). |
+| `breakoverVoltageRampRate` | number | No | dv/dt of the ramp at which breakoverVoltage is measured, in V/s (750 V/ms = 7.5e5). (exclusiveMinimum 0) |
+| `impulseBreakoverVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V_(BO) under a fast impulse (overshoot rating of a protector), in V. |
+| `impulseBreakoverVoltageRampRate` | number | No | dv/dt of the impulse at which impulseBreakoverVoltage is stated, in V/s. (exclusiveMinimum 0) |
+| `impulseBreakoverCurrentRampRate` | number | No | di/dt of the impulse at which impulseBreakoverVoltage is stated, in A/s. (exclusiveMinimum 0) |
+| `breakoverCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_(BO) (Littelfuse I_S), in A. |
+| `breakbackVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | Delta V of a diac/sidac: the drop from V_(BO) to the on-state voltage at the stated current, in V. |
+| `peakPulseCurrents` | array of [peakPulseCurrent](#thyristorpeakpulsecurrent) | No | Impulse current ratings of a surge protector, one per waveform (see thyristorPeakPulseCurrent). (minItems 1) |
+| `offStateCapacitance` | array of [offStateCapacitance](#thyristoroffstatecapacitance) | No | C_off at each printed bias (see thyristorOffStateCapacitance). (minItems 1) |
+| `powerDissipation` | number | No | P_D / P_tot maximum, in W, where the datasheet prints one. (exclusiveMinimum 0) |
+
+### triacQuadrantRating
+
+`thyristor.json#/$defs/quadrantRating` — gate figures of a triac in ONE quadrant (Q1 = MT2+ G+,
+Q2 = MT2+ G-, Q3 = MT2- G-, Q4 = MT2- G+; WeEn/NXP print 'T2+ G+'). A 3-quadrant triac has no Q4 entry.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `quadrant` | string (enum: `Q1`, `Q2`, `Q3`, `Q4`) | **Yes** |  |
+| `gateTriggerCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_GT in this quadrant, in A. |
+| `latchingCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_L in this quadrant, in A. |
+| `gateTriggerVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V_GT in this quadrant, in V. |
+
+### thyristorSurgeOnStateCurrent
+
+`thyristor.json#/$defs/surgeOnStateCurrent` — one I_TSM rating at line frequency; datasheets print
+two or three, so it is an array entry.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `current` | number | **Yes** | Peak surge current, in A. (exclusiveMinimum 0) |
+| `duration` | number | **Yes** | Duration of the surge, in s (0.01 for a 10 ms half sine, 0.02 for one 50 Hz full cycle, 1000 for Bourns' '1000 s 50/60 Hz a.c.'). (exclusiveMinimum 0) |
+| `shape` | string (enum: `halfSine`, `fullSine`) | **Yes** | 'halfSine' = one line-frequency half cycle (the usual SCR rating); 'fullSine' = whole line-frequency cycles for the stated duration (the usual triac / protector rating). |
+
+### thyristorPeakPulseCurrent
+
+`thyristor.json#/$defs/peakPulseCurrent` — one impulse rating (I_TSP / I_PP) of a surge protector.
+Protector datasheets print six to nine, so it is an array (unlike the scalar diode
+`peakPulseCurrent`). The waveform is **required** and is the PEAS `surgeWaveform` label exactly as
+printed; a rating whose waveform is not a member is left out, never approximated.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `current` | number | **Yes** | Peak impulse current, in A. (exclusiveMinimum 0) |
+| `waveform` | PEAS [surgeWaveform](#pulse-rating-waveforms-sas-rfc-0003) | **Yes** |  |
+
+### thyristorOffStateCurrent
+
+`thyristor.json#/$defs/offStateCurrent` — leakage at one condition (25 C and T_j(max) differ by
+three orders of magnitude, so each is its own entry).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `current` | [dimensionWithTolerance](#dimensionwithtolerance) | **Yes** | I_D / I_DRM (and I_R / I_RRM where printed as the same row), in A, as a magnitude. |
+| `voltage` | number | No | Off-state voltage at which it is specified, in V (magnitude). (minimum 0) |
+| `temperature` | number | No | Junction (or ambient, as printed) temperature of the test, in degC. |
+
+### thyristorOffStateCapacitance
+
+`thyristor.json#/$defs/offStateCapacitance` — C_off of a protector at one DC bias.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `capacitance` | [dimensionWithTolerance](#dimensionwithtolerance) | **Yes** | C_off, in F. |
+| `biasVoltage` | number | No | DC bias across the device during the measurement, in V, signed as printed. |
+| `frequency` | number | No | Measurement frequency, in Hz. (exclusiveMinimum 0) |
+
+### thyristorDie
+
+`thyristor.json#/$defs/die` — extends `utils.json#/$defs/dieBase` (`name`, `role`, `pins`) with
+an optional per-die `subType`, the required per-die `electrical` ([thyristorElectrical](#thyristorelectrical))
+and optional per-die `thermal`; sealed with `unevaluatedProperties: false`. Per-die values are
+stated as printed "per device"; a package total is never divided down.
+
+---
+
+## JFET Sections
+
+**File**: `schemas/jfet.json` (`$defs`)
+
+Junction FETs: Si small-signal and low-noise parts (J111, 2SK, U40x, JFE150, LSK389) and
+normally-on SiC power JFETs (UnitedSiC UJ3N, `part.technology` `SiC`). `part.subType` is
+`nChannel` | `pChannel` (`$defs/subType`, the anchor of the requirement-side `channel`). A SiC
+cascode (JFET + LV MOSFET, UJ3C/UJ4C/UF3C) is normally-off and is a `mosfet.json` part.
+
+`datasheetInfo`: `part` required; exactly one of `electrical` or `dies[]` (minItems 2). Rules:
+`part.dieConfiguration` `dual` requires `dies[]`; `matching[]` is legal only beside `dies[]`;
+`part.internalConnection` is narrowed to `independent`. Field names reuse the mosfet ones where the
+quantity is the same, and the AAS / bjt noise names, so one query spans op amps, matched BJTs and JFETs.
+
+### jfetElectrical
+
+Closed object. **Required**: a drain rating, `drainSourceVoltage` **or** `gateDrainVoltageMax`
+(small-signal JFETs often print only V_DG). Absolute-maximum voltages and currents are magnitudes;
+bias quantities whose sign carries meaning (V_GS(off), test V_GS) are signed exactly as printed
+(negative for an n-channel part).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `drainSourceVoltage` | number | No | V_DS / V_DSS absolute maximum (or the guaranteed V_(BR)DSS where that is the only drain rating), in V. (exclusiveMinimum 0) |
+| `gateDrainVoltageMax` | number | No | V_GD / V_DG absolute maximum reverse gate-drain voltage, in V - the drain rating many small-signal JFETs print instead of V_DS (J111 'V_DG 35 V'). (exclusiveMinimum 0) |
+| `gateSourceVoltageMax` | number | No | V_GS / V_GSS absolute maximum reverse gate-source voltage (or V_(BR)GSS), in V, as a magnitude. Same name as the mosfet field. (exclusiveMinimum 0) |
+| `gateForwardCurrentMax` | number | No | I_GF / I_GS absolute maximum forward gate current, in A. (exclusiveMinimum 0) |
+| `continuousDrainCurrent` | number | No | I_D / I_DS absolute maximum drain current, in A. Same name as the mosfet field. (exclusiveMinimum 0) |
+| `saturationDrainCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_DSS: drain current at V_GS = 0, in A (magnitude), at saturationDrainCurrentVds. Graded parts (2SK209-GR) are catalogued per orderable grade. |
+| `saturationDrainCurrentVds` | number | No | Drain-source voltage at which saturationDrainCurrent is specified, in V, signed as printed. |
+| `gateSourceCutoffVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V_GS(off) / V_P / V_GSC: gate-source voltage at which the drain current falls to cutoffDrainCurrent, in V, SIGNED as printed (-1.5..-0.9 V for an n-channel part). |
+| `cutoffDrainCurrent` | number | No | Drain current that defines gateSourceCutoffVoltage, in A (0.1 uA = 1e-7). (exclusiveMinimum 0) |
+| `cutoffDrainSourceVoltage` | number | No | Drain-source voltage at which gateSourceCutoffVoltage is specified, in V, signed as printed. |
+| `transconductance` | array of [transconductance](#jfettransconductance) | No | g_fs / g_m at each printed bias (see jfetTransconductance). (minItems 1) |
+| `onResistance` | [dimensionWithTolerance](#dimensionwithtolerance) | No | r_DS(on) at V_GS = 0 (switch JFETs, SiC JFETs), in Ohm. Same name as the mosfet field. |
+| `gateLeakageCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_GSS / I_G gate leakage (reverse gate current), in A (magnitude), at gateLeakageVoltage. |
+| `gateLeakageVoltage` | number | No | Gate-source voltage at which gateLeakageCurrent is specified, in V, signed as printed. |
+| `inputCapacitance` | number | No | C_iss, in F, at capacitanceMeasurementVds. Same name as the mosfet field. (exclusiveMinimum 0) |
+| `reverseTransferCapacitance` | number | No | C_rss, in F. Same name as the mosfet field. (exclusiveMinimum 0) |
+| `outputCapacitance` | number | No | C_oss, in F. Same name as the mosfet field. (exclusiveMinimum 0) |
+| `capacitanceMeasurementVds` | number | No | Drain-source voltage at which the capacitances are specified, in V. Same name as the mosfet field. |
+| `totalGateCharge` | number | No | Q_g of a power JFET, in C. Same name as the mosfet field. (exclusiveMinimum 0) |
+| `powerDissipation` | number | No | P_D maximum, in W. (exclusiveMinimum 0) |
+| `voltageNoiseDensity` | number | No | Input-referred voltage noise density e_n, in V/sqrt(Hz). Same name and unit as AAS amplifierCommon.voltageNoiseDensity and bjt.json, so one query covers op amps, matched BJTs and JFETs. Typical column. (minimum 0) |
+| `voltageNoiseDensityFrequency` | number | No | Frequency at which voltageNoiseDensity is specified, in Hz. (exclusiveMinimum 0) |
+| `voltageNoiseDensityDrainCurrent` | number | No | Drain current at which voltageNoiseDensity is specified, in A (a JFET's e_n falls with I_D). (exclusiveMinimum 0) |
+| `currentNoiseDensity` | number | No | Input current noise density i_n, in A/sqrt(Hz) (the AAS name). Typical column. (minimum 0) |
+| `currentNoiseDensityFrequency` | number | No | Frequency at which currentNoiseDensity is specified, in Hz. (exclusiveMinimum 0) |
+
+### jfetTransconductance
+
+`jfet.json#/$defs/transconductance` — g_fs / g_m at one bias (full conduction V_GS = 0 and an
+operating current are both printed, each an entry).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `transconductance` | [dimensionWithTolerance](#dimensionwithtolerance) | **Yes** | g_fs / g_m, in S. |
+| `drainCurrent` | number | No | Drain current of the test, in A (magnitude). Absent with gateSourceVoltage 0 = full conduction. (exclusiveMinimum 0) |
+| `gateSourceVoltage` | number | No | Gate-source voltage of the test, in V, signed as printed (0 for full conduction). |
+| `drainSourceVoltage` | number | No | Drain-source voltage of the test, in V, signed as printed. |
+
+### jfetDie
+
+`jfet.json#/$defs/die` — same shape as [thyristorDie](#thyristordie) with the JFET electrical
+block ([jfetElectrical](#jfetelectrical)) per die.
+
+### jfetMatching
+
+`jfet.json#/$defs/matching` — one matching specification between the die of a dual (LSK389,
+U401-U406), the [bjtMatching](#bjtmatching) pattern. Closed; at least one quantity is required.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `dies` | array of string | No | Names (dies[].name) of the die related. Absent = any two die of the part. (minItems 2) |
+| `gateSourceVoltageMatch` | [dimensionWithTolerance](#dimensionwithtolerance) | No | \|V_GS1 - V_GS2\| at equal drain current (the pair's offset), in V. |
+| `gateSourceVoltageMatchDrift` | [dimensionWithTolerance](#dimensionwithtolerance) | No | Temperature drift of the V_GS match, in V/K. |
+| `saturationDrainCurrentMatch` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_DSS match \|1 - I_DSS1/I_DSS2\| as a fraction. |
+| `transconductanceMatch` | [dimensionWithTolerance](#dimensionwithtolerance) | No | g_fs match \|1 - g_fs1/g_fs2\| as a fraction. |
+| `gateCurrentMatch` | [dimensionWithTolerance](#dimensionwithtolerance) | No | \|I_G1 - I_G2\|, in A. |
+| `testDrainCurrent` | number | No | Drain current per die at which the matching is specified, in A. (exclusiveMinimum 0) |
+| `testDrainGateVoltage` | number | No | Drain-gate voltage at which the matching is specified, in V. |
+| `testTemperature` | number | No | Ambient temperature of the test, in degC. |
+
+See `examples/12_jfet_jfe150.json`.
+
+---
+
+## Optocoupler Sections
+
+**File**: `schemas/optocoupler.json` (`$defs`)
+
+LED input, photo-detector output, galvanic isolation barrier. `part.subType` is the OUTPUT stage:
+`phototransistor` | `photodarlington` | `logicOutput` | `gateDriver` | `photoThyristor` |
+`photovoltaic` | `linear` (`$defs/subType`, the anchor of the requirement-side `outputType`).
+Optical gate-drive couplers (TLP250, HCPL-3120, ACPL-332J) are `gateDriver` here. Boundaries: a part
+the vendor sells as a PhotoMOS / photorelay / solid-state relay is an EMAS relay (technology
+`solidState`); an optical isolation amplifier (TLP78xx) is CTAS; magnetic and capacitive isolators are
+AAS / CTAS. `part.technology` is the material of the output (detector) die.
+
+`datasheetInfo`: `part` and `electrical` required (no `dies[]`). Channels, not die: a multi-channel
+part states `electrical.numberOfChannels` and every value is per channel; `part.dieConfiguration` and
+`part.internalConnection` are refused (`{"not": {}}`). Rules:
+
+- `electrical.isolation.withstandVoltageRms` (V_ISO) is **required** — every optocoupler datasheet prints it.
+- `phototransistor` / `photodarlington` require `collectorEmitterVoltage` + `currentTransferRatio`.
+- The bipolar-output fields (`collectorEmitterVoltage`, `emitterCollectorVoltage`, `collectorCurrent`,
+  `collectorPeakCurrent`, `collectorDarkCurrent`, `saturationVoltage`, `currentTransferRatio`) are
+  refused on every other output.
+- `zeroCrossing` and `peakBlockingVoltage` are `photoThyristor` only.
+
+**CTR is a fraction** (100 % = 1.0), like `dissipationFactor`. The schema cannot tell 100 (percent)
+from 1.0 (fraction); the TAS ingest gate bounds `currentTransferRatio` instead.
+
+### optocouplerElectrical
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `numberOfChannels` | integer | No | Number of identical coupler channels in the package. Absent = 1. (minimum 1) |
+| `inputForwardCurrentMax` | number | No | I_F absolute maximum continuous LED forward current, in A. (exclusiveMinimum 0) |
+| `inputReverseVoltageMax` | number | No | V_R absolute maximum LED reverse voltage, in V. (exclusiveMinimum 0) |
+| `inputSurgeCurrent` | number | No | I_FSM LED forward surge current, in A, for inputSurgeCurrentDuration. (exclusiveMinimum 0) |
+| `inputSurgeCurrentDuration` | number | No | Pulse duration of inputSurgeCurrent, in s. (exclusiveMinimum 0) |
+| `inputPowerDissipation` | number | No | LED power dissipation P_diss, in W. (exclusiveMinimum 0) |
+| `inputForwardVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V_F, in V, at inputForwardVoltageCurrent. |
+| `inputForwardVoltageCurrent` | number | No | Forward current at which inputForwardVoltage is specified, in A. (exclusiveMinimum 0) |
+| `inputThresholdCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | Input threshold current I_FT / I_FLH / I_FT(on) of a logicOutput, gateDriver or photoThyristor coupler: the LED current that guarantees the output switches, in A (the guarantee is the maximum). |
+| `collectorEmitterVoltage` | number | No | V_CEO absolute maximum of a transistor output, in V. (exclusiveMinimum 0) |
+| `emitterCollectorVoltage` | number | No | V_ECO absolute maximum of a transistor output, in V. (exclusiveMinimum 0) |
+| `collectorCurrent` | number | No | I_C absolute maximum continuous output current of a transistor output, in A. (exclusiveMinimum 0) |
+| `collectorPeakCurrent` | number | No | I_CM peak output current of a transistor output, in A. (exclusiveMinimum 0) |
+| `collectorDarkCurrent` | [dimensionWithTolerance](#dimensionwithtolerance) | No | I_CEO (dark current) of a transistor output, in A, at collectorDarkCurrentVce. |
+| `collectorDarkCurrentVce` | number | No | Collector-emitter voltage at which collectorDarkCurrent is specified, in V. (exclusiveMinimum 0) |
+| `saturationVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V_CE(sat) of a transistor output, in V, at saturationVoltageForwardCurrent / saturationVoltageCollectorCurrent. |
+| `saturationVoltageForwardCurrent` | number | No | LED forward current of the saturationVoltage test, in A. (exclusiveMinimum 0) |
+| `saturationVoltageCollectorCurrent` | number | No | Collector current of the saturationVoltage test, in A. (exclusiveMinimum 0) |
+| `currentTransferRatio` | [dimensionWithTolerance](#dimensionwithtolerance) | No | CTR = I_C / I_F as a FRACTION (a 100..200 % bin is minimum 1.0, maximum 2.0), at currentTransferRatioForwardCurrent and currentTransferRatioVce. A CTR-binned part (VO617A-3) is catalogued per orderable bin with that bin's limits. |
+| `currentTransferRatioForwardCurrent` | number | No | LED forward current of the CTR test, in A. (exclusiveMinimum 0) |
+| `currentTransferRatioVce` | number | No | Collector-emitter voltage of the CTR test, in V. (exclusiveMinimum 0) |
+| `outputPowerDissipation` | number | No | Output-side power dissipation, in W. (exclusiveMinimum 0) |
+| `totalPowerDissipation` | number | No | P_tot of the coupler (both sides), in W. (exclusiveMinimum 0) |
+| `peakBlockingVoltage` | number | No | V_DRM of a photoThyristor output, in V. (exclusiveMinimum 0) |
+| `zeroCrossing` | boolean | No | photoThyristor output only: true for a zero-cross (zero-voltage-switching) triac driver, false for a random-phase one. |
+| `outputPeakCurrent` | number | No | I_OPK peak output current of a gateDriver output stage (source or sink, the lower of the two as printed), in A. (exclusiveMinimum 0) |
+| `supplyVoltageMax` | number | No | Absolute maximum output-side supply voltage V_CC (logicOutput, gateDriver), in V. (exclusiveMinimum 0) |
+| `propagationDelayHighToLow` | [dimensionWithTolerance](#dimensionwithtolerance) | No | t_PHL, in s. |
+| `propagationDelayLowToHigh` | [dimensionWithTolerance](#dimensionwithtolerance) | No | t_PLH, in s. |
+| `dataRate` | number | No | Maximum signalling rate of a logicOutput coupler, in bit/s (Bd as printed). (exclusiveMinimum 0) |
+| `riseTime` | [dimensionWithTolerance](#dimensionwithtolerance) | No | Output rise time t_r, in s, in the test circuit of switchingLoadResistance. |
+| `fallTime` | [dimensionWithTolerance](#dimensionwithtolerance) | No | Output fall time t_f, in s. |
+| `turnOnTime` | [dimensionWithTolerance](#dimensionwithtolerance) | No | t_on, in s. |
+| `turnOffTime` | [dimensionWithTolerance](#dimensionwithtolerance) | No | t_off, in s. |
+| `switchingLoadResistance` | number | No | Load resistor R_L of the switching-time test circuit, in Ohm (the times scale with it). (exclusiveMinimum 0) |
+| `switchingSaturated` | boolean | No | true when the switching times are the SATURATED test (output driven into saturation), false for the non-saturated (linear) test. Vendors print both; the record carries one set. |
+| `cutoffFrequency` | number | No | Small-signal cut-off frequency f_ctr / f_c, in Hz. (exclusiveMinimum 0) |
+| `isolation` | PEAS [isolationRating](#optocoupler-isolation) | **Yes** | Galvanic-isolation barrier rating (the shared PEAS isolationRating, hoisted from CTAS with its key names). V_ISO -> withstandVoltageRms + withstandVoltageDuration, V_IORM -> workingVoltage, V_IOTM -> transientVoltage, C_C / C_IO coupling capacitance -> barrierCapacitance, CMTI -> cmti. |
+
+### Optocoupler isolation
+
+`electrical.isolation` is the shared PEAS `utils.json#/$defs/isolationRating` (the CTAS key names,
+hoisted to PEAS so CTAS controllers, AAS isolators and SAS optocouplers use one definition), at the
+same place AAS and CTAS put it. Datasheet mapping: V_ISO -> `withstandVoltageRms` +
+`withstandVoltageDuration` (+ the standard), V_IORM -> `workingVoltage`, V_IOTM -> `transientVoltage`,
+C_C / C_IO -> `barrierCapacitance`, CMTI -> `cmti`, plus creepage / clearance / insulation thickness /
+CTI / material group / pollution degree. See the PEAS schema reference for the full field list and
+`examples/11_optocoupler_vo617a_3.json`.
+
+---
+
 ## Power Module Sections
 
 **File**: `schemas/module.json` (`$defs`)
@@ -795,10 +1141,10 @@ Common fields (semiconductor layer + PEAS base):
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `deviceType` | string (enum) | **Yes** | `"mosfet"`, `"diode"`, `"igbt"`, `"bjt"`, `"module"` — selects the per-type branch below |
+| `deviceType` | string (enum) | **Yes** | `"mosfet"`, `"diode"`, `"igbt"`, `"bjt"`, `"thyristor"`, `"jfet"`, `"optocoupler"`, `"module"` — selects the per-type branch below |
 | `maximumJunctionTemperature` | number | No | Maximum allowed junction temperature, in Celsius |
 | `maximumPowerDissipation` | number (>= 0) | No | Maximum allowed continuous power dissipation, in W |
-| `role` | string (enum) | No | Semiconductor role in the converter: `mainSwitch`, `synchronousRectifier`, `freewheelingDiode`, `clampDiode`, `bootstrapDiode`, `lineRectifier`, `bridgeRectifier`, `bodyDiode`, `inrushLimiter`, `esdProtection`, `tvs`, `zenerReference`, `smallSignal` |
+| `role` | string (enum) | No | Semiconductor role in the converter: `mainSwitch`, `synchronousRectifier`, `freewheelingDiode`, `clampDiode`, `bootstrapDiode`, `lineRectifier`, `bridgeRectifier`, `bodyDiode`, `inrushLimiter`, `esdProtection`, `tvs`, `zenerReference`, `smallSignal`, `acSwitch`, `overvoltageProtection`, `isolatedFeedback` |
 | `allowedTechnologies` | array (enum items, minItems 1, unique) | No | Acceptable process technologies: `Si`, `SiC`, `GaN`, `GaAs`, `Ge` |
 | `application` | string (enum) | No | PEAS `semiconductorApplication`: `powerSwitching`, `powerRectification`, `protection`, `signalProcessing`, `referenceClamp` |
 | `subApplication` | string (enum) | No | PEAS `semiconductorSubApplication` (e.g. `highSideSwitch`, `synchronousRectifier`, `freewheelingDiode`, `tvs`, `zenerReference`, ...) |
@@ -819,6 +1165,9 @@ Per-`deviceType` optional fields (`oneOf`, discriminated by `deviceType`; every 
 | `diode` | `ratedReverseVoltage` (V), `ratedForwardCurrent` (A), `maximumForwardVoltage` (V), `maximumReverseRecoveryCharge` (C), `maximumReverseRecoveryTime` (s), `maximumReverseLeakage` (A) |
 | `igbt` | `ratedCollectorEmitterVoltage` (V), `ratedCollectorCurrent` (A), `maximumSaturationVoltage` (V), `maximumSwitchingLossPerCycle` (J) |
 | `bjt` | `polarity` (`npn`/`pnp`, optional; absent = either), `ratedCollectorEmitterVoltage` (V), `ratedCollectorCurrent` (A), `maximumSaturationVoltage` (V), `minimumDcCurrentGain` (--) |
+| `thyristor` | `thyristorType` (enum, `$ref`s the part-side anchor `thyristor.json#/$defs/subType`), `ratedOffStateVoltage` (V, minimum V_DRM), `ratedRmsOnStateCurrent` (A, minimum I_T(RMS)), `maximumGateTriggerCurrent` (A, worst quadrant for a triac), `maximumBreakoverVoltage` (V) |
+| `jfet` | `channel` (enum, anchor `jfet.json#/$defs/subType`), `ratedDrainSourceVoltage` (V, minimum V_DS or V_GD), `minimumSaturationDrainCurrent` (A, I_DSS), `maximumVoltageNoiseDensity` (V/sqrt(Hz)) |
+| `optocoupler` | `outputType` (enum, anchor `optocoupler.json#/$defs/subType`), `minimumIsolationVoltage` (V RMS, V_ISO), `minimumCurrentTransferRatio` (fraction), `ratedCollectorEmitterVoltage` (V), `numberOfChannels` (integer >= 1) |
 | `module` | `moduleTopology` (enum, `$ref`s the part-side anchor `module.json#/$defs/topology` — named `moduleTopology` because the PEAS base already carries a converter-level `topology`), `allowedSwitchTechnologies` (array, anchor `module.json#/$defs/switchTechnology`), `ratedBlockingVoltage` (V, per switch), `ratedContinuousCurrent` (A, per switch), `maximumSwitchingLossPerCycle` (J, per switch), `minimumIsolationVoltage` (V), `requireIntegratedNtc` (boolean) |
 
 ---
@@ -930,9 +1279,9 @@ canonical definition lives in `PEAS/schemas/utils.json#/$defs/provenance` (mirro
 ### The device discriminator (no enum)
 
 The device type of the component data is **not** an enum field — it is the name of the
-top-level field: `mosfet`, `diode`, `igbt`, `bjt`, or `module`. The only `deviceType` enum
-in SAS is in `inputs.designRequirements` (values `mosfet` / `diode` / `igbt` / `bjt` /
-`module`), where it states the *required* device type. There is no `jfet` value anywhere.
+top-level field: `mosfet`, `diode`, `igbt`, `bjt`, `thyristor`, `jfet`, `optocoupler`, or
+`module`. The only `deviceType` enum in SAS is in `inputs.designRequirements` (the same eight
+values), where it states the *required* device type.
 
 ### technology
 
@@ -1004,6 +1353,19 @@ Optional per-device subtype. Each device file narrows the shared `part.subType` 
 | `"esd"` | diode | ESD protection diode |
 | `"npn"` | bjt | NPN bipolar transistor |
 | `"pnp"` | bjt | PNP bipolar transistor |
+| `"scr"` | thyristor | Silicon controlled rectifier (unidirectional, gate-triggered) |
+| `"triac"` | thyristor | Bidirectional gate-triggered thyristor (MT1/MT2; 3Q and 4Q) |
+| `"sidac"` | thyristor | Bidirectional voltage-triggered switch without a gate |
+| `"diac"` | thyristor | Low-current bidirectional trigger diode |
+| `"surgeProtector"` | thyristor | Thyristor surge protective device (TISP, SIDACtor, SMCP, Trisil) |
+| `"nChannel"` / `"pChannel"` | jfet | JFET channel type |
+| `"phototransistor"` | optocoupler | Bipolar phototransistor output |
+| `"photodarlington"` | optocoupler | Photodarlington output |
+| `"logicOutput"` | optocoupler | Photodiode + amplifier, digital output (6N137, TLP2361) |
+| `"gateDriver"` | optocoupler | Optical IGBT/MOSFET gate driver (TLP250, HCPL-3120) |
+| `"photoThyristor"` | optocoupler | Photo-SCR / photo-triac output, incl. zero-cross triac drivers |
+| `"photovoltaic"` | optocoupler | Photovoltaic output (floating gate voltage) |
+| `"linear"` | optocoupler | Photodiode-output analog coupler (HCNR201, IL300) |
 | [moduleTopology](#moduletopology) values | module | Mirrors `electrical.topology`; prefer omitting `subType` |
 
 When `subType` is omitted on a diode, the rectifier-family required set applies (see

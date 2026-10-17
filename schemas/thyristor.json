@@ -1,0 +1,821 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://psma.com/sas/thyristor.json",
+    "title": "thyristor",
+    "description": "Thyristor component data: SCR, triac, sidac, diac and thyristor surge protective device (TSPD). The presence of the 'thyristor' field at the top level of an SAS document discriminates the device type. Thyristor MODULES (Infineon TT/TD/DD, Vishay VS-..RIA, press-pack discs) are module.json parts, not this file.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "manufacturerInfo": {
+            "title": "thyristorManufacturerInfo",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/name"
+                },
+                "reference": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/reference"
+                },
+                "status": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/status"
+                },
+                "description": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/description"
+                },
+                "orderCode": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/orderCode"
+                },
+                "datasheetUrl": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/datasheetUrl"
+                },
+                "spiceModel": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/spiceModel"
+                },
+                "family": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/manufacturerInfo/properties/family"
+                },
+                "datasheetInfo": {
+                    "$ref": "#/$defs/datasheetInfo"
+                }
+            },
+            "required": [
+                "name",
+                "datasheetInfo"
+            ]
+        },
+        "distributorsInfo": {
+            "description": "Where to buy this component",
+            "type": "array",
+            "items": {
+                "$ref": "https://psma.com/peas/utils.json#/$defs/distributorInfo"
+            }
+        },
+        "substitutesInfo": {
+            "description": "Replacement parts for this one: manufacturer-named successors and second sources. An entry with type 'successor' means THIS part is superseded by the named one, one hop, as the manufacturer states it - never inferred from a status of obsolete or from part-number similarity. The schema cannot check that the named part exists in the catalogue, or exists exactly once; that is the referential pass's job, as for CIAS component URIs. Evidence for the claim goes in the record's provenance[] with fields: [\"substitutesInfo\"], carrying the same sourceUrl, retrievedDate and verification stamp as any datasheet field.",
+            "type": "array",
+            "items": {
+                "$ref": "https://psma.com/peas/utils.json#/$defs/substituteInfo"
+            }
+        },
+        "spiceModel": {
+            "description": "Device-body SPICE .model card for a simulation-sourced part (no datasheet). Faithful home that does not require manufacturerInfo.",
+            "$ref": "./utils.json#/$defs/spiceModel"
+        }
+    },
+    "anyOf": [
+        {
+            "required": [
+                "manufacturerInfo"
+            ]
+        },
+        {
+            "required": [
+                "spiceModel"
+            ]
+        },
+        {
+            "maxProperties": 0
+        }
+    ],
+    "$defs": {
+        "datasheetInfo": {
+            "title": "thyristorDatasheetInfo",
+            "description": "All information extracted from a thyristor datasheet.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "part": {
+                    "allOf": [
+                        {
+                            "$ref": "./utils.json#/$defs/part"
+                        },
+                        {
+                            "$comment": "Device-specific narrowing of the shared part def: subType must come from this closed enum (protects the exact-string conditionals below).",
+                            "properties": {
+                                "subType": {
+                                    "$ref": "#/$defs/subType"
+                                },
+                                "dieConfiguration": {
+                                    "enum": [
+                                        "single",
+                                        "dual",
+                                        "array"
+                                    ],
+                                    "description": "'dual' / 'array' = two / three or more thyristors in one package (multi-line telecom protectors: Bourns TISP61xx, Littelfuse multiport SIDACtor). Such a part is described per die (dies[]). Thyristor MODULES and press-pack discs are module.json parts, not this file."
+                                },
+                                "internalConnection": {
+                                    "enum": [
+                                        "independent",
+                                        "commonAnode",
+                                        "commonCathode",
+                                        "series"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "electrical": {
+                    "$ref": "#/$defs/electrical"
+                },
+                "dies": {
+                    "description": "One entry per thyristor die of a multi-die package, INSTEAD OF the package-level electrical block.",
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/$defs/die"
+                    }
+                },
+                "thermal": {
+                    "$ref": "./utils.json#/$defs/thermal"
+                },
+                "mechanical": {
+                    "$ref": "./utils.json#/$defs/mechanical"
+                },
+                "provenance": {
+                    "description": "Data-provenance trail (see provenance).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/provenance"
+                }
+            },
+            "required": [
+                "part"
+            ],
+            "oneOf": [
+                {
+                    "required": [
+                        "electrical"
+                    ],
+                    "not": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                },
+                {
+                    "required": [
+                        "dies"
+                    ],
+                    "not": {
+                        "required": [
+                            "electrical"
+                        ]
+                    }
+                }
+            ],
+            "allOf": [
+                {
+                    "$comment": "A package that declares two or more die must describe them per die (the same gate as mosfet.json, from day one: there are no legacy rows to grandfather).",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "dieConfiguration"
+                                ],
+                                "properties": {
+                                    "dieConfiguration": {
+                                        "enum": [
+                                            "dual",
+                                            "array"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                },
+                {
+                    "$comment": "A triac's quadrant and commutation figures have no meaning on any other member.",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "subType"
+                                ],
+                                "properties": {
+                                    "subType": {
+                                        "not": {
+                                            "const": "triac"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "not": {
+                                    "anyOf": [
+                                        {
+                                            "required": [
+                                                "quadrantRatings"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "criticalRateOfChangeCommutatingCurrent"
+                                            ]
+                                        },
+                                        {
+                                            "required": [
+                                                "criticalRateOfRiseCommutatingVoltage"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "Headline ratings per member. An SCR states blocking voltage and an on-state current rating; a triac its blocking voltage and RMS current; a sidac / diac its breakover voltage; a surge protector its stand-off, its breakover and at least one impulse rating.",
+                    "allOf": [
+                        {
+                            "if": {
+                                "required": [
+                                    "part"
+                                ],
+                                "properties": {
+                                    "part": {
+                                        "required": [
+                                            "subType"
+                                        ],
+                                        "properties": {
+                                            "subType": {
+                                                "const": "scr"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "then": {
+                                "properties": {
+                                    "electrical": {
+                                        "required": [
+                                            "repetitivePeakOffStateVoltage"
+                                        ],
+                                        "anyOf": [
+                                            {
+                                                "required": [
+                                                    "rmsOnStateCurrent"
+                                                ]
+                                            },
+                                            {
+                                                "required": [
+                                                    "averageOnStateCurrent"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "if": {
+                                "required": [
+                                    "part"
+                                ],
+                                "properties": {
+                                    "part": {
+                                        "required": [
+                                            "subType"
+                                        ],
+                                        "properties": {
+                                            "subType": {
+                                                "const": "triac"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "then": {
+                                "properties": {
+                                    "electrical": {
+                                        "required": [
+                                            "repetitivePeakOffStateVoltage",
+                                            "rmsOnStateCurrent"
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "if": {
+                                "required": [
+                                    "part"
+                                ],
+                                "properties": {
+                                    "part": {
+                                        "required": [
+                                            "subType"
+                                        ],
+                                        "properties": {
+                                            "subType": {
+                                                "enum": [
+                                                    "sidac",
+                                                    "diac"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "then": {
+                                "properties": {
+                                    "electrical": {
+                                        "required": [
+                                            "breakoverVoltage"
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "if": {
+                                "required": [
+                                    "part"
+                                ],
+                                "properties": {
+                                    "part": {
+                                        "required": [
+                                            "subType"
+                                        ],
+                                        "properties": {
+                                            "subType": {
+                                                "const": "surgeProtector"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "then": {
+                                "properties": {
+                                    "electrical": {
+                                        "required": [
+                                            "repetitivePeakOffStateVoltage",
+                                            "breakoverVoltage",
+                                            "peakPulseCurrents"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "subType": {
+            "title": "thyristorSubType",
+            "description": "Thyristor family member. 'scr' = silicon controlled rectifier (unidirectional, gate-triggered; sensitive-gate SCRs included). 'triac' = bidirectional gate-triggered thyristor (main terminals MT1/MT2; 3Q 'snubberless/alternistor' and 4Q parts alike). 'sidac' = bidirectional voltage-triggered switch without a gate (breakover device for ignitors / pulse generators). 'diac' = low-current bidirectional trigger diode for triac gate circuits. 'surgeProtector' = thyristor surge protective device (TSPD: Bourns TISP, Littelfuse SIDACtor, Eaton SMCP, ST Trisil; uni- or bidirectional, gated or not) rated by impulse currents. A part sold as a protector is a surgeProtector even when its silicon is a sidac. Requirement-side enums $ref this anchor.",
+            "type": "string",
+            "enum": [
+                "scr",
+                "triac",
+                "sidac",
+                "diac",
+                "surgeProtector"
+            ]
+        },
+        "electrical": {
+            "title": "thyristorElectrical",
+            "description": "Thyristor electrical characteristics (SCR, triac, sidac, diac, thyristor surge protector). Every value SI: V, A, s, A/s, V/s, A^2 s, F, W. Voltages and currents are magnitudes (a bidirectional part prints '+-350 V'; store 350). Littelfuse SIDACtor V_S / I_S are the same quantities as Bourns V(BO) / I(BO) and map to breakoverVoltage / breakoverCurrent.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "conductionDirection": {
+                    "description": "Whether the device blocks and conducts in one direction or both. Inherent for scr (unidirectional) and triac/diac (bidirectional); state it for sidacs and surge protectors, which come in both.",
+                    "type": "string",
+                    "enum": [
+                        "unidirectional",
+                        "bidirectional"
+                    ]
+                },
+                "repetitivePeakOffStateVoltage": {
+                    "description": "V_DRM: repetitive peak off-state voltage, in V (magnitude). For a surge protector this is its stand-off rating (the line voltage it never clamps).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "repetitivePeakReverseVoltage": {
+                    "description": "V_RRM: repetitive peak reverse voltage of an SCR, in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "rmsOnStateCurrent": {
+                    "description": "I_T(RMS): RMS on-state current, in A, at onStateCurrentTemperature.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "averageOnStateCurrent": {
+                    "description": "I_T(AV): average on-state current (half-sine conduction), in A, at onStateCurrentTemperature.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "onStateCurrentTemperature": {
+                    "description": "Reference temperature at which rmsOnStateCurrent / averageOnStateCurrent are rated, in degC ('T_mb <= 109 C' is 109).",
+                    "type": "number"
+                },
+                "onStateCurrentTemperatureReference": {
+                    "description": "Which temperature onStateCurrentTemperature is: 'case' (T_c, and the T_mb mounting base of TO-220 class packages), 'ambient' or 'lead'.",
+                    "type": "string",
+                    "enum": [
+                        "case",
+                        "ambient",
+                        "lead"
+                    ]
+                },
+                "surgeOnStateCurrent": {
+                    "description": "I_TSM ratings (see thyristorSurgeOnStateCurrent).",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/surgeOnStateCurrent"
+                    }
+                },
+                "currentSquaredTime": {
+                    "description": "I^2t for fusing, in A^2 s.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "currentSquaredTimeDuration": {
+                    "description": "Pulse duration at which currentSquaredTime is stated, in s (0.01 for 10 ms).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "criticalRateOfRiseOnStateCurrent": {
+                    "description": "dI_T/dt (di/dt) maximum, in A/s (50 A/us = 5e7).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "criticalRateOfRiseOffStateVoltage": {
+                    "description": "dV_D/dt with the gate OPEN, in V/s: the datasheet minimum (and typical where printed). A figure printed only with a gate-cathode resistor is not this value and is left out.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "criticalRateOfRiseOffStateVoltageTemperature": {
+                    "description": "Junction temperature at which criticalRateOfRiseOffStateVoltage is specified, in degC.",
+                    "type": "number"
+                },
+                "criticalRateOfChangeCommutatingCurrent": {
+                    "description": "dI_com/dt of a triac: the rate of fall of current at commutation it survives without retriggering, in A/s (2 A/ms = 2000). Triac only.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "criticalRateOfRiseCommutatingVoltage": {
+                    "description": "dV_com/dt of a triac, in V/s. Triac only.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "gateTriggerCurrent": {
+                    "description": "I_GT of an SCR (or of a triac that prints one figure for all quadrants), in A.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "gateTriggerVoltage": {
+                    "description": "V_GT, in V.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "latchingCurrent": {
+                    "description": "I_L, in A.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "holdingCurrent": {
+                    "description": "I_H, in A.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "quadrantRatings": {
+                    "description": "Per-quadrant gate figures of a triac (see triacQuadrantRating). Triac only.",
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "items": {
+                        "$ref": "#/$defs/quadrantRating"
+                    }
+                },
+                "peakGateCurrent": {
+                    "description": "I_GM, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "peakGateReverseVoltage": {
+                    "description": "V_RGM, in V.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "peakGatePower": {
+                    "description": "P_GM, in W.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "averageGatePower": {
+                    "description": "P_G(AV), in W.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "onStateVoltage": {
+                    "description": "V_T (V_TM), in V, at onStateVoltageCurrent.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "onStateVoltageCurrent": {
+                    "description": "On-state current at which onStateVoltage is specified, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "offStateCurrent": {
+                    "description": "Leakage at each printed condition (see thyristorOffStateCurrent).",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/offStateCurrent"
+                    }
+                },
+                "gateControlledTurnOnTime": {
+                    "description": "t_gt, in s (typical as printed).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "circuitCommutatedTurnOffTime": {
+                    "description": "t_q, in s (typical as printed).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "isolationVoltage": {
+                    "description": "Isolation test voltage V_isol between the insulated mounting tab / heatsink and the terminals of an isolated-tab package, RMS at 50/60 Hz, in V - the same quantity and name as module.json isolationVoltage. Present only on an isolated-tab part.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "isolationCapacitance": {
+                    "description": "C_isol between the terminals and the external heatsink of an isolated-tab package, in F.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "breakoverVoltage": {
+                    "description": "V_(BO) (Littelfuse V_S) at the slow ramp of breakoverVoltageRampRate, in V (magnitude).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "breakoverVoltageRampRate": {
+                    "description": "dv/dt of the ramp at which breakoverVoltage is measured, in V/s (750 V/ms = 7.5e5).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "impulseBreakoverVoltage": {
+                    "description": "V_(BO) under a fast impulse (overshoot rating of a protector), in V.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "impulseBreakoverVoltageRampRate": {
+                    "description": "dv/dt of the impulse at which impulseBreakoverVoltage is stated, in V/s.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "impulseBreakoverCurrentRampRate": {
+                    "description": "di/dt of the impulse at which impulseBreakoverVoltage is stated, in A/s.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "breakoverCurrent": {
+                    "description": "I_(BO) (Littelfuse I_S), in A.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "breakbackVoltage": {
+                    "description": "Delta V of a diac/sidac: the drop from V_(BO) to the on-state voltage at the stated current, in V.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "peakPulseCurrents": {
+                    "description": "Impulse current ratings of a surge protector, one per waveform (see thyristorPeakPulseCurrent).",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/peakPulseCurrent"
+                    }
+                },
+                "offStateCapacitance": {
+                    "description": "C_off at each printed bias (see thyristorOffStateCapacitance).",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/offStateCapacitance"
+                    }
+                },
+                "powerDissipation": {
+                    "description": "P_D / P_tot maximum, in W, where the datasheet prints one.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                }
+            },
+            "dependentRequired": {
+                "onStateCurrentTemperatureReference": [
+                    "onStateCurrentTemperature"
+                ],
+                "currentSquaredTimeDuration": [
+                    "currentSquaredTime"
+                ],
+                "criticalRateOfRiseOffStateVoltageTemperature": [
+                    "criticalRateOfRiseOffStateVoltage"
+                ],
+                "onStateVoltageCurrent": [
+                    "onStateVoltage"
+                ],
+                "breakoverVoltageRampRate": [
+                    "breakoverVoltage"
+                ],
+                "impulseBreakoverVoltageRampRate": [
+                    "impulseBreakoverVoltage"
+                ],
+                "impulseBreakoverCurrentRampRate": [
+                    "impulseBreakoverVoltage"
+                ],
+                "isolationCapacitance": [
+                    "isolationVoltage"
+                ]
+            },
+            "minProperties": 1
+        },
+        "quadrantRating": {
+            "title": "triacQuadrantRating",
+            "description": "Gate-trigger figures of a triac in ONE operating quadrant, as the datasheet tabulates them per quadrant. Quadrant numbering is the industry one: Q1 = MT2+ G+, Q2 = MT2+ G-, Q3 = MT2- G-, Q4 = MT2- G+ (WeEn/NXP print 'T2+ G+' etc.). A 3-quadrant (snubberless) triac simply has no Q4 entry.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "quadrant": {
+                    "type": "string",
+                    "enum": [
+                        "Q1",
+                        "Q2",
+                        "Q3",
+                        "Q4"
+                    ]
+                },
+                "gateTriggerCurrent": {
+                    "description": "I_GT in this quadrant, in A.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "latchingCurrent": {
+                    "description": "I_L in this quadrant, in A.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "gateTriggerVoltage": {
+                    "description": "V_GT in this quadrant, in V.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                }
+            },
+            "required": [
+                "quadrant"
+            ],
+            "anyOf": [
+                {
+                    "required": [
+                        "gateTriggerCurrent"
+                    ]
+                },
+                {
+                    "required": [
+                        "latchingCurrent"
+                    ]
+                },
+                {
+                    "required": [
+                        "gateTriggerVoltage"
+                    ]
+                }
+            ]
+        },
+        "surgeOnStateCurrent": {
+            "title": "thyristorSurgeOnStateCurrent",
+            "description": "One non-repetitive surge on-state current rating I_TSM at line frequency, as printed. Datasheets print two or three (one 50 Hz and one 60 Hz cycle, sometimes a long a.c. overload), so this is an array entry.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "current": {
+                    "description": "Peak surge current, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "duration": {
+                    "description": "Duration of the surge, in s (0.01 for a 10 ms half sine, 0.02 for one 50 Hz full cycle, 1000 for Bourns' '1000 s 50/60 Hz a.c.').",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "shape": {
+                    "description": "'halfSine' = one line-frequency half cycle (the usual SCR rating); 'fullSine' = whole line-frequency cycles for the stated duration (the usual triac / protector rating).",
+                    "type": "string",
+                    "enum": [
+                        "halfSine",
+                        "fullSine"
+                    ]
+                }
+            },
+            "required": [
+                "current",
+                "duration",
+                "shape"
+            ]
+        },
+        "peakPulseCurrent": {
+            "title": "thyristorPeakPulseCurrent",
+            "description": "One impulse current rating of a surge protector (I_TSP / I_PP), at a standardised test impulse. Protector datasheets print six to nine of these against different waveforms, so it is an array entry, unlike the scalar diode peakPulseCurrent. A rating whose waveform is not a PEAS surgeWaveform member cannot be recorded: leave it out rather than approximate it.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "current": {
+                    "description": "Peak impulse current, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "waveform": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/surgeWaveform"
+                }
+            },
+            "required": [
+                "current",
+                "waveform"
+            ]
+        },
+        "offStateCurrent": {
+            "title": "thyristorOffStateCurrent",
+            "description": "Off-state (and, for an SCR, reverse) leakage at one stated condition. Datasheets print it at 25 C and at T_j(max), which differ by three orders of magnitude, so each condition is its own entry.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "current": {
+                    "description": "I_D / I_DRM (and I_R / I_RRM where printed as the same row), in A, as a magnitude.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "voltage": {
+                    "description": "Off-state voltage at which it is specified, in V (magnitude).",
+                    "type": "number",
+                    "minimum": 0
+                },
+                "temperature": {
+                    "description": "Junction (or ambient, as printed) temperature of the test, in degC.",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "current"
+            ]
+        },
+        "offStateCapacitance": {
+            "title": "thyristorOffStateCapacitance",
+            "description": "Off-state capacitance C_off of a surge protector at one DC bias. Telecom datasheets print it at several biases (0, -1, -2, -50, -100 V), each an entry.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "capacitance": {
+                    "description": "C_off, in F.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "biasVoltage": {
+                    "description": "DC bias across the device during the measurement, in V, signed as printed.",
+                    "type": "number"
+                },
+                "frequency": {
+                    "description": "Measurement frequency, in Hz.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                }
+            },
+            "required": [
+                "capacitance"
+            ]
+        },
+        "die": {
+            "title": "thyristorDie",
+            "description": "One thyristor die inside a multi-die package, with the complete thyristor electrical block the single-device file defines: same physics, same field names, stated once per die (per-die values as the datasheet prints them 'per device' / 'each'; a package total is never divided down).",
+            "unevaluatedProperties": false,
+            "allOf": [
+                {
+                    "$ref": "./utils.json#/$defs/dieBase"
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "electrical"
+                    ],
+                    "properties": {
+                        "subType": {
+                            "description": "Type OF THIS DIE where the die of one package differ.",
+                            "$ref": "#/$defs/subType"
+                        },
+                        "electrical": {
+                            "description": "The complete thyristor electrical block, per die.",
+                            "$ref": "#/$defs/electrical"
+                        },
+                        "thermal": {
+                            "description": "Per-die thermal figures where the datasheet gives them. The package figure stays in datasheetInfo.thermal.",
+                            "$ref": "./utils.json#/$defs/thermal"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

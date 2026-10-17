@@ -19,6 +19,9 @@
                         "diode",
                         "igbt",
                         "bjt",
+                        "thyristor",
+                        "jfet",
+                        "optocoupler",
                         "module"
                     ]
                 },
@@ -47,7 +50,10 @@
                         "esdProtection",
                         "tvs",
                         "zenerReference",
-                        "smallSignal"
+                        "smallSignal",
+                        "acSwitch",
+                        "overvoltageProtection",
+                        "isolatedFeedback"
                     ]
                 },
                 "allowedTechnologies": {
@@ -230,6 +236,100 @@
                             "description": "Minimum required DC current gain h_FE",
                             "type": "number",
                             "minimum": 0
+                        }
+                    },
+                    "required": []
+                },
+                {
+                    "description": "Thyristor-specific requirements",
+                    "properties": {
+                        "deviceType": {
+                            "const": "thyristor"
+                        },
+                        "thyristorType": {
+                            "description": "Required thyristor family member (part-side anchor: thyristor.json subType).",
+                            "$ref": "../thyristor.json#/$defs/subType"
+                        },
+                        "ratedOffStateVoltage": {
+                            "description": "Required minimum V_DRM rating, in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "ratedRmsOnStateCurrent": {
+                            "description": "Required minimum I_T(RMS) rating, in A",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumGateTriggerCurrent": {
+                            "description": "Maximum allowed I_GT (worst quadrant for a triac), in A",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumBreakoverVoltage": {
+                            "description": "Maximum allowed V_(BO) (surge protector, sidac, diac), in V",
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "required": []
+                },
+                {
+                    "description": "JFET-specific requirements",
+                    "properties": {
+                        "deviceType": {
+                            "const": "jfet"
+                        },
+                        "channel": {
+                            "description": "Required channel type, matched against the part's subType (part-side anchor: jfet.json subType).",
+                            "$ref": "../jfet.json#/$defs/subType"
+                        },
+                        "ratedDrainSourceVoltage": {
+                            "description": "Required minimum V_DS (or V_GD) rating, in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "minimumSaturationDrainCurrent": {
+                            "description": "Minimum required I_DSS, in A",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximumVoltageNoiseDensity": {
+                            "description": "Maximum allowed input voltage noise density e_n, in V/sqrt(Hz)",
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "required": []
+                },
+                {
+                    "description": "Optocoupler-specific requirements",
+                    "properties": {
+                        "deviceType": {
+                            "const": "optocoupler"
+                        },
+                        "outputType": {
+                            "description": "Required output stage (part-side anchor: optocoupler.json subType).",
+                            "$ref": "../optocoupler.json#/$defs/subType"
+                        },
+                        "minimumIsolationVoltage": {
+                            "description": "Required minimum V_ISO withstand voltage, in V RMS",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "minimumCurrentTransferRatio": {
+                            "description": "Minimum required CTR, as a fraction",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "ratedCollectorEmitterVoltage": {
+                            "description": "Required minimum V_CEO rating, in V",
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "numberOfChannels": {
+                            "description": "Required number of channels",
+                            "type": "integer",
+                            "minimum": 1
                         }
                     },
                     "required": []

@@ -1,0 +1,118 @@
+{
+  "jfet": {
+    "manufacturerInfo": {
+      "name": "Texas Instruments",
+      "reference": "JFE150",
+      "status": "production",
+      "description": "Ultra-low-noise n-channel JFET with integrated gate clamp diodes, SOT-23-5",
+      "datasheetUrl": "https://www.ti.com/lit/ds/symlink/jfe150.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "JFE150",
+          "technology": "Si",
+          "subType": "nChannel",
+          "case": "SOT-23-5",
+          "package": "DBV"
+        },
+        "electrical": {
+          "drainSourceVoltage": 40,
+          "gateSourceVoltageMax": 40,
+          "gateDrainVoltageMax": 40,
+          "gateForwardCurrentMax": 0.02,
+          "continuousDrainCurrent": 0.05,
+          "saturationDrainCurrent": {
+            "minimum": 0.024,
+            "nominal": 0.035,
+            "maximum": 0.046
+          },
+          "saturationDrainCurrentVds": 10,
+          "gateSourceCutoffVoltage": {
+            "minimum": -1.5,
+            "nominal": -1.2,
+            "maximum": -0.9
+          },
+          "cutoffDrainCurrent": 1e-07,
+          "cutoffDrainSourceVoltage": 10,
+          "transconductance": [
+            {
+              "transconductance": {
+                "minimum": 0.055,
+                "nominal": 0.068,
+                "maximum": 0.08
+              },
+              "gateSourceVoltage": 0,
+              "drainSourceVoltage": 10
+            },
+            {
+              "transconductance": {
+                "nominal": 0.018
+              },
+              "drainCurrent": 0.002,
+              "drainSourceVoltage": 10
+            }
+          ],
+          "gateLeakageCurrent": {
+            "nominal": 2e-13,
+            "maximum": 1e-11
+          },
+          "gateLeakageVoltage": -0.7,
+          "inputCapacitance": 2.4e-11,
+          "reverseTransferCapacitance": 7e-12,
+          "outputCapacitance": 8e-12,
+          "voltageNoiseDensity": 9e-10,
+          "voltageNoiseDensityFrequency": 1000,
+          "voltageNoiseDensityDrainCurrent": 0.002,
+          "currentNoiseDensity": 1.8e-15,
+          "currentNoiseDensityFrequency": 1000
+        },
+        "thermal": {
+          "thermalResistanceJunctionAmbient": 183.8,
+          "junctionTemperatureMin": -55,
+          "junctionTemperatureMax": 150
+        },
+        "mechanical": {
+          "case": "SOT-23-5",
+          "pinout": [
+            {
+              "pin": "1",
+              "name": "VCH",
+              "function": "other"
+            },
+            {
+              "pin": "2",
+              "name": "VCL",
+              "function": "other"
+            },
+            {
+              "pin": "3",
+              "name": "G",
+              "function": "gate"
+            },
+            {
+              "pin": "4",
+              "name": "S",
+              "function": "source"
+            },
+            {
+              "pin": "5",
+              "name": "D",
+              "function": "drain"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Texas Instruments JFE150 data sheet SLPS732B (June 2021, rev. April 2023)",
+            "sourceUrl": "https://www.ti.com/lit/ds/symlink/jfe150.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "IDSS and GFS at VDS 10 V, VGS 0; IG at VDS 2 V, VGS -0.7 V; capacitances at VDS 5 V (Crss at VDS 0); en at IDS 2 mA, VDS 5 V"
+          }
+        ]
+      },
+      "orderCode": "JFE150DBVR"
+    }
+  }
+}

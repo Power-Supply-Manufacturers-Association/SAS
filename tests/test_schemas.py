@@ -8,7 +8,7 @@ Covers:
   * cross-document $refs resolve (SAS + PEAS schemas registered)
   * the canonical examples validate
   * negative cases:
-      - top-level oneOf (must have exactly one of mosfet/diode/igbt/bjt/module)
+      - top-level oneOf (must have exactly one of mosfet/diode/igbt/bjt/thyristor/jfet/optocoupler/module)
       - manufacturerInfo is required
       - electrical is required inside datasheetInfo
       - per-type-specific required electrical fields
@@ -40,6 +40,9 @@ SAS_SCHEMA_FILES = [
     "diode.json",
     "igbt.json",
     "bjt.json",
+    "thyristor.json",
+    "jfet.json",
+    "optocoupler.json",
     "module.json",
     "inputs/designRequirements.json",
 ]
@@ -153,7 +156,7 @@ def test_module_example_validates(sas_validator, module_doc):
 
 
 # ---------------------------------------------------------------------------
-# Top-level oneOf: exactly one of mosfet/diode/igbt/bjt
+# Top-level oneOf: exactly one of mosfet/diode/igbt/bjt/thyristor/jfet/optocoupler/module
 # ---------------------------------------------------------------------------
 
 def test_missing_device_type_field_invalid(sas_validator, mosfet_doc):
@@ -167,7 +170,7 @@ def test_two_device_type_fields_invalid(sas_validator, mosfet_doc, diode_doc):
 
 
 def test_unknown_device_type_field_rejected(sas_validator, mosfet_doc):
-    mosfet_doc["jfet"] = mosfet_doc.pop("mosfet")
+    mosfet_doc["vacuumTube"] = mosfet_doc.pop("mosfet")
     assert_invalid(sas_validator, mosfet_doc)
 
 
@@ -283,7 +286,7 @@ def test_design_requirements_diode_rated_fields_optional(sas_validator, diode_do
 
 
 def test_unknown_device_type_in_design_requirements_rejected(sas_validator, mosfet_doc):
-    mosfet_doc["inputs"]["designRequirements"]["deviceType"] = "thyristor"
+    mosfet_doc["inputs"]["designRequirements"]["deviceType"] = "vacuumTube"
     assert_invalid(sas_validator, mosfet_doc)
 
 
@@ -1032,3 +1035,250 @@ def test_common_emitter_pair_may_share_a_pin(sas_validator, brt_pair_doc):
     di["dies"][0]["pins"] = ["1", "2", "6"]
     di["dies"][1]["pins"] = ["1", "3", "5"]
     assert_valid(sas_validator, brt_pair_doc)
+
+
+# ---------------------------------------------------------------------------
+# Thyristor / JFET / optocoupler kinds (2026-10)
+# ---------------------------------------------------------------------------
+
+NEW_KIND_EXAMPLES = {
+    "08_thyristor_scr_bt151_500r.json": "thyristor",
+    "09_thyristor_triac_bta16_600b.json": "thyristor",
+    "10_thyristor_protector_tisp4350h3bj.json": "thyristor",
+    "11_optocoupler_vo617a_3.json": "optocoupler",
+    "12_jfet_jfe150.json": "jfet",
+}
+
+
+def _ex(name):
+    return _load(EXAMPLES_DIR / name)
+
+
+def _di(doc):
+    return doc[next(iter(doc))]["manufacturerInfo"]["datasheetInfo"]
+
+
+def assert_invalid_deep(validator, doc, contains):
+    """Like assert_invalid, but also searches the nested oneOf/anyOf branch errors, where the
+    reason a body fails a kind's rule actually lives."""
+    errs = list(validator.iter_errors(doc))
+    assert errs, "expected invalid, got no errors"
+    msgs, stack = [], list(errs)
+    while stack:
+        e = stack.pop()
+        msgs.append(e.message)
+        stack.extend(e.context or [])
+    assert any(contains in m for m in msgs), f"expected an error containing {contains!r}"
+
+
+@pytest.mark.parametrize("name, kind", NEW_KIND_EXAMPLES.items())
+def test_new_kind_example_validates(sas_validator, name, kind):
+    doc = _ex(name)
+    assert list(doc) == [kind]
+    assert_valid(sas_validator, doc)
+
+
+@pytest.mark.parametrize("kind", ["thyristor", "jfet", "optocoupler"])
+def test_new_kind_seed_valid(sas_validator, kind):
+    assert_valid(sas_validator, {kind: {}})
+
+
+def test_two_new_kinds_in_one_document_rejected(sas_validator):
+    doc = {"thyristor": _ex("08_thyristor_scr_bt151_500r.json")["thyristor"],
+           "jfet": _ex("12_jfet_jfe150.json")["jfet"]}
+    assert_invalid(sas_validator, doc, contains="is valid under each of")
+
+
+def test_thyristor_subtype_closed(sas_validator):
+    doc = _ex("08_thyristor_scr_bt151_500r.json")
+    _di(doc)["part"]["subType"] = "tvs"
+    assert_invalid(sas_validator, doc, contains="is not one of")
+
+
+def test_quadrant_ratings_are_triac_only(sas_validator):
+    doc = _ex("08_thyristor_scr_bt151_500r.json")
+    _di(doc)["electrical"]["quadrantRatings"] = [{"quadrant": "Q1", "gateTriggerCurrent": {"maximum": 0.015}}]
+    assert_invalid(sas_validator, doc, contains="should not be valid under")
+
+
+def test_triac_requires_rms_on_state_current(sas_validator):
+    doc = _ex("09_thyristor_triac_bta16_600b.json")
+    _di(doc)["electrical"].pop("rmsOnStateCurrent")
+    assert_invalid(sas_validator, doc, contains="'rmsOnStateCurrent' is a required property")
+
+
+def test_triac_pinout_uses_main_terminals(sas_validator):
+    doc = _ex("09_thyristor_triac_bta16_600b.json")
+    funcs = {p.get("function") for p in _di(doc)["mechanical"]["pinout"]}
+    assert {"mainTerminal1", "mainTerminal2", "gate"} <= funcs
+
+
+def test_surge_protector_requires_peak_pulse_currents(sas_validator):
+    doc = _ex("10_thyristor_protector_tisp4350h3bj.json")
+    _di(doc)["electrical"].pop("peakPulseCurrents")
+    assert_invalid(sas_validator, doc, contains="'peakPulseCurrents' is a required property")
+
+
+def test_protector_example_keeps_every_printed_waveform():
+    doc = _ex("10_thyristor_protector_tisp4350h3bj.json")
+    wf = [r["waveform"] for r in _di(doc)["electrical"]["peakPulseCurrents"]]
+    assert {"5/310", "5/200", "0.2/310"} <= set(wf)
+
+
+def test_impulse_rating_requires_its_waveform(sas_validator):
+    doc = _ex("10_thyristor_protector_tisp4350h3bj.json")
+    _di(doc)["electrical"]["peakPulseCurrents"].append({"current": 100})
+    assert_invalid(sas_validator, doc, contains="'waveform' is a required property")
+
+
+@pytest.mark.parametrize("bad", ["10x1000", "10/1000us", ""])
+def test_impulse_rating_unknown_waveform_rejected(sas_validator, bad):
+    doc = _ex("10_thyristor_protector_tisp4350h3bj.json")
+    _di(doc)["electrical"]["peakPulseCurrents"][0]["waveform"] = bad
+    assert_invalid(sas_validator, doc, contains="is not one of")
+
+
+def test_surge_on_state_current_requires_shape(sas_validator):
+    doc = _ex("08_thyristor_scr_bt151_500r.json")
+    _di(doc)["electrical"]["surgeOnStateCurrent"][0].pop("shape")
+    assert_invalid(sas_validator, doc, contains="'shape' is a required property")
+
+
+def test_isolation_capacitance_requires_isolation_voltage(sas_validator):
+    doc = _ex("08_thyristor_scr_bt151_500r.json")
+    _di(doc)["electrical"]["isolationCapacitance"] = 1e-11
+    assert_invalid(sas_validator, doc, contains="'isolationVoltage' is a dependency")
+
+
+def test_dual_thyristor_requires_dies(sas_validator):
+    doc = _ex("08_thyristor_scr_bt151_500r.json")
+    _di(doc)["part"]["dieConfiguration"] = "dual"
+    assert_invalid(sas_validator, doc, contains="'dies' is a required property")
+
+
+def _dual_protector():
+    """Synthetic STRUCTURE fixture (not a catalogue part): two copies of the TISP die block."""
+    doc = _ex("10_thyristor_protector_tisp4350h3bj.json")
+    di = _di(doc)
+    di["part"]["dieConfiguration"] = "dual"
+    di["dies"] = [{"name": n, "electrical": copy.deepcopy(di["electrical"])} for n in ("line A", "line B")]
+    return doc
+
+
+def test_dual_protector_described_per_die(sas_validator):
+    doc = _dual_protector()
+    _di(doc).pop("electrical")
+    assert_valid(sas_validator, doc)
+
+
+def test_thyristor_dies_beside_package_electrical_rejected(sas_validator):
+    assert_invalid_deep(sas_validator, _dual_protector(), contains="should not be valid under")
+
+
+def test_jfet_requires_a_drain_voltage_rating(sas_validator):
+    doc = _ex("12_jfet_jfe150.json")
+    el = _di(doc)["electrical"]
+    el.pop("drainSourceVoltage")
+    assert_valid(sas_validator, doc)          # V_DG alone is enough (small-signal JFETs)
+    el.pop("gateDrainVoltageMax")
+    assert_invalid_deep(sas_validator, doc, contains="is a required property")
+
+
+def _dual_jfet():
+    """Synthetic STRUCTURE fixture: the JFE150 die block twice, with one matching spec."""
+    doc = _ex("12_jfet_jfe150.json")
+    di = _di(doc)
+    di["part"]["dieConfiguration"] = "dual"
+    di["dies"] = [{"name": n, "electrical": copy.deepcopy(di["electrical"])} for n in ("Q1", "Q2")]
+    di.pop("electrical")
+    di["matching"] = [{"gateSourceVoltageMatch": {"maximum": 0.02}, "testDrainCurrent": 1e-3}]
+    return doc
+
+
+def test_dual_jfet_with_matching_valid(sas_validator):
+    assert_valid(sas_validator, _dual_jfet())
+
+
+def test_jfet_matching_requires_dies(sas_validator):
+    doc = _ex("12_jfet_jfe150.json")
+    _di(doc)["matching"] = [{"gateSourceVoltageMatch": {"maximum": 0.02}}]
+    assert_invalid(sas_validator, doc, contains="'dies' is a required property")
+
+
+def test_jfet_internal_connection_narrowed(sas_validator):
+    doc = _dual_jfet()
+    _di(doc)["part"]["internalConnection"] = "commonSource"
+    assert_invalid(sas_validator, doc, contains="is not one of")
+
+
+def test_jfet_matching_entry_needs_a_quantity(sas_validator):
+    doc = _dual_jfet()
+    _di(doc)["matching"] = [{"testDrainCurrent": 1e-3}]
+    assert_invalid_deep(sas_validator, doc, contains="is a required property")
+
+
+def test_optocoupler_requires_isolation_voltage(sas_validator):
+    doc = _ex("11_optocoupler_vo617a_3.json")
+    _di(doc)["electrical"]["isolation"].pop("withstandVoltageRms")
+    assert_invalid(sas_validator, doc, contains="'withstandVoltageRms' is a required property")
+
+
+def test_optocoupler_requires_electrical(sas_validator):
+    doc = _ex("11_optocoupler_vo617a_3.json")
+    _di(doc).pop("electrical")
+    assert_invalid(sas_validator, doc, contains="'electrical' is a required property")
+
+
+def test_phototransistor_requires_ctr(sas_validator):
+    doc = _ex("11_optocoupler_vo617a_3.json")
+    el = _di(doc)["electrical"]
+    for k in ("currentTransferRatio", "currentTransferRatioForwardCurrent", "currentTransferRatioVce"):
+        el.pop(k)
+    assert_invalid(sas_validator, doc, contains="'currentTransferRatio' is a required property")
+
+
+def test_bipolar_output_fields_refused_on_logic_output(sas_validator):
+    doc = _ex("11_optocoupler_vo617a_3.json")
+    _di(doc)["part"]["subType"] = "logicOutput"
+    assert_invalid(sas_validator, doc, contains="should not be valid under")
+
+
+def test_zero_crossing_is_photothyristor_only(sas_validator):
+    doc = _ex("11_optocoupler_vo617a_3.json")
+    _di(doc)["electrical"]["zeroCrossing"] = True
+    assert_invalid(sas_validator, doc, contains="should not be valid under")
+
+
+def test_optocoupler_has_no_die_configuration(sas_validator):
+    doc = _ex("11_optocoupler_vo617a_3.json")
+    _di(doc)["part"]["dieConfiguration"] = "dual"
+    assert_invalid(sas_validator, doc, contains="should not be valid under {}")
+
+
+def test_optocoupler_isolation_is_the_shared_peas_block(sas_validator):
+    doc = _ex("11_optocoupler_vo617a_3.json")
+    _di(doc)["electrical"]["isolation"]["isolationVoltage"] = 5300
+    assert_invalid(sas_validator, doc, contains="'isolationVoltage' was unexpected")
+
+
+def test_optocoupler_ctr_is_a_fraction_in_the_example():
+    """CTR is stored as a fraction (100 % = 1.0); the schema cannot tell percent from fraction,
+    so the ingest gate bounds it. The example must follow the rule."""
+    ctr = _di(_ex("11_optocoupler_vo617a_3.json"))["electrical"]["currentTransferRatio"]
+    assert ctr == {"minimum": 1.0, "maximum": 2.0}
+
+
+@pytest.mark.parametrize("kind, extra", [
+    ("thyristor", {"thyristorType": "triac", "ratedOffStateVoltage": 600}),
+    ("jfet", {"channel": "nChannel", "ratedDrainSourceVoltage": 30}),
+    ("optocoupler", {"outputType": "phototransistor", "minimumIsolationVoltage": 5000,
+                     "role": "isolatedFeedback"}),
+])
+def test_design_requirements_new_kinds(sas_validator, mosfet_doc, kind, extra):
+    mosfet_doc["inputs"]["designRequirements"] = {"deviceType": kind, **extra}
+    assert_valid(sas_validator, mosfet_doc)
+
+
+def test_design_requirements_thyristor_type_anchored(sas_validator, mosfet_doc):
+    mosfet_doc["inputs"]["designRequirements"] = {"deviceType": "thyristor", "thyristorType": "tvs"}
+    assert_invalid_deep(sas_validator, mosfet_doc, contains="is not one of")

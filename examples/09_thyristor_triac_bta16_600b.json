@@ -1,0 +1,164 @@
+{
+  "thyristor": {
+    "manufacturerInfo": {
+      "name": "WeEn Semiconductors",
+      "reference": "BTA16-600B",
+      "status": "production",
+      "description": "4Q triac, 600 V, 16 A RMS, isolated TO-220",
+      "datasheetUrl": "https://www.ween-semi.com/datasheet/BTA16-600B.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "BTA16-600B",
+          "technology": "Si",
+          "subType": "triac",
+          "case": "TO-220",
+          "package": "IITO220"
+        },
+        "electrical": {
+          "conductionDirection": "bidirectional",
+          "repetitivePeakOffStateVoltage": 600,
+          "rmsOnStateCurrent": 16,
+          "onStateCurrentTemperature": 112,
+          "onStateCurrentTemperatureReference": "case",
+          "surgeOnStateCurrent": [
+            {
+              "current": 160,
+              "duration": 0.02,
+              "shape": "fullSine"
+            },
+            {
+              "current": 176,
+              "duration": 0.0167,
+              "shape": "fullSine"
+            }
+          ],
+          "currentSquaredTime": 128,
+          "currentSquaredTimeDuration": 0.01,
+          "criticalRateOfRiseOnStateCurrent": 50000000.0,
+          "criticalRateOfRiseOffStateVoltage": {
+            "minimum": 500000000.0
+          },
+          "criticalRateOfRiseOffStateVoltageTemperature": 125,
+          "criticalRateOfChangeCommutatingCurrent": 2000,
+          "quadrantRatings": [
+            {
+              "quadrant": "Q1",
+              "gateTriggerCurrent": {
+                "minimum": 0.01,
+                "maximum": 0.05
+              },
+              "latchingCurrent": {
+                "maximum": 0.06
+              }
+            },
+            {
+              "quadrant": "Q2",
+              "gateTriggerCurrent": {
+                "minimum": 0.01,
+                "maximum": 0.05
+              },
+              "latchingCurrent": {
+                "maximum": 0.09
+              }
+            },
+            {
+              "quadrant": "Q3",
+              "gateTriggerCurrent": {
+                "minimum": 0.01,
+                "maximum": 0.05
+              },
+              "latchingCurrent": {
+                "maximum": 0.06
+              }
+            },
+            {
+              "quadrant": "Q4",
+              "gateTriggerCurrent": {
+                "minimum": 0.01,
+                "maximum": 0.07
+              },
+              "latchingCurrent": {
+                "maximum": 0.09
+              }
+            }
+          ],
+          "holdingCurrent": {
+            "maximum": 0.06
+          },
+          "gateTriggerVoltage": {
+            "nominal": 0.7,
+            "maximum": 1.0
+          },
+          "peakGateCurrent": 2,
+          "peakGatePower": 5,
+          "averageGatePower": 0.5,
+          "onStateVoltage": {
+            "nominal": 1.22,
+            "maximum": 1.5
+          },
+          "onStateVoltageCurrent": 20,
+          "offStateCurrent": [
+            {
+              "current": {
+                "maximum": 5e-06
+              },
+              "voltage": 600,
+              "temperature": 25
+            },
+            {
+              "current": {
+                "nominal": 0.0004,
+                "maximum": 0.002
+              },
+              "voltage": 600,
+              "temperature": 150
+            }
+          ],
+          "isolationVoltage": 2500,
+          "isolationCapacitance": 1e-11
+        },
+        "thermal": {
+          "thermalResistanceJunctionAmbient": 60,
+          "junctionTemperatureMax": 150
+        },
+        "mechanical": {
+          "case": "TO-220",
+          "pinout": [
+            {
+              "pin": "1",
+              "name": "T1",
+              "function": "mainTerminal1"
+            },
+            {
+              "pin": "2",
+              "name": "T2",
+              "function": "mainTerminal2"
+            },
+            {
+              "pin": "3",
+              "name": "G",
+              "function": "gate"
+            },
+            {
+              "pin": "mb",
+              "name": "n.c.",
+              "function": "mechanical"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "WeEn BTA16-600B product data sheet Rev.02 (30 May 2023)",
+            "sourceUrl": "https://www.ween-semi.com/datasheet/BTA16-600B.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "IGT/IL per quadrant at VD 12 V, Tj 25 C; dVD/dt gate open; Rth(j-h) 1.9 K/W not recorded (heatsink, not case)"
+          }
+        ]
+      },
+      "orderCode": "BTA16-600BQ"
+    }
+  }
+}

@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://psma.com/sas/SAS.json",
     "title": "SAS",
-    "description": "Semiconductor Agnostic Structure (SAS). A document carries inputs, exactly one of {mosfet, diode, igbt, bjt, module} (the field name is the discriminator), and outputs.",
+    "description": "Semiconductor Agnostic Structure (SAS). A document carries inputs, exactly one of {mosfet, diode, igbt, bjt, thyristor, jfet, optocoupler, module} (the field name is the discriminator), and outputs.",
     "type": "object",
     "additionalProperties": false,
     "properties": {
@@ -30,6 +30,21 @@
             "description": "BJT (npn or pnp)",
             "title": "bjt",
             "$ref": "./bjt.json"
+        },
+        "thyristor": {
+            "description": "Thyristor: SCR, triac, sidac, diac, thyristor surge protector",
+            "title": "thyristor",
+            "$ref": "./thyristor.json"
+        },
+        "jfet": {
+            "description": "Junction FET (n- or p-channel; Si, SiC)",
+            "title": "jfet",
+            "$ref": "./jfet.json"
+        },
+        "optocoupler": {
+            "description": "Optocoupler (LED input, photo-detector output, isolation barrier)",
+            "title": "optocoupler",
+            "$ref": "./optocoupler.json"
         },
         "module": {
             "description": "Multi-die power module (half-bridge, full-bridge, sixpack, chopper, ...; Si IGBT / Si-SiC MOSFET / GaN HEMT dies)",
@@ -68,6 +83,21 @@
         {
             "required": [
                 "bjt"
+            ]
+        },
+        {
+            "required": [
+                "thyristor"
+            ]
+        },
+        {
+            "required": [
+                "jfet"
+            ]
+        },
+        {
+            "required": [
+                "optocoupler"
             ]
         },
         {
