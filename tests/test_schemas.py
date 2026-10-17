@@ -568,3 +568,88 @@ def test_module_switch_still_requires_continuous_drain_current(sas_validator, mo
     sw = module_doc["module"]["manufacturerInfo"]["datasheetInfo"]["electrical"]["switch"]
     sw.pop("continuousDrainCurrent", None)
     assert_invalid(sas_validator, module_doc, contains="'continuousDrainCurrent' is a required property")
+
+
+# ---------------------------------------------------------------------------
+# TVS/ESD pulse-rating waveforms (SAS-RFC 0003, PEAS-RFC 0003 surgeWaveform)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def tvs_doc():
+    return _load(EXAMPLES_DIR / "05_tvs_ptvs1_022c_h.json")
+
+
+def _tvs_electrical(doc):
+    return doc["diode"]["manufacturerInfo"]["datasheetInfo"]["electrical"]
+
+
+def test_tvs_example_validates(sas_validator, tvs_doc):
+    assert_valid(sas_validator, tvs_doc)
+
+
+def test_tvs_example_states_every_waveform(tvs_doc):
+    el = _tvs_electrical(tvs_doc)
+    assert el["peakPulseCurrentWaveform"] == "8/20"
+    assert el["clampingWaveform"] == "8/20"
+    assert el["clampingCurrent"] == el["peakPulseCurrent"]
+
+
+@pytest.mark.parametrize("subtype, electrical", [
+    # peakPulseCurrentWaveform without peakPulseCurrent (rating given as power)
+    ("tvs", {"standoffVoltage": 5, "clampingVoltage": 9.8, "peakPulsePower": 350,
+             "peakPulseCurrentWaveform": "8/20"}),
+    # peakPulsePowerWaveform without peakPulsePower
+    ("tvs", {"standoffVoltage": 5, "clampingVoltage": 9.8, "peakPulseCurrent": 20,
+             "peakPulsePowerWaveform": "10/1000"}),
+    # clampingWaveform without clampingVoltage (esd needs no V_C)
+    ("esd", {"standoffVoltage": 5, "peakPulseCurrent": 20,
+             "clampingWaveform": "TLP 100 ns"}),
+])
+def test_waveform_without_its_value_rejected(sas_validator, tvs_doc, subtype, electrical):
+    tvs_doc["diode"]["manufacturerInfo"]["datasheetInfo"]["part"]["subType"] = subtype
+    tvs_doc["diode"]["manufacturerInfo"]["datasheetInfo"]["electrical"] = electrical
+    assert_invalid(sas_validator, tvs_doc, contains="is a dependency of")
+
+
+def test_clamping_current_without_clamping_voltage_rejected(sas_validator, tvs_doc):
+    el = _tvs_electrical(tvs_doc)
+    del el["clampingVoltage"]
+    del el["clampingWaveform"]
+    tvs_doc["diode"]["manufacturerInfo"]["datasheetInfo"]["part"]["subType"] = "esd"
+    assert_invalid(sas_validator, tvs_doc, contains="is a dependency of")
+
+
+@pytest.mark.parametrize("field", [
+    "peakPulseCurrentWaveform", "clampingWaveform",
+])
+@pytest.mark.parametrize("bad", ["8x20", "8/20us", "ISO 7637-2 pulse 1", "IEC 61000-4-2", ""])
+def test_unknown_waveform_rejected(sas_validator, tvs_doc, field, bad):
+    _tvs_electrical(tvs_doc)[field] = bad
+    assert_invalid(sas_validator, tvs_doc, contains="is not one of")
+
+
+def test_peak_pulse_power_waveform_unknown_rejected(sas_validator, tvs_doc):
+    el = _tvs_electrical(tvs_doc)
+    el["peakPulsePower"] = 350
+    el["peakPulsePowerWaveform"] = "10/1000us"
+    assert_invalid(sas_validator, tvs_doc, contains="is not one of")
+
+
+def test_peak_pulse_power_waveform_accepted(sas_validator, tvs_doc):
+    el = _tvs_electrical(tvs_doc)
+    el["peakPulsePower"] = 350
+    el["peakPulsePowerWaveform"] = "10/1000"
+    assert_valid(sas_validator, tvs_doc)
+
+
+def test_clamping_current_must_be_positive(sas_validator, tvs_doc):
+    _tvs_electrical(tvs_doc)["clampingCurrent"] = 0
+    assert_invalid(sas_validator, tvs_doc)
+
+
+def test_pulse_values_without_waveform_still_valid(sas_validator, tvs_doc):
+    """Absent waveform = not stated; the 14k legacy TVS/ESD rows stay valid."""
+    el = _tvs_electrical(tvs_doc)
+    for k in ("peakPulseCurrentWaveform", "clampingWaveform", "clampingCurrent"):
+        del el[k]
+    assert_valid(sas_validator, tvs_doc)

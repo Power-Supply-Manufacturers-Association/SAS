@@ -312,6 +312,8 @@ SAS/
 |   +-- 01_mosfet_ipb017n10n5.json   100V Si n-channel MOSFET (reference document)
 |   +-- 02_diode_stps30l60ct.json    60V Si Schottky diode    (reference document)
 |   +-- 03_module_ff2mr12w3m1h.json  1200V SiC half-bridge module (reference document)
+|   +-- 04_mosfet_dual_iaucn04s7l025ah.json  two-die MOSFET package
+|   +-- 05_tvs_ptvs1_022c_h.json     22V TVS diode, 1 kA 8/20 us, with pulse waveforms
 |
 +-- src/                      C++ converter layer (semiconductor PEAS -> CIAS)
 +-- tests/                    pytest schema tests + C++ converter tests
@@ -433,7 +435,7 @@ Key features demonstrated:
 | Device Type | Required Electrical Fields |
 |-------------|--------------------------|
 | **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge -- in `electrical` for a single-die part. A `dies[]` entry requires the same set **minus continuousDrainCurrent** (a package rating many vendors publish only per package), plus `name` and `subType` |
-| **diode** | depends on `part.subType`: rectifier family (`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`, or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating |
+| **diode** | depends on `part.subType`: rectifier family (`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`, or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating. Each pulse rating may state its waveform (`peakPulseCurrentWaveform`, `peakPulsePowerWaveform`, `clampingWaveform` + `clampingCurrent`; PEAS `surgeWaveform` enum), and a waveform requires its value |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
 | **bjt** | collectorEmitterVoltage, collectorCurrent |
 | **module** | topology, switchTechnology, numberOfSwitches, switch (whose own required set is the mosfet or igbt one above, per switchTechnology) |

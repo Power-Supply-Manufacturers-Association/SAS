@@ -1,0 +1,97 @@
+{
+  "inputs": {
+    "operatingPoints": [
+      {
+        "name": "standoff",
+        "conditions": {
+          "ambientTemperature": 25
+        },
+        "excitationsPerPort": [
+          {
+            "port": "anode",
+            "excitation": {
+              "frequency": 0,
+              "voltage": {
+                "processed": {
+                  "label": "custom",
+                  "peak": 22,
+                  "offset": 22
+                }
+              },
+              "current": {
+                "processed": {
+                  "label": "custom",
+                  "peak": 0,
+                  "offset": 0
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "designRequirements": {
+      "name": "22 V DC power-line surge protection",
+      "deviceType": "diode",
+      "allowedTechnologies": [
+        "Si"
+      ]
+    }
+  },
+  "diode": {
+    "manufacturerInfo": {
+      "name": "Bourns",
+      "reference": "PTVS1-022C-H",
+      "datasheetUrl": "https://www.bourns.com/docs/product-datasheets/ptvs1-xxxc-h.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "PTVS1-022C-H",
+          "series": "PTVS1-xxxC-H",
+          "technology": "Si",
+          "subType": "tvs",
+          "case": "DFN"
+        },
+        "electrical": {
+          "standoffVoltage": 22,
+          "breakdownVoltage": {
+            "minimum": 24,
+            "maximum": 27
+          },
+          "reverseLeakageCurrent": 1e-05,
+          "peakPulseCurrent": 1000,
+          "peakPulseCurrentWaveform": "8/20",
+          "clampingVoltage": 28,
+          "clampingCurrent": 1000,
+          "clampingWaveform": "8/20",
+          "junctionCapacitance": 2e-09
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "verification": "partNamed",
+            "sourceName": "Bourns datasheet PTVS1-xxxC-H",
+            "sourceUrl": "https://www.bourns.com/docs/product-datasheets/ptvs1-xxxc-h.pdf",
+            "retrievedDate": "2026-10-09",
+            "fields": [
+              "part.case",
+              "electrical.standoffVoltage",
+              "electrical.breakdownVoltage",
+              "electrical.reverseLeakageCurrent",
+              "electrical.peakPulseCurrent",
+              "electrical.peakPulseCurrentWaveform",
+              "electrical.clampingVoltage",
+              "electrical.clampingCurrent",
+              "electrical.clampingWaveform",
+              "electrical.junctionCapacitance"
+            ],
+            "verificationMethod": "IPPM 1 kA 8/20 us per IEC 61000-4-5 (absolute maximum); VC typical, measured coincident with the peak of the IPPM 8/20 us surge; VBR at 10 mA; ID at VWM; C typical at 10 kHz, 1 Vrms; TA = 25 C",
+            "verificationDate": "2026-10-17"
+          }
+        ]
+      }
+    }
+  },
+  "outputs": [
+    {}
+  ]
+}

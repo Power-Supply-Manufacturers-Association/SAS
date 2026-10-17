@@ -281,9 +281,23 @@
         },
         "electrical": {
             "title": "diodeElectrical",
-            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardVoltage (V_F, the defining rectifier conduction parameter) + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM). For a package declared part.dieConfiguration='dual', every value here is PER DIODE (per leg), never the package total.",
+            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardVoltage (V_F, the defining rectifier conduction parameter) + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM). For a package declared part.dieConfiguration='dual', every value here is PER DIODE (per leg), never the package total. Each pulse rating carries its own waveform field; ratings at different waveforms are not comparable.",
             "type": "object",
             "additionalProperties": false,
+            "dependentRequired": {
+                "clampingCurrent": [
+                    "clampingVoltage"
+                ],
+                "clampingWaveform": [
+                    "clampingVoltage"
+                ],
+                "peakPulseCurrentWaveform": [
+                    "peakPulseCurrent"
+                ],
+                "peakPulsePowerWaveform": [
+                    "peakPulsePower"
+                ]
+            },
             "properties": {
                 "reverseVoltage": {
                     "type": "number",
@@ -331,7 +345,16 @@
                 },
                 "clampingVoltage": {
                     "type": "number",
-                    "description": "V_C at I_PP for TVS in Volts"
+                    "description": "V_C for TVS/ESD in Volts, at clampingCurrent with clampingWaveform. Without clampingCurrent the record does not state the test current."
+                },
+                "clampingCurrent": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Peak test current at which clampingVoltage is specified, in Amperes (the datasheet's 'V_C @ I_PP' current, or e.g. 1 A). Same name and meaning as RAS varistor clampingCurrent."
+                },
+                "clampingWaveform": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/surgeWaveform",
+                    "description": "Impulse at which clampingVoltage was measured. Absent = the record does not state it (no default)."
                 },
                 "breakdownVoltage": {
                     "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance",
@@ -351,11 +374,19 @@
                 },
                 "peakPulseCurrent": {
                     "type": "number",
-                    "description": "I_PP for TVS/ESD in Amperes (datasheet-stated waveform, typically 8/20 us or IEC 61000-4-5)"
+                    "description": "I_PP (I_PPM) rating for TVS/ESD in Amperes, at peakPulseCurrentWaveform."
+                },
+                "peakPulseCurrentWaveform": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/surgeWaveform",
+                    "description": "Impulse the peakPulseCurrent rating is stated at (e.g. '8/20' per IEC 61000-4-5). Absent = the record does not state it (no default)."
                 },
                 "peakPulsePower": {
                     "type": "number",
-                    "description": "P_PP for TVS/ESD in Watts (datasheet-stated waveform, e.g. 10/1000 us or 8/20 us)"
+                    "description": "P_PP (P_PPM) rating for TVS/ESD in Watts, at peakPulsePowerWaveform."
+                },
+                "peakPulsePowerWaveform": {
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/surgeWaveform",
+                    "description": "Impulse the peakPulsePower rating is stated at (classically '10/1000'). Absent = the record does not state it (no default)."
                 },
                 "esdVoltageContact": {
                     "type": "number",

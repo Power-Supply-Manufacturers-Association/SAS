@@ -11,9 +11,11 @@ SAS builds on PEAS: shared primitives (`dimensionWithTolerance`, `curve`, `manuf
 alongside SAS. The reference documents for this schema are
 [`examples/01_mosfet_ipb017n10n5.json`](../examples/01_mosfet_ipb017n10n5.json),
 [`examples/02_diode_stps30l60ct.json`](../examples/02_diode_stps30l60ct.json),
-[`examples/03_module_ff2mr12w3m1h.json`](../examples/03_module_ff2mr12w3m1h.json) and
+[`examples/03_module_ff2mr12w3m1h.json`](../examples/03_module_ff2mr12w3m1h.json),
 [`examples/04_mosfet_dual_iaucn04s7l025ah.json`](../examples/04_mosfet_dual_iaucn04s7l025ah.json)
-(a two-die MOSFET package).
+(a two-die MOSFET package) and
+[`examples/05_tvs_ptvs1_022c_h.json`](../examples/05_tvs_ptvs1_022c_h.json)
+(a TVS diode rated at 8/20 us, with its pulse waveforms stated).
 
 ---
 
@@ -429,13 +431,17 @@ enforced by conditionals in the diode `datasheetInfo` (next section).
 | `junctionCapacitance` | number | F | C_j -- junction capacitance |
 | `junctionCapacitanceVr` | number | V | V_R at which C_j is measured |
 | `powerDissipation` | number | W | P_D max |
-| `clampingVoltage` | number | V | V_C at I_PP -- TVS clamping voltage |
+| `clampingVoltage` | number | V | V_C for TVS/ESD, at `clampingCurrent` with `clampingWaveform`. Without `clampingCurrent` the record does not state the test current |
+| `clampingCurrent` | number > 0 | A | Peak test current at which `clampingVoltage` is specified (the datasheet's "V_C @ I_PP" current, or e.g. 1 A). Same name and meaning as RAS varistor `clampingCurrent`. Requires `clampingVoltage` |
+| `clampingWaveform` | [PEAS `surgeWaveform`](../../PEAS/docs/architecture.md#surge-waveform-peas-rfc-0003-2026-10) | — | Impulse at which `clampingVoltage` was measured (e.g. `8/20`, `TLP 100 ns`). Requires `clampingVoltage`. Absent = not stated (no default) |
 | `breakdownVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | V | V_BR for Zener/TVS/ESD. For zeners this **is** the zener voltage V_Z (min/nom/max, specified at `zenerTestCurrent`) — there is deliberately no separate `zenerVoltage` field |
 | `zenerTestCurrent` | number | A | I_ZT -- test current at which V_Z (breakdownVoltage) is specified |
 | `zenerImpedance` | number | Ohm | Z_ZT -- dynamic impedance at I_ZT |
 | `standoffVoltage` | number | V | V_RWM -- working voltage for TVS/ESD |
-| `peakPulseCurrent` | number | A | I_PP for TVS/ESD (datasheet-stated waveform, typically 8/20 us or IEC 61000-4-5) |
-| `peakPulsePower` | number | W | P_PP for TVS/ESD (datasheet-stated waveform, e.g. 10/1000 us) |
+| `peakPulseCurrent` | number | A | I_PP (I_PPM) rating for TVS/ESD, at `peakPulseCurrentWaveform` |
+| `peakPulseCurrentWaveform` | [PEAS `surgeWaveform`](../../PEAS/docs/architecture.md#surge-waveform-peas-rfc-0003-2026-10) | — | Impulse the `peakPulseCurrent` rating is stated at (e.g. `8/20` per IEC 61000-4-5). Requires `peakPulseCurrent`. Absent = not stated (no default) |
+| `peakPulsePower` | number | W | P_PP (P_PPM) rating for TVS/ESD, at `peakPulsePowerWaveform` |
+| `peakPulsePowerWaveform` | [PEAS `surgeWaveform`](../../PEAS/docs/architecture.md#surge-waveform-peas-rfc-0003-2026-10) | — | Impulse the `peakPulsePower` rating is stated at (classically `10/1000`). Requires `peakPulsePower`. Absent = not stated (no default) |
 | `esdVoltageContact` | number | V | IEC 61000-4-2 contact discharge rating |
 | `esdVoltageAir` | number | V | IEC 61000-4-2 air discharge rating |
 
@@ -454,6 +460,41 @@ Enforced by `if`/`then`/`else` conditionals on `part.subType` inside the diode
 TVS and ESD parts do not have a `forwardCurrent` (I_F(AV)) rating — that is a rectifier
 parameter; their forward-direction capability, when published, is the surge `surgeCurrent`
 (I_FSM).
+
+### Pulse-rating waveforms (SAS-RFC 0003)
+
+Each pulse rating carries its own waveform field, because ratings at different waveforms
+are not comparable (an 8/20 us I_PP is many times a 10/1000 us I_PP for the same die). The
+waveform values are the PEAS `surgeWaveform` enum: `8/20`, `10/1000`, `10/350`, `2/10`,
+`5/320`, `10/700`, `10/560`, `9/720`, `10/160`, `TLP 100 ns` (wave and standard per value in
+PEAS `docs/architecture.md`). `dependentRequired` on `diodeElectrical` makes a condition
+impossible to store without the value it qualifies:
+
+| if present | requires |
+|---|---|
+| `clampingCurrent` | `clampingVoltage` |
+| `clampingWaveform` | `clampingVoltage` |
+| `peakPulseCurrentWaveform` | `peakPulseCurrent` |
+| `peakPulsePowerWaveform` | `peakPulsePower` |
+
+The reverse is not enforced: a pulse value without a waveform stays valid and means the
+record does not state it. The waveform fields are optional, and the subType required sets
+are unchanged.
+
+Example — Bourns PTVS1-022C-H (from the PTVS1-xxxC-H datasheet: I_PPM 1 kA per 8/20 us
+IEC 61000-4-5; typical V_C measured at I_PPM, 8/20 us), full document in
+[`examples/05_tvs_ptvs1_022c_h.json`](../examples/05_tvs_ptvs1_022c_h.json):
+
+```json
+"electrical": {
+  "standoffVoltage": 22,
+  "breakdownVoltage": {"minimum": 24, "maximum": 27},
+  "reverseLeakageCurrent": 1e-05,
+  "peakPulseCurrent": 1000,  "peakPulseCurrentWaveform": "8/20",
+  "clampingVoltage": 28,     "clampingCurrent": 1000, "clampingWaveform": "8/20",
+  "junctionCapacitance": 2e-09
+}
+```
 
 ### diodeModelParams
 
