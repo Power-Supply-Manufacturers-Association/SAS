@@ -104,7 +104,7 @@
                     "type": "string"
                 },
                 "pins": {
-                    "description": "Pin identifiers belonging to this die, matching entries of mechanical.pinout, so a circuit can bind to one die rather than to the package. Note what the schema cannot check: that the pinout contains these ids, that no pin is claimed by two die, and that die names are unique — those are the ingest gate's job, exactly as for CIAS component URIs.",
+                    "description": "Pin identifiers belonging to this die, matching entries of mechanical.pinout, so a circuit can bind to one die rather than to the package. A pin bonded to more than one die inside the package (the shared emitter pin of a common-emitter BJT pair, the shared drain of a common-drain dual) is listed in the pins of EACH die it belongs to, consistent with part.internalConnection. Note what the schema cannot check: that the pinout contains these ids, that a pin listed by two die is one the stated internal connection actually shares, and that die names are unique — those are the ingest gate's job, exactly as for CIAS component URIs.",
                     "type": "array",
                     "minItems": 1,
                     "items": {

@@ -1,0 +1,124 @@
+{
+  "bjt": {
+    "manufacturerInfo": {
+      "name": "Nexperia",
+      "reference": "PUMH11",
+      "status": "production",
+      "description": "50 V, 100 mA NPN/NPN resistor-equipped double transistor; R1 = 10 kΩ, R2 = 10 kΩ",
+      "datasheetUrl": "https://assets.nexperia.com/documents/data-sheet/PUMH11.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "PUMH11",
+          "case": "TSSOP6",
+          "package": "SOT363-3",
+          "technology": "Si",
+          "subType": "npn",
+          "dieConfiguration": "dual",
+          "internalConnection": "independent"
+        },
+        "dies": [
+          {
+            "name": "TR1",
+            "subType": "npn",
+            "pins": ["1", "2", "6"],
+            "electrical": {
+              "collectorEmitterVoltage": 50,
+              "collectorBaseVoltage": 50,
+              "collectorCurrent": 0.1,
+              "dcCurrentGain": {"minimum": 30},
+              "saturationVoltage": 0.15,
+              "transitionFrequency": 230000000.0,
+              "powerDissipation": 0.2,
+              "biasResistors": {
+                "baseResistance": {"minimum": 7000, "nominal": 10000, "maximum": 13000},
+                "baseEmitterResistance": {"nominal": 10000},
+                "resistanceRatio": {"minimum": 0.8, "nominal": 1, "maximum": 1.2},
+                "resistanceRatioDefinition": "R2/R1"
+              },
+              "inputOffVoltage": {"minimum": 0.8, "nominal": 1.1},
+              "inputOffVoltageVce": 5,
+              "inputOffVoltageIc": 0.0001,
+              "inputOnVoltage": {"nominal": 1.8, "maximum": 2.5},
+              "inputOnVoltageVce": 0.3,
+              "inputOnVoltageIc": 0.01,
+              "inputVoltageMax": 40,
+              "inputReverseVoltageMax": 10
+            },
+            "thermal": {"thermalResistanceJunctionAmbient": 625}
+          },
+          {
+            "name": "TR2",
+            "subType": "npn",
+            "pins": ["3", "4", "5"],
+            "electrical": {
+              "collectorEmitterVoltage": 50,
+              "collectorBaseVoltage": 50,
+              "collectorCurrent": 0.1,
+              "dcCurrentGain": {"minimum": 30},
+              "saturationVoltage": 0.15,
+              "transitionFrequency": 230000000.0,
+              "powerDissipation": 0.2,
+              "biasResistors": {
+                "baseResistance": {"minimum": 7000, "nominal": 10000, "maximum": 13000},
+                "baseEmitterResistance": {"nominal": 10000},
+                "resistanceRatio": {"minimum": 0.8, "nominal": 1, "maximum": 1.2},
+                "resistanceRatioDefinition": "R2/R1"
+              },
+              "inputOffVoltage": {"minimum": 0.8, "nominal": 1.1},
+              "inputOffVoltageVce": 5,
+              "inputOffVoltageIc": 0.0001,
+              "inputOnVoltage": {"nominal": 1.8, "maximum": 2.5},
+              "inputOnVoltageVce": 0.3,
+              "inputOnVoltageIc": 0.01,
+              "inputVoltageMax": 40,
+              "inputReverseVoltageMax": 10
+            },
+            "thermal": {"thermalResistanceJunctionAmbient": 625}
+          }
+        ],
+        "packagePowerDissipation": 0.3,
+        "thermal": {
+          "thermalResistanceJunctionAmbient": 417,
+          "junctionTemperatureMax": 150
+        },
+        "mechanical": {
+          "pinout": [
+            {"pin": "1", "name": "GND1", "function": "emitter"},
+            {"pin": "2", "name": "I1", "function": "base"},
+            {"pin": "3", "name": "O2", "function": "collector"},
+            {"pin": "4", "name": "GND2", "function": "emitter"},
+            {"pin": "5", "name": "I2", "function": "base"},
+            {"pin": "6", "name": "O1", "function": "collector"}
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Nexperia PUMH11 product data sheet, 15 July 2026",
+            "sourceUrl": "https://assets.nexperia.com/documents/data-sheet/PUMH11.pdf",
+            "retrievedDate": "2026-10-17",
+            "fields": [
+              "datasheetInfo.part.case",
+              "datasheetInfo.part.package",
+              "datasheetInfo.part.subType",
+              "datasheetInfo.part.dieConfiguration",
+              "datasheetInfo.part.internalConnection",
+              "datasheetInfo.dies",
+              "datasheetInfo.packagePowerDissipation",
+              "datasheetInfo.thermal",
+              "datasheetInfo.mechanical.pinout"
+            ],
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18"
+          },
+          {
+            "source": "manufacturerParametric",
+            "sourceName": "Nexperia parametric search",
+            "retrievedDate": "2026-06-25",
+            "fields": ["datasheetInfo.part.technology"]
+          }
+        ]
+      }
+    }
+  }
+}

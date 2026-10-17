@@ -237,6 +237,41 @@
                             "dies"
                         ]
                     }
+                },
+                {
+                    "$comment": "A multi-die part states its bias resistors per die: the package-level electrical block cannot say which transistor carries which resistors (PUMD/EMC/UMC pairs differ per die). Existing multi-die rows with a package block stay legal until the phase-2 gate; only the NEW field is refused in the dishonest place.",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "dieConfiguration"
+                                ],
+                                "properties": {
+                                    "dieConfiguration": {
+                                        "enum": [
+                                            "dual",
+                                            "complementary",
+                                            "array"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "not": {
+                                    "required": [
+                                        "biasResistors"
+                                    ]
+                                }
+                            }
+                        }
+                    }
                 }
             ]
         },
@@ -288,6 +323,53 @@
                     "type": "number",
                     "exclusiveMinimum": 0,
                     "description": "Collector current at which voltageNoiseDensity is specified, in A. A BJT's e_n depends strongly on I_C (shot noise falls, r_bb' noise stays), so the figure carries its bias condition."
+                },
+                "biasResistors": {
+                    "description": "Built-in bias resistors of a resistor-equipped ('pre-biased', 'digital') transistor. Present only on such a transistor; see bjtBiasResistors.",
+                    "$ref": "#/$defs/biasResistors"
+                },
+                "inputOnVoltage": {
+                    "description": "On-state input voltage V_I(on): the input-to-ground (base-terminal-to-emitter, through R1) voltage at which the transistor carries inputOnVoltageIc at inputOnVoltageVce, in V, as a magnitude. Stored as the DISTRIBUTION of that voltage: minimum/nominal/maximum bound the voltage at which the stated current is reached, so the drive that guarantees 'on' is the maximum. Vendors print it two ways and both map here without arithmetic: Toshiba prints the distribution itself (min..max, stored as is); Nexperia and ROHM print the guarantee as a 'Min' column ('V_I(on) min 2.5 V' = on for any input >= 2.5 V), which is the distribution's maximum.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "inputOnVoltageVce": {
+                    "description": "Collector-emitter voltage at which inputOnVoltage is specified, in V (magnitude).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputOnVoltageIc": {
+                    "description": "Collector (output) current at which inputOnVoltage is specified, in A (magnitude).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputOffVoltage": {
+                    "description": "Off-state input voltage V_I(off): the input voltage at which the collector current falls to inputOffVoltageIc at inputOffVoltageVce, in V, as a magnitude. Stored as the DISTRIBUTION of that voltage (see inputOnVoltage), so the input level that guarantees 'off' is the minimum. Toshiba prints the distribution (stored as is); Nexperia and ROHM print the guarantee as a 'Max' column ('V_I(off) max 0.8 V' = off for any input <= 0.8 V), which is the distribution's minimum.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "inputOffVoltageVce": {
+                    "description": "Collector-emitter voltage at which inputOffVoltage is specified, in V (magnitude).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputOffVoltageIc": {
+                    "description": "Collector (output) current at which inputOffVoltage is specified, in A (magnitude).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputVoltageMax": {
+                    "description": "Absolute maximum forward input voltage, input terminal to ground, in V (Nexperia V_I 'positive', onsemi V_IN(fwd), ROHM V_IN upper limit), as a magnitude.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "inputReverseVoltageMax": {
+                    "description": "Absolute maximum reverse input voltage, in V, as a magnitude (Nexperia V_I 'negative' -10 V is stored as 10; onsemi V_IN(rev)).",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "outputCurrentMax": {
+                    "description": "Rated output current I_O, in A, ONLY where the datasheet prints it separately from, and lower than, the built-in transistor's I_C(max) (ROHM: I_O 50 mA beside I_C(MAX) 100 mA). Where I_O is the part's only current rating (Nexperia 'I_O output current'), it is collectorCurrent and this field is omitted.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
                 }
             },
             "required": [
@@ -300,6 +382,33 @@
                 ],
                 "voltageNoiseDensityCollectorCurrent": [
                     "voltageNoiseDensity"
+                ],
+                "inputOnVoltage": [
+                    "biasResistors"
+                ],
+                "inputOffVoltage": [
+                    "biasResistors"
+                ],
+                "inputVoltageMax": [
+                    "biasResistors"
+                ],
+                "inputReverseVoltageMax": [
+                    "biasResistors"
+                ],
+                "outputCurrentMax": [
+                    "biasResistors"
+                ],
+                "inputOnVoltageVce": [
+                    "inputOnVoltage"
+                ],
+                "inputOnVoltageIc": [
+                    "inputOnVoltage"
+                ],
+                "inputOffVoltageVce": [
+                    "inputOffVoltage"
+                ],
+                "inputOffVoltageIc": [
+                    "inputOffVoltage"
                 ]
             }
         },
@@ -415,6 +524,56 @@
                     ]
                 }
             ]
+        },
+        "biasResistors": {
+            "title": "bjtBiasResistors",
+            "description": "The bias-resistor network built into a resistor-equipped transistor (a 'pre-biased', 'digital', BRT or RET part): R1 in series with the base (the input resistor) and R2 from base to emitter. Its presence is what marks a transistor as pre-biased; a plain transistor omits it, and no separate flag exists that could contradict it. One block per transistor: on a multi-die part it sits in each dies[].electrical, because the two transistors of a pair may carry different resistors. R2 'open' (R1-only types such as PDTC114T, RN1711JE) is stated by omitting baseEmitterResistance, never by a sentinel value. Each resistance is a dimensionWithTolerance in Ohm: nominal = the datasheet's typical (or title) value, minimum/maximum = its limits. A tolerance printed as a percentage (Panasonic '-30% 22 +30%') is stored as the limits it states.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "baseResistance": {
+                    "description": "R1, the series base (input) resistor, in Ohm.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "baseEmitterResistance": {
+                    "description": "R2, the base-emitter resistor, in Ohm. Datasheets usually print only its nominal (in the title or a type table) and toleranced R1 plus the ratio; store what is printed and do not derive R2 limits from R1 and the ratio.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "resistanceRatio": {
+                    "description": "The resistor ratio exactly as printed, in the direction resistanceRatioDefinition names (dimensionless). Vendors disagree on the direction: Nexperia and ROHM print R2/R1; onsemi, Toshiba and Panasonic print R1/R2. The value is stored as printed and never inverted.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "resistanceRatioDefinition": {
+                    "description": "Which ratio resistanceRatio holds.",
+                    "type": "string",
+                    "enum": [
+                        "R2/R1",
+                        "R1/R2"
+                    ]
+                }
+            },
+            "anyOf": [
+                {
+                    "required": [
+                        "baseResistance"
+                    ]
+                },
+                {
+                    "required": [
+                        "baseEmitterResistance"
+                    ]
+                }
+            ],
+            "dependentRequired": {
+                "resistanceRatio": [
+                    "resistanceRatioDefinition",
+                    "baseResistance",
+                    "baseEmitterResistance"
+                ],
+                "resistanceRatioDefinition": [
+                    "resistanceRatio"
+                ]
+            }
         }
     }
 }

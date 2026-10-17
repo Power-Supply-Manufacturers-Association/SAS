@@ -817,3 +817,197 @@ def test_igbt_multi_die_configuration_rejected(sas_validator, value):
     assert_invalid(sas_validator, doc)
     doc["igbt"]["manufacturerInfo"]["datasheetInfo"]["part"]["dieConfiguration"] = "single"
     assert_valid(sas_validator, doc)
+
+
+# ---------------------------------------------------------------------------
+# Resistor-equipped ("pre-biased", "digital", BRT/RET) BJTs: electrical.biasResistors
+# and the input-voltage fields. The presence of biasResistors is the only marker.
+# ---------------------------------------------------------------------------
+
+PREBIAS_KEYS = ("biasResistors", "inputOnVoltage", "inputOnVoltageVce", "inputOnVoltageIc",
+                "inputOffVoltage", "inputOffVoltageVce", "inputOffVoltageIc", "inputVoltageMax",
+                "inputReverseVoltageMax", "outputCurrentMax")
+
+
+@pytest.fixture
+def brt_pair_doc():
+    return _load(EXAMPLES_DIR / "07_bjt_prebiased_dual_pumh11.json")
+
+
+@pytest.fixture
+def brt_single_doc(brt_pair_doc):
+    """The PUMH11's TR1 block as a single-die record (package electrical)."""
+    di = _bjt_di(brt_pair_doc)
+    di["electrical"] = copy.deepcopy(di.pop("dies")[0]["electrical"])
+    di.pop("packagePowerDissipation")
+    di["part"].pop("dieConfiguration")
+    di["part"].pop("internalConnection")
+    di["mechanical"]["pinout"] = di["mechanical"]["pinout"][:3]
+    return brt_pair_doc
+
+
+def _brt_el(doc):
+    return _bjt_di(doc)["electrical"]
+
+
+def _plain(doc):
+    for k in PREBIAS_KEYS:
+        _brt_el(doc).pop(k, None)
+    return doc
+
+
+def test_brt_pair_example_validates(sas_validator, brt_pair_doc):
+    assert_valid(sas_validator, brt_pair_doc)
+
+
+def test_brt_pair_example_is_per_die(brt_pair_doc):
+    di = _bjt_di(brt_pair_doc)
+    assert "electrical" not in di
+    for die in di["dies"]:
+        br = die["electrical"]["biasResistors"]
+        assert br["resistanceRatioDefinition"] == "R2/R1"
+        # Nexperia prints VI(on) 'Min 2.5' (the guarantee) -> the distribution's maximum.
+        assert die["electrical"]["inputOnVoltage"] == {"nominal": 1.8, "maximum": 2.5}
+        assert die["electrical"]["inputOffVoltage"] == {"minimum": 0.8, "nominal": 1.1}
+
+
+def test_brt_single_die_validates(sas_validator, brt_single_doc):
+    assert_valid(sas_validator, brt_single_doc)
+    _bjt_di(brt_single_doc)["part"]["dieConfiguration"] = "single"
+    assert_valid(sas_validator, brt_single_doc)
+
+
+def test_brt_plain_record_without_prebias_fields_valid(sas_validator, brt_single_doc):
+    assert_valid(sas_validator, _plain(brt_single_doc))
+
+
+@pytest.mark.parametrize("drop, missing", [
+    ("resistanceRatioDefinition", "'resistanceRatioDefinition' is a dependency of 'resistanceRatio'"),
+    ("baseEmitterResistance", "'baseEmitterResistance' is a dependency of 'resistanceRatio'"),
+    ("resistanceRatio", "'resistanceRatio' is a dependency of 'resistanceRatioDefinition'"),
+])
+def test_brt_ratio_dependencies(sas_validator, brt_single_doc, drop, missing):
+    _brt_el(brt_single_doc)["biasResistors"].pop(drop)
+    assert_invalid(sas_validator, brt_single_doc, contains=missing)
+
+
+def test_brt_ratio_direction_enum_closed(sas_validator, brt_single_doc):
+    _brt_el(brt_single_doc)["biasResistors"]["resistanceRatioDefinition"] = "R1:R2"
+    assert_invalid(sas_validator, brt_single_doc, contains="is not one of")
+
+
+def test_brt_ratio_r1_over_r2_accepted(sas_validator, brt_single_doc):
+    _brt_el(brt_single_doc)["biasResistors"]["resistanceRatioDefinition"] = "R1/R2"
+    assert_valid(sas_validator, brt_single_doc)
+
+
+def test_brt_empty_bias_resistors_rejected(sas_validator, brt_single_doc):
+    """biasResistors needs R1 or R2 (anyOf): an empty block cannot mark a part as pre-biased."""
+    _brt_el(brt_single_doc)["biasResistors"] = {}
+    assert_invalid(sas_validator, brt_single_doc, contains="{} is not valid under any of the given schemas")
+
+
+def test_brt_bias_resistors_closed(sas_validator, brt_single_doc):
+    _brt_el(brt_single_doc)["biasResistors"]["tolerancePercent"] = 30
+    assert_invalid(sas_validator, brt_single_doc, contains="'tolerancePercent' was unexpected")
+
+
+def test_brt_r1_only_and_r2_only(sas_validator, brt_single_doc):
+    el = _brt_el(brt_single_doc)
+    el["biasResistors"] = {"baseResistance": {"minimum": 7000, "nominal": 10000, "maximum": 13000}}
+    assert_valid(sas_validator, brt_single_doc)
+    el["biasResistors"] = {"baseEmitterResistance": {"nominal": 10000}}
+    assert_valid(sas_validator, brt_single_doc)
+
+
+def test_brt_resistance_must_be_dimension(sas_validator, brt_single_doc):
+    _brt_el(brt_single_doc)["biasResistors"]["baseResistance"] = 10000
+    assert_invalid(sas_validator, brt_single_doc, contains="is not of type 'object'")
+
+
+@pytest.mark.parametrize("field, value", [
+    ("inputOnVoltage", {"nominal": 1.8, "maximum": 2.5}),
+    ("inputOffVoltage", {"minimum": 0.8}),
+    ("inputVoltageMax", 40),
+    ("inputReverseVoltageMax", 10),
+    ("outputCurrentMax", 0.05),
+])
+def test_brt_input_fields_require_bias_resistors(sas_validator, brt_single_doc, field, value):
+    doc = _plain(brt_single_doc)
+    _brt_el(doc)[field] = value
+    assert_invalid(sas_validator, doc, contains=f"'biasResistors' is a dependency of '{field}'")
+
+
+@pytest.mark.parametrize("cond, value", [
+    ("inputOnVoltageVce", "inputOnVoltage"), ("inputOnVoltageIc", "inputOnVoltage"),
+    ("inputOffVoltageVce", "inputOffVoltage"), ("inputOffVoltageIc", "inputOffVoltage"),
+])
+def test_brt_condition_requires_its_voltage(sas_validator, brt_single_doc, cond, value):
+    el = _brt_el(brt_single_doc)
+    el.pop(value)
+    for k in (value + "Vce", value + "Ic"):
+        if k != cond:
+            el.pop(k)
+    assert_invalid(sas_validator, brt_single_doc, contains=f"'{value}' is a dependency of '{cond}'")
+
+
+def test_brt_input_voltage_shapes(sas_validator, brt_single_doc):
+    el = _brt_el(brt_single_doc)
+    el["inputOnVoltageVce"] = 0
+    assert_invalid(sas_validator, brt_single_doc, contains="less than or equal to the minimum")
+    el["inputOnVoltageVce"] = 0.3
+    el["inputOnVoltage"] = 2.5
+    assert_invalid(sas_validator, brt_single_doc, contains="is not of type 'object'")
+
+
+@pytest.mark.parametrize("cfg", ["dual", "complementary", "array"])
+def test_brt_multi_die_forbids_package_bias_resistors(sas_validator, brt_single_doc, cfg):
+    di = _bjt_di(brt_single_doc)
+    di["part"]["dieConfiguration"] = cfg
+    if cfg == "complementary":
+        di["part"].pop("subType")
+    assert_invalid(sas_validator, brt_single_doc, contains="should not be valid under")
+
+
+def test_brt_multi_die_plain_package_block_still_tolerated(sas_validator, brt_single_doc):
+    doc = _plain(brt_single_doc)
+    _bjt_di(doc)["part"]["dieConfiguration"] = "dual"
+    assert_valid(sas_validator, doc)
+
+
+def test_brt_mixed_pair(sas_validator, brt_pair_doc):
+    for k in PREBIAS_KEYS:
+        _bjt_di(brt_pair_doc)["dies"][1]["electrical"].pop(k, None)
+    assert_valid(sas_validator, brt_pair_doc)
+
+
+def test_brt_complementary_pair_with_different_resistors(sas_validator, brt_pair_doc):
+    di = _bjt_di(brt_pair_doc)
+    di["part"]["dieConfiguration"] = "complementary"
+    di["part"].pop("subType")
+    di["dies"][1]["subType"] = "pnp"
+    di["dies"][1]["electrical"]["biasResistors"] = {
+        "baseResistance": {"minimum": 7000, "nominal": 10000, "maximum": 13000},
+        "baseEmitterResistance": {"nominal": 47000},
+        "resistanceRatio": {"minimum": 3.7, "nominal": 4.7, "maximum": 5.7},
+        "resistanceRatioDefinition": "R2/R1"}
+    assert_valid(sas_validator, brt_pair_doc)
+
+
+def test_brt_bias_resistors_outside_electrical_rejected(sas_validator, brt_pair_doc):
+    di = _bjt_di(brt_pair_doc)
+    br = copy.deepcopy(di["dies"][0]["electrical"]["biasResistors"])
+    di["dies"][0]["biasResistors"] = br
+    assert_invalid(sas_validator, brt_pair_doc, contains="'biasResistors' was unexpected")
+    di["dies"][0].pop("biasResistors")
+    di["biasResistors"] = br
+    assert_invalid(sas_validator, brt_pair_doc, contains="'biasResistors' was unexpected")
+
+
+def test_common_emitter_pair_may_share_a_pin(sas_validator, brt_pair_doc):
+    """A shared emitter pin is listed by both die (dieBase.pins); the schema does not forbid it."""
+    di = _bjt_di(brt_pair_doc)
+    di["part"]["internalConnection"] = "commonEmitter"
+    di["dies"][0]["pins"] = ["1", "2", "6"]
+    di["dies"][1]["pins"] = ["1", "3", "5"]
+    assert_valid(sas_validator, brt_pair_doc)

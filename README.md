@@ -208,6 +208,7 @@ document.
 ### BJT
 
 - **electrical** -- V_CEO, V_CBO, I_C, h_FE, V_CE(sat), f_T, P_D, voltage noise density e_n (+ the frequency and collector current it is specified at; the AAS field names)
+- **biasResistors** (inside `electrical`) -- resistor-equipped ("pre-biased", "digital", BRT/RET) transistors: R1, R2 and their ratio as printed with its direction (`R2/R1` | `R1/R2`). Its presence is the only pre-biased marker; beside it, V_I(on)/V_I(off) as a distribution with their test V_CE/I_C, the input voltage limits and I_O (only where printed below I_C). Per die on a multi-die part, never in a dual's package block
 - **dies** -- duals, complementary pairs, matched pairs/quads and current mirrors: one entry per die, each `{name, role, pins, subType, electrical, thermal}` with the full BJT electrical block (I_C stays required per die: BJT duals print it per transistor). Mutually exclusive with the package-level `electrical`. Phase 1: optional even when `part.dieConfiguration` is `dual`/`complementary`/`array` (a gate like the MOSFET one waits for the 13 Toshiba duals to be migrated)
 - **matching** -- only beside `dies`: |ΔV_BE| (V_OS), its drift, Δh_FE/h_FE, I_OS, mirror-ratio error, each as a `dimensionWithTolerance` (typical + guaranteed) with its test I_C / V_CB / T_A
 - **packagePowerDissipation** -- only beside `dies`: the package total P_tot; each die keeps its per-transistor P_D
@@ -320,6 +321,7 @@ SAS/
 |   +-- 04_mosfet_dual_iaucn04s7l025ah.json  two-die MOSFET package
 |   +-- 05_tvs_ptvs1_022c_h.json     22V TVS diode, 1 kA 8/20 us, with pulse waveforms
 |   +-- 06_bjt_dual_matched_ssm2212.json  dual matched NPN pair (dies[] + matching[])
+|   +-- 07_bjt_prebiased_dual_pumh11.json  pre-biased NPN/NPN pair (per-die biasResistors)
 |
 +-- src/                      C++ converter layer (semiconductor PEAS -> CIAS)
 +-- tests/                    pytest schema tests + C++ converter tests
@@ -418,6 +420,23 @@ Key features demonstrated:
   e_n = 0.85 nV/sqrt(Hz) at 1 kHz and I_C = 1 mA (`voltageNoiseDensity*`)
 - `matching[]`: V_OS {typ 10 uV, max 200 uV}, its drift, Delta h_FE {0.5 %, 5 %} and
   I_OS max 6.2 nA, each with the test conditions the datasheet prints
+
+### Example 7: Resistor-equipped (pre-biased) NPN/NPN pair -- Nexperia PUMH11
+
+File: `examples/07_bjt_prebiased_dual_pumh11.json`
+
+A 50 V, 100 mA double resistor-equipped transistor (R1 = R2 = 10 kOhm) in TSSOP6, every
+value from the 15 July 2026 product data sheet.
+
+Key features demonstrated:
+- `electrical.biasResistors` in each die: R1 {7, 10, 13} kOhm, R2 nominal 10 kOhm (the
+  title), and the ratio stored as printed, `R2/R1` {0.8, 1, 1.2}
+- V_I(off) printed "typ 1.1, Max 0.8" -> `inputOffVoltage {minimum 0.8, nominal 1.1}`;
+  V_I(on) printed "Min 2.5, typ 1.8" -> `inputOnVoltage {nominal 1.8, maximum 2.5}`: the
+  guarantee column is moved to the end of the distribution, no arithmetic
+- I_O 100 mA is the part's only current rating, so it is `collectorCurrent` and there is
+  no `outputCurrentMax`; V_I +40 / -10 V -> `inputVoltageMax` 40, `inputReverseVoltageMax` 10
+- P_tot 200 mW per transistor on each die, 300 mW per device in `packagePowerDissipation`
 
 ---
 

@@ -48,7 +48,8 @@ alongside SAS. The reference documents for this schema are
   - [igbtCurves](#igbtcurves)
 - [BJT Sections](#bjt-sections)
   - [bjtElectrical](#bjtelectrical)
-  - [bjtDie (multi-die packages)](#bjtdie)
+  - [bjtBiasResistors (pre-biased transistors)](#bjtbiasresistors)
+- [bjtDie (multi-die packages)](#bjtdie)
   - [bjtMatching](#bjtmatching)
 - [Power Module Sections](#power-module-sections)
   - [moduleElectrical](#moduleelectrical)
@@ -210,7 +211,9 @@ The bjt `datasheetInfo` carries the same `electrical`-XOR-`dies` rule. In additi
 `part.dieConfiguration` is `complementary` must not carry `part.subType` (each die states
 its own polarity). Unlike the mosfet, a bjt declaring `dual` / `complementary` / `array`
 is **not yet required** to carry `dies` (phase 1): the gate follows once the catalogued
-duals that still carry a package block are migrated. See [bjtDie](#bjtdie).
+duals that still carry a package block are migrated. See [bjtDie](#bjtdie). Such a
+multi-die part may not put `biasResistors` in a package-level `electrical`, though (see
+[bjtBiasResistors](#bjtbiasresistors)).
 
 ---
 
@@ -378,9 +381,11 @@ and is sealed with `unevaluatedProperties: false`.
 
 Every die states its own values even when the datasheet prints them as equal
 ("Q1 = Q2 = 95 mOhm"), so "both die are 95 mOhm" and "the part is 95 mOhm" are
-different documents. The schema cannot check that `pins` exist in `mechanical.pinout`,
-that no pin is claimed by two die, or that `name` is unique across the array — those are
-referential checks and belong to the ingest gate.
+different documents. A pin bonded to more than one die inside the package (the shared
+drain of a common-drain dual) is listed in the `pins` of each die it belongs to. The schema
+cannot check that `pins` exist in `mechanical.pinout`, that a pin listed by two die is one
+`part.internalConnection` actually shares, or that `name` is unique across the array — those
+are referential checks and belong to the ingest gate.
 
 ### mosfetModelParams
 
@@ -608,6 +613,41 @@ Closed object. No `modelParams` or `curves` sections are defined for BJTs.
 | `voltageNoiseDensity` | number | No | V/√Hz | e_n, input-referred voltage noise density (typical); same name and unit as AAS `amplifierCommon` |
 | `voltageNoiseDensityFrequency` | number | No | Hz | Frequency at which e_n is specified; requires `voltageNoiseDensity` |
 | `voltageNoiseDensityCollectorCurrent` | number | No | A | Collector current at which e_n is specified (e_n depends strongly on I_C); requires `voltageNoiseDensity` |
+| `biasResistors` | [bjtBiasResistors](#bjtbiasresistors) | No | -- | Built-in bias resistors; present only on a resistor-equipped ("pre-biased", "digital", BRT/RET) transistor, and its presence is what marks one. On a multi-die part it goes in each die's `electrical` |
+| `inputOnVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V | V_I(on), magnitude, stored as the **distribution** of the switching voltage: the drive that guarantees "on" is `maximum`. Toshiba prints the min..max distribution (stored as is); Nexperia/ROHM print the guarantee in a "Min" column (`V_I(on) min 2.5 V`), which goes to `maximum`. Requires `biasResistors` |
+| `inputOnVoltageVce` | number | No | V | V_CE at which `inputOnVoltage` is specified (> 0); requires `inputOnVoltage` |
+| `inputOnVoltageIc` | number | No | A | I_C at which `inputOnVoltage` is specified (> 0); requires `inputOnVoltage` |
+| `inputOffVoltage` | [dimensionWithTolerance](#dimensionwithtolerance) | No | V | V_I(off), magnitude, stored as the distribution: the input level that guarantees "off" is `minimum`. Nexperia/ROHM print it in a "Max" column (`V_I(off) max 0.8 V`), which goes to `minimum`. Requires `biasResistors` |
+| `inputOffVoltageVce` | number | No | V | V_CE at which `inputOffVoltage` is specified (> 0); requires `inputOffVoltage` |
+| `inputOffVoltageIc` | number | No | A | I_C at which `inputOffVoltage` is specified (> 0); requires `inputOffVoltage` |
+| `inputVoltageMax` | number | No | V | Absolute maximum forward input voltage, input to ground (Nexperia V_I positive, onsemi V_IN(fwd)); requires `biasResistors` |
+| `inputReverseVoltageMax` | number | No | V | Absolute maximum reverse input voltage, as a magnitude (Nexperia V_I -10 V is stored as 10; onsemi V_IN(rev)); requires `biasResistors` |
+| `outputCurrentMax` | number | No | A | I_O, **only** where the datasheet prints it separately from, and lower than, I_C(max) (ROHM I_O 50 mA beside I_C 100 mA). Where I_O is the only current rating (Nexperia) it is `collectorCurrent` and this field is omitted. Requires `biasResistors` |
+
+V_EBO, V_OH/V_OL, input current I_I and input gain G_I have no field yet.
+
+### bjtBiasResistors
+
+`bjt.json#/$defs/biasResistors` — the resistor network built into a resistor-equipped
+transistor: R1 in series with the base, R2 from base to emitter. Closed; at least one of
+R1 / R2 is required. There is no `prebiased` subType or flag: the presence of this block
+is the marker, so it cannot contradict itself, and it works per die (a mixed pair is one
+pre-biased die and one plain die). R2 "open" (R1-only types such as PDTC114T, RN1711JE)
+is stated by omitting `baseEmitterResistance`, never by a sentinel. A tolerance printed as
+a percentage (Panasonic "-30% 22 +30%") is stored as the limits it states.
+
+| Field | Type | Required | Unit | Description |
+|-------|------|----------|------|-------------|
+| `baseResistance` | [dimensionWithTolerance](#dimensionwithtolerance) | R1 or R2 | Ohm | R1, the series base (input) resistor; `nominal` = typical (or title) value, `minimum`/`maximum` = its limits |
+| `baseEmitterResistance` | [dimensionWithTolerance](#dimensionwithtolerance) | R1 or R2 | Ohm | R2, base-emitter resistor; omitted when R2 is open. Store what is printed (often the nominal only); never derive R2 limits from R1 and the ratio |
+| `resistanceRatio` | [dimensionWithTolerance](#dimensionwithtolerance) | No | 1 | The ratio **exactly as printed**, never inverted. Requires `resistanceRatioDefinition`, `baseResistance` and `baseEmitterResistance` |
+| `resistanceRatioDefinition` | string (enum) | No | -- | `"R2/R1"` (Nexperia, ROHM) or `"R1/R2"` (onsemi, Toshiba, Panasonic): which ratio `resistanceRatio` holds. Requires `resistanceRatio` |
+
+On a part whose `part.dieConfiguration` is `dual`, `complementary` or `array`, the
+package-level `electrical` must not carry `biasResistors`: a package block cannot say
+which transistor carries which resistors (a PUMD9 pairs an NPN 10k/47k die with a PNP
+die of different f_T). State them per die in `dies[].electrical`.
+See `examples/07_bjt_prebiased_dual_pumh11.json`.
 
 ### bjtDie
 
@@ -627,8 +667,10 @@ the shared `utils.json#/$defs/dieBase` and is sealed with `unevaluatedProperties
 
 Every die states its own values even when the datasheet prints them once for "each
 transistor", so "both transistors are 45 V" and "the part is 45 V" are different documents.
-The schema cannot check that die names are unique or that `pins` exist in the pinout —
-those are the ingest gate's referential checks.
+A shared pin is listed by every die bonded to it: on a `commonEmitter` pair (Toshiba RN1707JE,
+ESV pin 2 = E common) pin 2 appears in both dies' `pins`. The schema cannot check that die
+names are unique, that `pins` exist in the pinout, or that a pin listed by two die is one the
+stated `internalConnection` shares — those are the ingest gate's referential checks.
 
 ### bjtMatching
 
