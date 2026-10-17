@@ -1,0 +1,133 @@
+{
+  "bjt": {
+    "manufacturerInfo": {
+      "name": "Analog Devices",
+      "reference": "SSM2212",
+      "status": "production",
+      "description": "Audio Dual Matched NPN Transistor",
+      "datasheetUrl": "https://www.analog.com/media/en/technical-documentation/data-sheets/SSM2212.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "SSM2212RZ",
+          "series": "SSM2212",
+          "case": "SOIC-8",
+          "technology": "Si",
+          "subType": "npn",
+          "package": "8-Lead Standard Small Outline Package [SOIC_N]",
+          "dieConfiguration": "dual"
+        },
+        "dies": [
+          {
+            "name": "Channel 1",
+            "subType": "npn",
+            "pins": [
+              "1",
+              "2",
+              "3"
+            ],
+            "electrical": {
+              "collectorEmitterVoltage": 40,
+              "collectorBaseVoltage": 40,
+              "collectorCurrent": 0.02,
+              "dcCurrentGain": {
+                "minimum": 300,
+                "nominal": 605
+              },
+              "transitionFrequency": 200000000.0,
+              "voltageNoiseDensity": 8.5e-10,
+              "voltageNoiseDensityFrequency": 1000,
+              "voltageNoiseDensityCollectorCurrent": 0.001
+            }
+          },
+          {
+            "name": "Channel 2",
+            "subType": "npn",
+            "pins": [
+              "6",
+              "7",
+              "8"
+            ],
+            "electrical": {
+              "collectorEmitterVoltage": 40,
+              "collectorBaseVoltage": 40,
+              "collectorCurrent": 0.02,
+              "dcCurrentGain": {
+                "minimum": 300,
+                "nominal": 605
+              },
+              "transitionFrequency": 200000000.0,
+              "voltageNoiseDensity": 8.5e-10,
+              "voltageNoiseDensityFrequency": 1000,
+              "voltageNoiseDensityCollectorCurrent": 0.001
+            }
+          }
+        ],
+        "matching": [
+          {
+            "baseEmitterVoltageMatch": {
+              "nominal": 1e-05,
+              "maximum": 0.0002
+            },
+            "testCollectorCurrent": 0.001,
+            "testCollectorBaseVoltage": 0,
+            "testTemperature": 25
+          },
+          {
+            "baseEmitterVoltageMatchDrift": {
+              "nominal": 8e-08,
+              "maximum": 1e-06
+            }
+          },
+          {
+            "currentGainMatch": {
+              "nominal": 0.005,
+              "maximum": 0.05
+            },
+            "testTemperature": 25
+          },
+          {
+            "baseCurrentMatch": {
+              "maximum": 6.2e-09
+            },
+            "testCollectorCurrent": 1e-05,
+            "testCollectorBaseVoltage": 15,
+            "testTemperature": 25
+          }
+        ],
+        "thermal": {
+          "thermalResistanceJunctionAmbient": 120,
+          "thermalResistanceJunctionCase": 45,
+          "junctionTemperatureMax": 150
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Analog Devices SSM2212 data sheet Rev. C",
+            "sourceUrl": "https://www.analog.com/media/en/technical-documentation/data-sheets/SSM2212.pdf",
+            "retrievedDate": "2026-10-17",
+            "fields": [
+              "datasheetInfo.part.package",
+              "datasheetInfo.part.dieConfiguration",
+              "datasheetInfo.dies",
+              "datasheetInfo.matching",
+              "datasheetInfo.thermal"
+            ],
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-17"
+          },
+          {
+            "source": "scrape",
+            "sourceName": "Datasheet Archive part description",
+            "sourceUrl": "https://www.datasheetarchive.com/datasheet/SSM2212RZ/Analog-Devices?version=1",
+            "retrievedDate": "2026-09-24",
+            "fields": [
+              "datasheetInfo.part.technology"
+            ],
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-09-24"
+          }
+        ]
+      }
+    }
+  }
+}

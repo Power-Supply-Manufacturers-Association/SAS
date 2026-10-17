@@ -110,3 +110,31 @@ TEST_CASE("SAS real MOSFET without package-level electrical is refused, not gues
     json ideal = SAS::sas_to_cias(doc, Fidelity(Fidelity::Origin::REQUIREMENTS));
     CHECK_MSG(mosfet_ron(ideal) == 0.01, "ideal fidelity unaffected");
 }
+
+TEST_CASE("SAS BJT, single-die or per-die, is not lowered and throws", "[sas][bjt]") {
+    // BJT lowering does not exist yet. A multi-die BJT (dies[], no package electrical) must keep
+    // failing loudly at every fidelity: there is no package block to fall back to, and picking one
+    // die on the caller's behalf would invent a part.
+    json perDie = json::parse(R"({
+        "semiconductor": { "bjt": { "manufacturerInfo": { "name": "Analog Devices", "datasheetInfo": {
+            "part": { "partNumber": "SSM2212RZ", "technology": "Si", "dieConfiguration": "dual" },
+            "dies": [
+                { "name": "Channel 1", "subType": "npn", "electrical": { "collectorEmitterVoltage": 40, "collectorCurrent": 0.02 } },
+                { "name": "Channel 2", "subType": "npn", "electrical": { "collectorEmitterVoltage": 40, "collectorCurrent": 0.02 } } ] } } } }
+    })");
+    json single = json::parse(R"({
+        "semiconductor": { "bjt": { "manufacturerInfo": { "name": "onsemi", "datasheetInfo": {
+            "part": { "partNumber": "2N3904", "technology": "Si", "subType": "npn" },
+            "electrical": { "collectorEmitterVoltage": 40, "collectorCurrent": 0.2 } } } } }
+    })");
+    for (const json* doc : {&perDie, &single}) {
+        for (auto origin : {Fidelity::Origin::DATASHEET, Fidelity::Origin::REQUIREMENTS}) {
+            bool threw = false;
+            std::string what;
+            try { SAS::sas_to_cias(*doc, Fidelity(origin)); }
+            catch (const std::exception& e) { threw = true; what = e.what(); }
+            CHECK_MSG(threw, "bjt conversion throws");
+            CHECK_MSG(what.find("igbt/bjt") != std::string::npos, "the message names the gap: " << what);
+        }
+    }
+}

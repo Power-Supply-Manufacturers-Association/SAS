@@ -167,7 +167,7 @@
             ],
             "allOf": [
                 {
-                    "$comment": "A package that declares two die must describe them per die. This is the gate: with no package-level electrical block available, one die's numbers cannot be written as the part's.",
+                    "$comment": "A package that declares two or more die must describe them per die. This is the gate: with no package-level electrical block available, one die's numbers cannot be written as the part's.",
                     "if": {
                         "required": [
                             "part"
@@ -181,7 +181,8 @@
                                     "dieConfiguration": {
                                         "enum": [
                                             "dual",
-                                            "complementary"
+                                            "complementary",
+                                            "array"
                                         ]
                                     }
                                 }

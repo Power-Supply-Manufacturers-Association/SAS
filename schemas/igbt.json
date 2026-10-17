@@ -98,6 +98,12 @@
                                         "nChannel"
                                     ]
                                 },
+                                "dieConfiguration": {
+                                    "enum": [
+                                        "single"
+                                    ],
+                                    "description": "A discrete IGBT is one die (absent also means one die). Multi-die IGBT packages are power modules and are described by module.json, so 'dual' / 'complementary' / 'array' are not legal here: igbt.json has no per-die description to put them in."
+                                },
                                 "internalConnection": {
                                     "enum": [
                                         "independent",

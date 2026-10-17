@@ -653,3 +653,167 @@ def test_pulse_values_without_waveform_still_valid(sas_validator, tvs_doc):
     for k in ("peakPulseCurrentWaveform", "clampingWaveform", "clampingCurrent"):
         del el[k]
     assert_valid(sas_validator, tvs_doc)
+
+
+# ---------------------------------------------------------------------------
+# Multi-die BJT packages: dies[] + matching[] (phase 1 — no dual/array gate yet)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def bjt_pair_doc():
+    return _load(EXAMPLES_DIR / "06_bjt_dual_matched_ssm2212.json")
+
+
+def _bjt_di(doc):
+    return doc["bjt"]["manufacturerInfo"]["datasheetInfo"]
+
+
+def _bjt_single(doc):
+    """The SSM2212 rewritten as a single-die record (package electrical, no dies/matching)."""
+    di = _bjt_di(doc)
+    di["electrical"] = copy.deepcopy(di.pop("dies")[0]["electrical"])
+    di.pop("matching")
+    di["part"].pop("dieConfiguration")
+    return doc
+
+
+def test_bjt_matched_pair_example_validates(sas_validator, bjt_pair_doc):
+    assert_valid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_matched_pair_example_is_per_die(bjt_pair_doc):
+    di = _bjt_di(bjt_pair_doc)
+    assert "electrical" not in di
+    assert [d["name"] for d in di["dies"]] == ["Channel 1", "Channel 2"]
+    assert di["matching"][0]["baseEmitterVoltageMatch"] == {"nominal": 1e-05, "maximum": 0.0002}
+
+
+def test_bjt_single_die_record_still_valid(sas_validator, bjt_pair_doc):
+    assert_valid(sas_validator, _bjt_single(bjt_pair_doc))
+
+
+def test_bjt_dies_beside_package_electrical_rejected(sas_validator, bjt_pair_doc):
+    di = _bjt_di(bjt_pair_doc)
+    di["electrical"] = copy.deepcopy(di["dies"][0]["electrical"])
+    assert_invalid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_neither_electrical_nor_dies_rejected(sas_validator, bjt_pair_doc):
+    _bjt_di(bjt_pair_doc).pop("dies")
+    _bjt_di(bjt_pair_doc).pop("matching")
+    assert_invalid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_matching_requires_dies(sas_validator, bjt_pair_doc):
+    doc = _bjt_single(bjt_pair_doc)
+    _bjt_di(doc)["matching"] = [{"baseEmitterVoltageMatch": {"maximum": 2e-4}}]
+    assert_invalid(sas_validator, doc, contains="'dies' is a required property")
+
+
+def test_bjt_complementary_forbids_part_subtype(sas_validator, bjt_pair_doc):
+    di = _bjt_di(bjt_pair_doc)
+    di["part"]["dieConfiguration"] = "complementary"
+    di["dies"][1]["subType"] = "pnp"
+    assert_invalid(sas_validator, bjt_pair_doc)
+    di["part"].pop("subType")
+    assert_valid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_matching_entry_needs_a_quantity(sas_validator, bjt_pair_doc):
+    _bjt_di(bjt_pair_doc)["matching"] = [{"testCollectorCurrent": 1e-3}]
+    assert_invalid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_matching_unknown_field_rejected(sas_validator, bjt_pair_doc):
+    _bjt_di(bjt_pair_doc)["matching"][0]["offsetVoltage"] = 1e-5
+    assert_invalid(sas_validator, bjt_pair_doc, contains="unexpected")
+
+
+def test_bjt_dies_requires_two_entries(sas_validator, bjt_pair_doc):
+    _bjt_di(bjt_pair_doc)["dies"] = _bjt_di(bjt_pair_doc)["dies"][:1]
+    assert_invalid(sas_validator, bjt_pair_doc, contains="is too short")
+
+
+def test_bjt_die_requires_collector_current(sas_validator, bjt_pair_doc):
+    """BJT duals print I_C per transistor, so the die keeps the single-part requirement."""
+    _bjt_di(bjt_pair_doc)["dies"][0]["electrical"].pop("collectorCurrent")
+    assert_invalid(sas_validator, bjt_pair_doc, contains="'collectorCurrent' is a required property")
+
+
+def test_bjt_die_requires_polarity(sas_validator, bjt_pair_doc):
+    _bjt_di(bjt_pair_doc)["dies"][0].pop("subType")
+    assert_invalid(sas_validator, bjt_pair_doc, contains="'subType' is a required property")
+
+
+def test_bjt_quad_as_array(sas_validator, bjt_pair_doc):
+    di = _bjt_di(bjt_pair_doc)
+    di["part"]["dieConfiguration"] = "array"
+    di["dies"] = [dict(copy.deepcopy(di["dies"][0]), name=f"Q{i}") for i in range(1, 5)]
+    assert_valid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_die_configuration_quad_rejected(sas_validator, bjt_pair_doc):
+    _bjt_di(bjt_pair_doc)["part"]["dieConfiguration"] = "quad"
+    assert_invalid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_dual_with_package_electrical_tolerated_in_phase_1(sas_validator, bjt_pair_doc):
+    """Phase 1 does not gate: 13 live Toshiba duals still carry a package block."""
+    doc = _bjt_single(bjt_pair_doc)
+    _bjt_di(doc)["part"]["dieConfiguration"] = "dual"
+    assert_valid(sas_validator, doc)
+
+
+@pytest.mark.parametrize("value", ["commonEmitter", "commonBase", "commonCollector", "currentMirror", "independent"])
+def test_bjt_internal_connection_bjt_words(sas_validator, bjt_pair_doc, value):
+    _bjt_di(bjt_pair_doc)["part"]["internalConnection"] = value
+    assert_valid(sas_validator, bjt_pair_doc)
+
+
+@pytest.mark.parametrize("value", ["commonDrain", "commonSource", "halfBridge", "commonCathode"])
+def test_bjt_internal_connection_other_device_words_rejected(sas_validator, bjt_pair_doc, value):
+    _bjt_di(bjt_pair_doc)["part"]["internalConnection"] = value
+    assert_invalid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_package_power_dissipation_beside_dies(sas_validator, bjt_pair_doc):
+    _bjt_di(bjt_pair_doc)["packagePowerDissipation"] = 0.3
+    assert_valid(sas_validator, bjt_pair_doc)
+
+
+def test_bjt_package_power_dissipation_requires_dies(sas_validator, bjt_pair_doc):
+    doc = _bjt_single(bjt_pair_doc)
+    _bjt_di(doc)["packagePowerDissipation"] = 0.3
+    assert_invalid(sas_validator, doc, contains="'dies' is a required property")
+
+
+@pytest.mark.parametrize("field", ["voltageNoiseDensityFrequency", "voltageNoiseDensityCollectorCurrent"])
+def test_bjt_noise_condition_requires_noise_value(sas_validator, bjt_pair_doc, field):
+    el = _bjt_di(bjt_pair_doc)["dies"][0]["electrical"]
+    el.pop("voltageNoiseDensity")
+    for k in ("voltageNoiseDensityFrequency", "voltageNoiseDensityCollectorCurrent"):
+        if k != field:
+            el.pop(k)
+    assert_invalid(sas_validator, bjt_pair_doc, contains="is a dependency of")
+
+
+def test_bjt_old_noise_name_rejected(sas_validator, bjt_pair_doc):
+    _bjt_di(bjt_pair_doc)["dies"][0]["electrical"]["noiseVoltageDensity"] = 8.5e-10
+    assert_invalid(sas_validator, bjt_pair_doc, contains="unexpected")
+
+
+def test_mosfet_array_requires_dies(sas_validator, mosfet_doc):
+    """'array' joins the shared enum; on a MOSFET it is gated exactly like 'dual'."""
+    _mosfet_di(mosfet_doc)["part"]["dieConfiguration"] = "array"
+    assert_invalid(sas_validator, mosfet_doc, contains="'dies' is a required property")
+
+
+@pytest.mark.parametrize("value", ["dual", "complementary", "array"])
+def test_igbt_multi_die_configuration_rejected(sas_validator, value):
+    doc = {"igbt": {"manufacturerInfo": {"name": "X", "datasheetInfo": {
+        "part": {"partNumber": "X1", "technology": "Si", "dieConfiguration": value},
+        "electrical": {"collectorEmitterVoltage": 1200, "collectorEmitterSaturation": 1.7,
+                       "continuousCollectorCurrent": 40}}}}}
+    assert_invalid(sas_validator, doc)
+    doc["igbt"]["manufacturerInfo"]["datasheetInfo"]["part"]["dieConfiguration"] = "single"
+    assert_valid(sas_validator, doc)

@@ -48,6 +48,8 @@ alongside SAS. The reference documents for this schema are
   - [igbtCurves](#igbtcurves)
 - [BJT Sections](#bjt-sections)
   - [bjtElectrical](#bjtelectrical)
+  - [bjtDie (multi-die packages)](#bjtdie)
+  - [bjtMatching](#bjtmatching)
 - [Power Module Sections](#power-module-sections)
   - [moduleElectrical](#moduleelectrical)
   - [moduleSwitchingEnergy](#moduleswitchingenergy)
@@ -184,8 +186,10 @@ device-discriminating `oneOf` — the file it lives in already fixes the device 
 | Field | Type | Required | mosfet | diode | igbt | bjt |
 |-------|------|----------|--------|-------|------|-----|
 | `part` | [part](#part) | **Yes** | yes | yes | yes | yes |
-| `electrical` | per-device electrical | **Yes**, except on a multi-die MOSFET | yes | yes | yes | yes |
-| `dies` | array of [mosfetDie](#mosfetdie) | No (mosfet only) | yes | -- | -- | -- |
+| `electrical` | per-device electrical | **Yes**, except on a multi-die MOSFET or BJT | yes | yes | yes | yes |
+| `dies` | array of [mosfetDie](#mosfetdie) / [bjtDie](#bjtdie) | No | yes | -- | -- | yes |
+| `matching` | array of [bjtMatching](#bjtmatching) | No (bjt only; requires `dies`) | -- | -- | -- | yes |
+| `packagePowerDissipation` | number (W) | No (bjt only; requires `dies`) | -- | -- | -- | yes |
 | `thermal` | [thermal](#thermal) | No | yes | yes | yes | yes |
 | `mechanical` | [mechanical](#mechanical) | No | yes | yes | yes | yes |
 | `modelParams` | per-device modelParams | No | yes | yes | yes | -- |
@@ -200,6 +204,13 @@ exclusive** (a `oneOf` — exactly one of the two must be present), and a part w
 `part.dieConfiguration` is `dual` or `complementary` **must** carry `dies`. A package holding
 two die therefore has no slot in which one die's R_DS(on) could be recorded as the part's.
 See [mosfetDie](#mosfetdie).
+
+The bjt `datasheetInfo` carries the same `electrical`-XOR-`dies` rule. In addition,
+`matching` and `packagePowerDissipation` are legal only beside `dies`, and a part whose
+`part.dieConfiguration` is `complementary` must not carry `part.subType` (each die states
+its own polarity). Unlike the mosfet, a bjt declaring `dual` / `complementary` / `array`
+is **not yet required** to carry `dies` (phase 1): the gate follows once the catalogued
+duals that still carry a package block are migrated. See [bjtDie](#bjtdie).
 
 ---
 
@@ -225,8 +236,8 @@ field** — the device type is the top-level field name.
 | `package` | string | No | Manufacturer's exact package designation (e.g. "PG-TDSON-8"); complements the generic `case` code |
 | `qualification` | string | No | Qualification grade (e.g. "Industrial", "Automotive (AEC-Q101)") |
 | `matchcodeDescription` | string | No | Additional description or matchcode |
-| `dieConfiguration` | string (enum) | No | How many die the package holds: `single`, `dual` (two die of the same channel type), `complementary` (one n-channel and one p-channel die). Absent means one die. On a mosfet, `dual`/`complementary` makes [`dies`](#mosfetdie) required and forbids a package-level `electrical`. On a diode only `single`/`dual` are allowed, and `dual` keeps the single `electrical` block, which then describes **one** diode: every value is per diode (per leg), never the package total. Exception: where the datasheet itself states the per-diode rating as a fixed fraction of the printed package value (e.g. ROHM "Io/2 per diode"), record that fraction; never infer a fraction when the datasheet is silent |
-| `internalConnection` | string (enum) | No | How the die are wired inside the package, where the datasheet states it: `independent`, `commonDrain`, `commonSource`, `halfBridge`; for diodes `independent`, `commonCathode`, `commonAnode`, `series` (BAV99-style). Never inferred from the package or part number |
+| `dieConfiguration` | string (enum) | No | How many die the package holds: `single`, `dual` (two die of the same channel type / polarity), `complementary` (one n- and one p-type die), `array` (three or more die: BJT quads such as MAT14 / MMPQ3904, the 5-transistor CA3046; the count is the length of `dies`). Absent means one die. On a mosfet, `dual`/`complementary`/`array` makes [`dies`](#mosfetdie) required and forbids a package-level `electrical`. On a bjt, any multi-die value may be described per die through [`dies`](#bjtdie) (a package-level `electrical` is still tolerated until the phase-2 gate). On an igbt only `single` is legal (multi-die IGBTs are `module` parts). On a diode only `single`/`dual` are allowed, and `dual` keeps the single `electrical` block, which then describes **one** diode: every value is per diode (per leg), never the package total. Exception: where the datasheet itself states the per-diode rating as a fixed fraction of the printed package value (e.g. ROHM "Io/2 per diode"), record that fraction; never infer a fraction when the datasheet is silent |
+| `internalConnection` | string (enum) | No | How the die are wired inside the package, where the datasheet states it: for mosfet and igbt `independent`, `commonDrain`, `commonSource`, `halfBridge`; for diodes `independent`, `commonCathode`, `commonAnode`, `series` (BAV99-style); for bjt `independent`, `commonEmitter`, `commonBase`, `commonCollector` (the stated terminals bonded to one pin), `currentMirror` (bases tied and one transistor diode-connected: BCV61/62, BCM61/62). Never inferred from the package or part number |
 
 Each device file's `datasheetInfo.part` narrows `subType` to a closed enum via `allOf`:
 
@@ -593,7 +604,51 @@ Closed object. No `modelParams` or `curves` sections are defined for BJTs.
 | `dcCurrentGain` | [dimensionWithTolerance](#dimensionwithtolerance) | No | -- | h_FE -- DC current gain (min/nom/max) |
 | `saturationVoltage` | number | No | V | V_CE(sat) -- collector-emitter saturation voltage |
 | `transitionFrequency` | number | No | Hz | f_T -- gain-bandwidth product |
-| `powerDissipation` | number | No | W | P_D max |
+| `powerDissipation` | number | No | W | P_D max. Inside a die: the **per-transistor** rating; a package total goes in `datasheetInfo.packagePowerDissipation` and is never divided down to fill this |
+| `voltageNoiseDensity` | number | No | V/√Hz | e_n, input-referred voltage noise density (typical); same name and unit as AAS `amplifierCommon` |
+| `voltageNoiseDensityFrequency` | number | No | Hz | Frequency at which e_n is specified; requires `voltageNoiseDensity` |
+| `voltageNoiseDensityCollectorCurrent` | number | No | A | Collector current at which e_n is specified (e_n depends strongly on I_C); requires `voltageNoiseDensity` |
+
+### bjtDie
+
+`bjt.json#/$defs/die` — one transistor die inside a multi-die package (dual, complementary
+pair, matched pair, quad or larger array). Used through `datasheetInfo.dies[]`, which is
+**mutually exclusive** with the package-level `electrical` and has `minItems: 2`. Extends
+the shared `utils.json#/$defs/dieBase` and is sealed with `unevaluatedProperties: false`.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | **Yes** | The datasheet's own label for the die ("Q1", "Channel 1", "TR1"), verbatim and never invented |
+| `role` | string | No | The datasheet's functional name where it gives one, verbatim |
+| `pins` | array of string | No | Pin identifiers belonging to this die, matching entries of `mechanical.pinout` |
+| `subType` | string (enum) | **Yes** | Polarity OF THIS DIE: `npn` or `pnp` |
+| `electrical` | [bjtElectrical](#bjtelectrical) | **Yes** | The complete BJT electrical block, per die, with the same required `collectorEmitterVoltage` + `collectorCurrent` (BJT duals print I_C per transistor). `powerDissipation` is the **per-transistor** rating |
+| `thermal` | [thermal](#thermal) | No | Per-die figures where given; the package figure stays in `datasheetInfo.thermal` |
+
+Every die states its own values even when the datasheet prints them once for "each
+transistor", so "both transistors are 45 V" and "the part is 45 V" are different documents.
+The schema cannot check that die names are unique or that `pins` exist in the pinout —
+those are the ingest gate's referential checks.
+
+### bjtMatching
+
+`bjt.json#/$defs/matching` — one matching specification between die. Closed; at least one
+quantity is required. Every quantity is a [dimensionWithTolerance](#dimensionwithtolerance)
+(`nominal` = typical column, `maximum` = guaranteed), stated as a magnitude.
+
+| Field | Type | Required | Unit | Description |
+|-------|------|----------|------|-------------|
+| `dies` | array of string (≥2, unique) | No | -- | `dies[].name` values this spec relates; absent = between any two die (quad style) |
+| `baseEmitterVoltageMatch` | dimensionWithTolerance | one of the five | V | \|ΔV_BE\| at equal I_C, the pair's offset voltage V_OS |
+| `baseEmitterVoltageMatchDrift` | dimensionWithTolerance | one of the five | V/K | TCV_OS |
+| `currentGainMatch` | dimensionWithTolerance | one of the five | fraction | \|Δh_FE\|/h_FE (0.005 = 0.5 %) |
+| `baseCurrentMatch` | dimensionWithTolerance | one of the five | A | \|I_B1 − I_B2\|, the pair's offset current I_OS |
+| `collectorCurrentMatch` | dimensionWithTolerance | one of the five | fraction | \|I_C1/I_C2 − 1\|, the mirror-ratio error |
+| `testCollectorCurrent` | number | No | A | I_C per die at which the spec holds |
+| `testCollectorBaseVoltage` | number | No | V | V_CB at which the spec holds |
+| `testTemperature` | number | No | °C | Ambient temperature of the spec |
+
+See `examples/06_bjt_dual_matched_ssm2212.json`.
 
 ---
 

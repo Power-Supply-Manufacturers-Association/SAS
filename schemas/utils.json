@@ -59,17 +59,18 @@
         },
         "dieConfiguration": {
             "title": "dieConfiguration",
-            "description": "How many die the package holds and how their channels relate. Absent means the package holds one die, which is the overwhelming majority; state it explicitly only when the datasheet does. 'dual' = two die of the SAME channel type (onsemi SO-8FL Dual, Infineon Dual SSO8, TI two-FET power blocks); 'complementary' = one n-channel and one p-channel die in one package (YAGEO XP6C..., Vishay Si...DS). A part declaring 'dual' or 'complementary' MUST carry per-die data and MUST NOT carry a package-level electrical block — see mosfet.json.",
+            "description": "How many die the package holds and how their channels relate. Absent means the package holds one die, which is the overwhelming majority; state it explicitly only when the datasheet does. 'dual' = two die of the SAME channel type (onsemi SO-8FL Dual, Infineon Dual SSO8, TI two-FET power blocks); 'complementary' = one n-channel and one p-channel die in one package (YAGEO XP6C..., Vishay Si...DS). A part declaring 'dual' or 'complementary' MUST carry per-die data and MUST NOT carry a package-level electrical block — see mosfet.json. 'array' = three or more die (BJT quads such as MAT14 / MMPQ3904, the 5-transistor CA3046); the count is the length of dies[], the polarities are per die. A MOSFET declaring 'array' is gated exactly like 'dual'. A BJT may describe any multi-die value per die (bjt.json dies[]); a discrete IGBT is narrowed to 'single' (multi-die IGBTs are module.json parts).",
             "type": "string",
             "enum": [
                 "single",
                 "dual",
-                "complementary"
+                "complementary",
+                "array"
             ]
         },
         "internalConnection": {
             "title": "dieInternalConnection",
-            "description": "How the die are wired to each other INSIDE the package, when the datasheet says so. 'independent' = no internal connection between the die; 'commonDrain' / 'commonSource' = the stated terminals are bonded internally (YAGEO prints 'Common-Drain' in its own Configuration column); 'halfBridge' = the drain of one die is bonded to the source of the other, forming a switching node (Infineon 'Dual SSO8 HB', TI power blocks). Omit when the datasheet does not state the internal arrangement — do not infer it from the package or the part number. Diode packages: 'commonCathode' / 'commonAnode' = the two cathodes / anodes are bonded to one pin (e.g. center-tap TO-220AB rectifiers such as STPS30L60CT, BAT54C / BAT54A); 'series' = the anode of one diode is bonded to the cathode of the other (BAV99, BAT54S).",
+            "description": "How the die are wired to each other INSIDE the package, when the datasheet says so. 'independent' = no internal connection between the die; 'commonDrain' / 'commonSource' = the stated terminals are bonded internally (YAGEO prints 'Common-Drain' in its own Configuration column); 'halfBridge' = the drain of one die is bonded to the source of the other, forming a switching node (Infineon 'Dual SSO8 HB', TI power blocks). Omit when the datasheet does not state the internal arrangement — do not infer it from the package or the part number. Diode packages: 'commonCathode' / 'commonAnode' = the two cathodes / anodes are bonded to one pin (e.g. center-tap TO-220AB rectifiers such as STPS30L60CT, BAT54C / BAT54A); 'series' = the anode of one diode is bonded to the cathode of the other (BAV99, BAT54S). BJT packages: 'commonEmitter' / 'commonBase' / 'commonCollector' = the stated terminals of the die are bonded to one pin inside the package; 'currentMirror' = the two bases are tied and one transistor is diode-connected inside the package (BCV61/62, BCM61/62). Omit when the datasheet does not state it, as for every other value.",
             "type": "string",
             "enum": [
                 "independent",
@@ -78,7 +79,11 @@
                 "halfBridge",
                 "commonCathode",
                 "commonAnode",
-                "series"
+                "series",
+                "commonEmitter",
+                "commonBase",
+                "commonCollector",
+                "currentMirror"
             ]
         },
         "dieBase": {

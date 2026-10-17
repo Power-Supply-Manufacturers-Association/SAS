@@ -97,8 +97,10 @@ prefixes — the file it lives in already fixes the device type):
   |     +-- datasheetInfo
   |           +-- part         (required)  partNumber, technology, subType, case
   |           +-- electrical   (required)  device-specific ratings
-  |           +-- dies                     mosfet only: one entry per die in a
+  |           +-- dies                     mosfet + bjt: one entry per die in a
   |           |                            multi-die package, INSTEAD OF electrical
+  |           +-- matching                 bjt only: matching specs between die
+  |           +-- packagePowerDissipation  bjt only, beside dies: package P_tot
   |           +-- thermal                  R_th, T_j range, Foster network
   |           +-- mechanical               package dims, assembly type
   |           +-- modelParams              SPICE parameters   (not bjt)
@@ -205,7 +207,10 @@ document.
 
 ### BJT
 
-- **electrical** -- V_CEO, V_CBO, I_C, h_FE, V_CE(sat), f_T, P_D
+- **electrical** -- V_CEO, V_CBO, I_C, h_FE, V_CE(sat), f_T, P_D, voltage noise density e_n (+ the frequency and collector current it is specified at; the AAS field names)
+- **dies** -- duals, complementary pairs, matched pairs/quads and current mirrors: one entry per die, each `{name, role, pins, subType, electrical, thermal}` with the full BJT electrical block (I_C stays required per die: BJT duals print it per transistor). Mutually exclusive with the package-level `electrical`. Phase 1: optional even when `part.dieConfiguration` is `dual`/`complementary`/`array` (a gate like the MOSFET one waits for the 13 Toshiba duals to be migrated)
+- **matching** -- only beside `dies`: |ΔV_BE| (V_OS), its drift, Δh_FE/h_FE, I_OS, mirror-ratio error, each as a `dimensionWithTolerance` (typical + guaranteed) with its test I_C / V_CB / T_A
+- **packagePowerDissipation** -- only beside `dies`: the package total P_tot; each die keeps its per-transistor P_D
 - No modelParams or curves sections defined (BJTs are rarely used in new power designs)
 
 ### Power Module (Si IGBT, Si/SiC MOSFET, GaN HEMT dies)
@@ -314,6 +319,7 @@ SAS/
 |   +-- 03_module_ff2mr12w3m1h.json  1200V SiC half-bridge module (reference document)
 |   +-- 04_mosfet_dual_iaucn04s7l025ah.json  two-die MOSFET package
 |   +-- 05_tvs_ptvs1_022c_h.json     22V TVS diode, 1 kA 8/20 us, with pulse waveforms
+|   +-- 06_bjt_dual_matched_ssm2212.json  dual matched NPN pair (dies[] + matching[])
 |
 +-- src/                      C++ converter layer (semiconductor PEAS -> CIAS)
 +-- tests/                    pytest schema tests + C++ converter tests
@@ -399,6 +405,20 @@ Key features demonstrated:
 - A bare part record (device field only, no `inputs`/`outputs`), which the top-level
   `anyOf` allows
 
+### Example 6: Dual matched NPN pair -- Analog Devices SSM2212
+
+File: `examples/06_bjt_dual_matched_ssm2212.json`
+
+An audio dual matched NPN transistor in SOIC-8, sold for its matching spec.
+
+Key features demonstrated:
+- `part.dieConfiguration: "dual"` and **no package-level `electrical`**: two `dies[]`
+  named `Channel 1` / `Channel 2`, the datasheet's own words for C1/B1/E1 and C2/B2/E2
+- Each die states its own V_CEO = 40 V, I_C = 20 mA, h_FE {min 300, typ 605} and
+  e_n = 0.85 nV/sqrt(Hz) at 1 kHz and I_C = 1 mA (`voltageNoiseDensity*`)
+- `matching[]`: V_OS {typ 10 uV, max 200 uV}, its drift, Delta h_FE {0.5 %, 5 %} and
+  I_OS max 6.2 nA, each with the test conditions the datasheet prints
+
 ---
 
 ## Quick Reference: Fields by Device Type
@@ -407,7 +427,7 @@ Key features demonstrated:
 
 | Section | Key Fields |
 |---------|------------|
-| **part** | partNumber, technology, subType (per-device closed enum), case, package, qualification, dieConfiguration (`single`/`dual`/`complementary`), internalConnection (`independent`/`commonDrain`/`commonSource`/`halfBridge`) |
+| **part** | partNumber, technology, subType (per-device closed enum), case, package, qualification, dieConfiguration (`single`/`dual`/`complementary`/`array`), internalConnection (mosfet/igbt `independent`/`commonDrain`/`commonSource`/`halfBridge`; diode `commonCathode`/`commonAnode`/`series`; bjt `commonEmitter`/`commonBase`/`commonCollector`/`currentMirror`) |
 | **thermal** | R_th(j-c), R_th(j-a), R_th(c-s), T_j min/max, fosterNetwork |
 | **mechanical** | assemblyType (PEAS connectionType: smt/tht/chassis/...), case, length, width, height, weight |
 | **provenance** | data-source trail: source, sourceName, sourceUrl, retrievedDate, fields |
@@ -437,7 +457,7 @@ Key features demonstrated:
 | **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge -- in `electrical` for a single-die part. A `dies[]` entry requires the same set **minus continuousDrainCurrent** (a package rating many vendors publish only per package), plus `name` and `subType` |
 | **diode** | depends on `part.subType`: rectifier family (`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`, or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating. Each pulse rating may state its waveform (`peakPulseCurrentWaveform`, `peakPulsePowerWaveform`, `clampingWaveform` + `clampingCurrent`; PEAS `surgeWaveform` enum), and a waveform requires its value |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
-| **bjt** | collectorEmitterVoltage, collectorCurrent |
+| **bjt** | collectorEmitterVoltage, collectorCurrent -- in `electrical` for a single-die part, and in every `dies[]` entry (plus `name` and `subType`) for a multi-die one |
 | **module** | topology, switchTechnology, numberOfSwitches, switch (whose own required set is the mosfet or igbt one above, per switchTechnology) |
 
 ---

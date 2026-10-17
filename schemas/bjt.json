@@ -102,9 +102,18 @@
                                 "internalConnection": {
                                     "enum": [
                                         "independent",
-                                        "commonDrain",
-                                        "commonSource",
-                                        "halfBridge"
+                                        "commonEmitter",
+                                        "commonBase",
+                                        "commonCollector",
+                                        "currentMirror"
+                                    ]
+                                },
+                                "dieConfiguration": {
+                                    "enum": [
+                                        "single",
+                                        "dual",
+                                        "complementary",
+                                        "array"
                                     ]
                                 }
                             }
@@ -113,6 +122,27 @@
                 },
                 "electrical": {
                     "$ref": "#/$defs/electrical"
+                },
+                "dies": {
+                    "description": "One entry per transistor die in a multi-die package. Present INSTEAD OF the package-level electrical block, never beside it: a dual has no single V_CEO or h_FE, and a complementary pair has no single polarity. Order carries no meaning; die are identified by name.",
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/$defs/die"
+                    }
+                },
+                "matching": {
+                    "description": "Matching specifications between die (matched pairs and quads, current mirrors). Only legal on a part described per die.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/matching"
+                    }
+                },
+                "packagePowerDissipation": {
+                    "description": "Total power dissipation of the PACKAGE with all die conducting (P_tot 'per device' / 'per package'), in W, as the datasheet prints it. Legal only beside dies[]: on a single-die part the package figure is electrical.powerDissipation. The per-transistor rating stays in each die's electrical.powerDissipation; the package total is never divided down to fill it, and a per-die figure is never summed up to fill this one.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
                 },
                 "thermal": {
                     "$ref": "./utils.json#/$defs/thermal"
@@ -126,8 +156,88 @@
                 }
             },
             "required": [
-                "part",
-                "electrical"
+                "part"
+            ],
+            "oneOf": [
+                {
+                    "required": [
+                        "electrical"
+                    ],
+                    "not": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                },
+                {
+                    "required": [
+                        "dies"
+                    ],
+                    "not": {
+                        "required": [
+                            "electrical"
+                        ]
+                    }
+                }
+            ],
+            "allOf": [
+                {
+                    "$comment": "Matching relates die; it has nothing to attach to on a single-die record.",
+                    "if": {
+                        "required": [
+                            "matching"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                },
+                {
+                    "$comment": "A complementary pair has no package polarity: part.subType would have to be one die's polarity written as the part's.",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "dieConfiguration"
+                                ],
+                                "properties": {
+                                    "dieConfiguration": {
+                                        "const": "complementary"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "part": {
+                                "not": {
+                                    "required": [
+                                        "subType"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "A package total relates die; a single-die record states its dissipation in electrical.powerDissipation.",
+                    "if": {
+                        "required": [
+                            "packagePowerDissipation"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                }
             ]
         },
         "electrical": {
@@ -163,11 +273,147 @@
                 "powerDissipation": {
                     "type": "number",
                     "description": "P_D max in Watts"
+                },
+                "voltageNoiseDensity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Input-referred voltage noise density e_n, in V/sqrt(Hz) - the headline of low-noise matched pairs (MAT03, SSM2212). Same name and unit as AAS amplifierCommon.voltageNoiseDensity, so one query covers op amps and matched transistors. Typical column."
+                },
+                "voltageNoiseDensityFrequency": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Frequency at which voltageNoiseDensity is specified, in Hz (the AAS name)."
+                },
+                "voltageNoiseDensityCollectorCurrent": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Collector current at which voltageNoiseDensity is specified, in A. A BJT's e_n depends strongly on I_C (shot noise falls, r_bb' noise stays), so the figure carries its bias condition."
                 }
             },
             "required": [
                 "collectorEmitterVoltage",
                 "collectorCurrent"
+            ],
+            "dependentRequired": {
+                "voltageNoiseDensityFrequency": [
+                    "voltageNoiseDensity"
+                ],
+                "voltageNoiseDensityCollectorCurrent": [
+                    "voltageNoiseDensity"
+                ]
+            }
+        },
+        "die": {
+            "title": "bjtDie",
+            "description": "One transistor die inside a multi-die BJT package (dual, complementary pair, matched pair, quad or larger array), with the complete BJT electrical block the single-device file already defines: the same physics and the same field names as a single-die part, stated once per die. Every die states its own values even when the datasheet prints them once for 'each transistor', so 'both transistors are 45 V' and 'the part is 45 V' are different documents. powerDissipation inside a die is the PER-TRANSISTOR rating; a package total is not a die figure and is never divided down to fill this slot (it goes in datasheetInfo.packagePowerDissipation).",
+            "unevaluatedProperties": false,
+            "allOf": [
+                {
+                    "$ref": "./utils.json#/$defs/dieBase"
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "subType",
+                        "electrical"
+                    ],
+                    "properties": {
+                        "subType": {
+                            "description": "Polarity OF THIS DIE. A complementary pair has one npn die and one pnp die in one part; the single-device part.subType cannot say that.",
+                            "type": "string",
+                            "enum": [
+                                "npn",
+                                "pnp"
+                            ]
+                        },
+                        "electrical": {
+                            "description": "The complete BJT electrical block, per die (same definition and same required V_CEO + I_C as a single-die part).",
+                            "$ref": "#/$defs/electrical"
+                        },
+                        "thermal": {
+                            "description": "Per-die thermal figures where the datasheet gives them. The package figure stays in datasheetInfo.thermal.",
+                            "$ref": "./utils.json#/$defs/thermal"
+                        }
+                    }
+                }
+            ]
+        },
+        "matching": {
+            "title": "bjtMatching",
+            "description": "One matching specification between die of a multi-die BJT: how closely the named transistors agree, at the stated test conditions. Matching is a property of a PAIR (or set) of die, never of one die, so it sits beside dies[] rather than inside a die. Each quantity is a dimensionWithTolerance so the datasheet's typical (nominal) and guaranteed (maximum) columns are both kept; magnitudes are absolute values.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "dies": {
+                    "description": "Names (dies[].name) of the die this specification relates. Absent means it holds between ANY two die of the part, which is how quad datasheets state it. The schema cannot check that the names exist in dies[]; that is the ingest gate's job.",
+                    "type": "array",
+                    "minItems": 2,
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "baseEmitterVoltageMatch": {
+                    "description": "|Delta V_BE| between the die at equal collector current - the offset voltage V_OS of the pair, in V.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "baseEmitterVoltageMatchDrift": {
+                    "description": "Temperature drift of the V_BE match (offset-voltage tracking, TCV_OS), in V/K.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "currentGainMatch": {
+                    "description": "Current-gain match |Delta h_FE| / h_FE as a fraction (0.005 = 0.5%).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "baseCurrentMatch": {
+                    "description": "Base-current match |I_B1 - I_B2| (input offset current I_OS of the pair), in A.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "collectorCurrentMatch": {
+                    "description": "Collector-current match |I_C1/I_C2 - 1| as a fraction - the mirror-ratio error of a current-mirror pair (BCV61/62, BCM61/62).",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "testCollectorCurrent": {
+                    "description": "Collector current per die at which the matching is specified, in A.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "testCollectorBaseVoltage": {
+                    "description": "Collector-base voltage at which the matching is specified, in V.",
+                    "type": "number"
+                },
+                "testTemperature": {
+                    "description": "Ambient temperature at which the matching is specified, in degC.",
+                    "type": "number"
+                }
+            },
+            "anyOf": [
+                {
+                    "required": [
+                        "baseEmitterVoltageMatch"
+                    ]
+                },
+                {
+                    "required": [
+                        "baseEmitterVoltageMatchDrift"
+                    ]
+                },
+                {
+                    "required": [
+                        "currentGainMatch"
+                    ]
+                },
+                {
+                    "required": [
+                        "baseCurrentMatch"
+                    ]
+                },
+                {
+                    "required": [
+                        "collectorCurrentMatch"
+                    ]
+                }
             ]
         }
     }
