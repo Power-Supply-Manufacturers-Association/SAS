@@ -124,7 +124,7 @@
                     "$ref": "#/$defs/electrical"
                 },
                 "dies": {
-                    "description": "One entry per transistor die in a multi-die package. Present INSTEAD OF the package-level electrical block, never beside it: a dual has no single V_CEO or h_FE, and a complementary pair has no single polarity. Order carries no meaning; die are identified by name.",
+                    "description": "One entry per transistor die in a multi-die package. Present INSTEAD OF the package-level electrical block, never beside it: a dual has no single V_CEO or h_FE, and a complementary pair has no single polarity. Required when part.dieConfiguration is dual, complementary or array. Order carries no meaning; die are identified by name.",
                     "type": "array",
                     "minItems": 2,
                     "items": {
@@ -239,7 +239,7 @@
                     }
                 },
                 {
-                    "$comment": "A multi-die part states its bias resistors per die: the package-level electrical block cannot say which transistor carries which resistors (PUMD/EMC/UMC pairs differ per die). Existing multi-die rows with a package block stay legal until the phase-2 gate; only the NEW field is refused in the dishonest place.",
+                    "$comment": "A package that declares two or more die must describe them per die, as on mosfet.json. With electrical XOR dies, this also leaves no package-level electrical block in which one die's numbers (V_CEO, h_FE, bias resistors) could be written as the part's.",
                     "if": {
                         "required": [
                             "part"
@@ -262,15 +262,9 @@
                         }
                     },
                     "then": {
-                        "properties": {
-                            "electrical": {
-                                "not": {
-                                    "required": [
-                                        "biasResistors"
-                                    ]
-                                }
-                            }
-                        }
+                        "required": [
+                            "dies"
+                        ]
                     }
                 }
             ]

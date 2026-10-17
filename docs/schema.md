@@ -209,11 +209,10 @@ See [mosfetDie](#mosfetdie).
 The bjt `datasheetInfo` carries the same `electrical`-XOR-`dies` rule. In addition,
 `matching` and `packagePowerDissipation` are legal only beside `dies`, and a part whose
 `part.dieConfiguration` is `complementary` must not carry `part.subType` (each die states
-its own polarity). Unlike the mosfet, a bjt declaring `dual` / `complementary` / `array`
-is **not yet required** to carry `dies` (phase 1): the gate follows once the catalogued
-duals that still carry a package block are migrated. See [bjtDie](#bjtdie). Such a
-multi-die part may not put `biasResistors` in a package-level `electrical`, though (see
-[bjtBiasResistors](#bjtbiasresistors)).
+its own polarity). As on the mosfet, a bjt whose `part.dieConfiguration` is `dual`,
+`complementary` or `array` **must** carry `dies`, and therefore has no package-level
+`electrical` in which one die's V_CEO, h_FE or bias resistors could be recorded as the
+part's. See [bjtDie](#bjtdie).
 
 ---
 
@@ -239,7 +238,7 @@ field** — the device type is the top-level field name.
 | `package` | string | No | Manufacturer's exact package designation (e.g. "PG-TDSON-8"); complements the generic `case` code |
 | `qualification` | string | No | Qualification grade (e.g. "Industrial", "Automotive (AEC-Q101)") |
 | `matchcodeDescription` | string | No | Additional description or matchcode |
-| `dieConfiguration` | string (enum) | No | How many die the package holds: `single`, `dual` (two die of the same channel type / polarity), `complementary` (one n- and one p-type die), `array` (three or more die: BJT quads such as MAT14 / MMPQ3904, the 5-transistor CA3046; the count is the length of `dies`). Absent means one die. On a mosfet, `dual`/`complementary`/`array` makes [`dies`](#mosfetdie) required and forbids a package-level `electrical`. On a bjt, any multi-die value may be described per die through [`dies`](#bjtdie) (a package-level `electrical` is still tolerated until the phase-2 gate). On an igbt only `single` is legal (multi-die IGBTs are `module` parts). On a diode only `single`/`dual` are allowed, and `dual` keeps the single `electrical` block, which then describes **one** diode: every value is per diode (per leg), never the package total. Exception: where the datasheet itself states the per-diode rating as a fixed fraction of the printed package value (e.g. ROHM "Io/2 per diode"), record that fraction; never infer a fraction when the datasheet is silent |
+| `dieConfiguration` | string (enum) | No | How many die the package holds: `single`, `dual` (two die of the same channel type / polarity), `complementary` (one n- and one p-type die), `array` (three or more die: BJT quads such as MAT14 / MMPQ3904, the 5-transistor CA3046; the count is the length of `dies`). Absent means one die. On a mosfet, `dual`/`complementary`/`array` makes [`dies`](#mosfetdie) required and forbids a package-level `electrical`. On a bjt the same three values make [`dies`](#bjtdie) required and forbid a package-level `electrical`. On an igbt only `single` is legal (multi-die IGBTs are `module` parts). On a diode only `single`/`dual` are allowed, and `dual` keeps the single `electrical` block, which then describes **one** diode: every value is per diode (per leg), never the package total. Exception: where the datasheet itself states the per-diode rating as a fixed fraction of the printed package value (e.g. ROHM "Io/2 per diode"), record that fraction; never infer a fraction when the datasheet is silent |
 | `internalConnection` | string (enum) | No | How the die are wired inside the package, where the datasheet states it: for mosfet and igbt `independent`, `commonDrain`, `commonSource`, `halfBridge`; for diodes `independent`, `commonCathode`, `commonAnode`, `series` (BAV99-style); for bjt `independent`, `commonEmitter`, `commonBase`, `commonCollector` (the stated terminals bonded to one pin), `currentMirror` (bases tied and one transistor diode-connected: BCV61/62, BCM61/62). Never inferred from the package or part number |
 
 Each device file's `datasheetInfo.part` narrows `subType` to a closed enum via `allOf`:
@@ -643,10 +642,10 @@ a percentage (Panasonic "-30% 22 +30%") is stored as the limits it states.
 | `resistanceRatio` | [dimensionWithTolerance](#dimensionwithtolerance) | No | 1 | The ratio **exactly as printed**, never inverted. Requires `resistanceRatioDefinition`, `baseResistance` and `baseEmitterResistance` |
 | `resistanceRatioDefinition` | string (enum) | No | -- | `"R2/R1"` (Nexperia, ROHM) or `"R1/R2"` (onsemi, Toshiba, Panasonic): which ratio `resistanceRatio` holds. Requires `resistanceRatio` |
 
-On a part whose `part.dieConfiguration` is `dual`, `complementary` or `array`, the
-package-level `electrical` must not carry `biasResistors`: a package block cannot say
-which transistor carries which resistors (a PUMD9 pairs an NPN 10k/47k die with a PNP
-die of different f_T). State them per die in `dies[].electrical`.
+On a part whose `part.dieConfiguration` is `dual`, `complementary` or `array` there is no
+package-level `electrical` at all (`dies` is required), so the resistors are stated per die
+in `dies[].electrical`: a package block could not say which transistor carries which
+resistors (a PUMD9 pairs an NPN 10k/47k die with a PNP die of different f_T).
 See `examples/07_bjt_prebiased_dual_pumh11.json`.
 
 ### bjtDie

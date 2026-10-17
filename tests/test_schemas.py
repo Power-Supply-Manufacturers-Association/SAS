@@ -656,7 +656,7 @@ def test_pulse_values_without_waveform_still_valid(sas_validator, tvs_doc):
 
 
 # ---------------------------------------------------------------------------
-# Multi-die BJT packages: dies[] + matching[] (phase 1 — no dual/array gate yet)
+# Multi-die BJT packages: dies[] + matching[], gated like the MOSFET
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
@@ -757,10 +757,31 @@ def test_bjt_die_configuration_quad_rejected(sas_validator, bjt_pair_doc):
     assert_invalid(sas_validator, bjt_pair_doc)
 
 
-def test_bjt_dual_with_package_electrical_tolerated_in_phase_1(sas_validator, bjt_pair_doc):
-    """Phase 1 does not gate: 13 live Toshiba duals still carry a package block."""
+@pytest.mark.parametrize("cfg", ["dual", "complementary", "array"])
+def test_bjt_multi_die_with_package_electrical_rejected(sas_validator, bjt_pair_doc, cfg):
+    """The gate: a package declaring two or more die must describe them per die."""
     doc = _bjt_single(bjt_pair_doc)
-    _bjt_di(doc)["part"]["dieConfiguration"] = "dual"
+    _bjt_di(doc)["part"]["dieConfiguration"] = cfg
+    if cfg == "complementary":
+        _bjt_di(doc)["part"].pop("subType")
+    assert_invalid(sas_validator, doc, contains="'dies' is a required property")
+
+
+@pytest.mark.parametrize("cfg", ["dual", "complementary", "array"])
+def test_bjt_multi_die_with_dies_accepted(sas_validator, bjt_pair_doc, cfg):
+    di = _bjt_di(bjt_pair_doc)
+    di["part"]["dieConfiguration"] = cfg
+    if cfg == "complementary":
+        di["part"].pop("subType")
+        di["dies"][1]["subType"] = "pnp"
+    assert_valid(sas_validator, bjt_pair_doc)
+
+
+@pytest.mark.parametrize("cfg", ["single", None])
+def test_bjt_single_die_package_electrical_not_gated(sas_validator, bjt_pair_doc, cfg):
+    doc = _bjt_single(bjt_pair_doc)
+    if cfg:
+        _bjt_di(doc)["part"]["dieConfiguration"] = cfg
     assert_valid(sas_validator, doc)
 
 
@@ -966,13 +987,13 @@ def test_brt_multi_die_forbids_package_bias_resistors(sas_validator, brt_single_
     di["part"]["dieConfiguration"] = cfg
     if cfg == "complementary":
         di["part"].pop("subType")
-    assert_invalid(sas_validator, brt_single_doc, contains="should not be valid under")
+    assert_invalid(sas_validator, brt_single_doc, contains="'dies' is a required property")
 
 
-def test_brt_multi_die_plain_package_block_still_tolerated(sas_validator, brt_single_doc):
+def test_brt_multi_die_plain_package_block_rejected(sas_validator, brt_single_doc):
     doc = _plain(brt_single_doc)
     _bjt_di(doc)["part"]["dieConfiguration"] = "dual"
-    assert_valid(sas_validator, doc)
+    assert_invalid(sas_validator, doc, contains="'dies' is a required property")
 
 
 def test_brt_mixed_pair(sas_validator, brt_pair_doc):
