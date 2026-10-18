@@ -512,7 +512,7 @@ Key features demonstrated:
 | Field | MOSFET | Diode | IGBT | BJT |
 |-------|--------|-------|------|-----|
 | **Voltage rating** | drainSourceVoltage | reverseVoltage | collectorEmitterVoltage | collectorEmitterVoltage |
-| **Current rating** | continuousDrainCurrent | forwardCurrent | continuousCollectorCurrent | collectorCurrent |
+| **Current rating** | continuousDrainCurrent (T_C); ambientRatings[] (T_A, board-mounted) | forwardCurrent | continuousCollectorCurrent | collectorCurrent |
 | **On-state loss param** | onResistance | forwardVoltage | collectorEmitterSaturation | saturationVoltage |
 | **Gate/base threshold** | gateThresholdVoltage | -- | gateThresholdVoltage | -- |
 | **Switching energy** | (from Q_g, times) | -- | turnOnEnergy, turnOffEnergy | -- |
@@ -527,7 +527,7 @@ Key features demonstrated:
 
 | Device Type | Required Electrical Fields |
 |-------------|--------------------------|
-| **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge -- in `electrical` for a single-die part. A `dies[]` entry requires the same set **minus continuousDrainCurrent** (a package rating many vendors publish only per package), plus `name` and `subType` |
+| **mosfet** | drainSourceVoltage, onResistance, continuousDrainCurrent, gateThresholdVoltage, totalGateCharge -- in `electrical` for a single-die part. A part whose datasheet rates I_D only at an ambient temperature (SO-8, SOT-23, TSOP-6, SC-70, CSP) omits continuousDrainCurrent and carries an `ambientRatings` point with continuousDrainCurrent instead; a T_A figure is never written into the case-referred field. A `dies[]` entry requires the same set **minus continuousDrainCurrent** (a package rating many vendors publish only per package), plus `name` and `subType` |
 | **diode** | depends on `part.subType`: rectifier family (`rectifier`/`schottky`/`sicSchottky`/`fastRecovery`/`ultrafast`/`switching`/`pin`, or no subType) -> reverseVoltage, forwardVoltage, forwardCurrent; zener -> breakdownVoltage, powerDissipation; tvs -> standoffVoltage, clampingVoltage + a pulse rating; esd -> standoffVoltage + a pulse rating. Each pulse rating may state its waveform (`peakPulseCurrentWaveform`, `peakPulsePowerWaveform`, `clampingWaveform` + `clampingCurrent`; PEAS `surgeWaveform` enum), and a waveform requires its value |
 | **igbt** | collectorEmitterVoltage, collectorEmitterSaturation, continuousCollectorCurrent |
 | **bjt** | collectorEmitterVoltage, collectorCurrent -- in `electrical` for a single-die part, and in every `dies[]` entry (plus `name` and `subType`) for a multi-die one |

@@ -1282,3 +1282,70 @@ def test_design_requirements_new_kinds(sas_validator, mosfet_doc, kind, extra):
 def test_design_requirements_thyristor_type_anchored(sas_validator, mosfet_doc):
     mosfet_doc["inputs"]["designRequirements"] = {"deviceType": "thyristor", "thyristorType": "tvs"}
     assert_invalid_deep(sas_validator, mosfet_doc, contains="is not one of")
+
+
+# ---------------------------------------------------------------------------
+# MOSFET ambient-temperature (T_A) ratings: electrical.ambientRatings[]
+# ---------------------------------------------------------------------------
+
+AMBIENT_EXAMPLES = ("13_mosfet_ambient_only_si4896dy.json",
+                    "14_mosfet_ambient_single_column_si3440dv.json",
+                    "15_mosfet_case_and_ambient_si7450dp.json")
+
+
+def _mel(doc):
+    return doc["mosfet"]["manufacturerInfo"]["datasheetInfo"]["electrical"]
+
+
+@pytest.mark.parametrize("name", AMBIENT_EXAMPLES)
+def test_ambient_example_validates(sas_validator, name):
+    assert_valid(sas_validator, _ex(name))
+
+
+def test_ambient_only_part_needs_no_case_current(sas_validator):
+    """SO-8 / SOT-23 / TSOP-6 parts print I_D only at T_A: an ambient point with I_D stands in
+    for the case-referred continuousDrainCurrent."""
+    doc = _ex("13_mosfet_ambient_only_si4896dy.json")
+    assert "continuousDrainCurrent" not in _mel(doc)
+    assert_valid(sas_validator, doc)
+
+
+def test_ambient_block_without_any_current_does_not_satisfy_the_rule(sas_validator):
+    doc = _ex("13_mosfet_ambient_only_si4896dy.json")
+    for r in _mel(doc)["ambientRatings"]:
+        for p in r["points"]:
+            p.pop("continuousDrainCurrent", None)
+    assert_invalid(sas_validator, doc, contains="'continuousDrainCurrent' is a required property")
+
+
+def test_case_rated_part_without_ambient_block_is_unchanged(sas_validator):
+    doc = _ex("15_mosfet_case_and_ambient_si7450dp.json")
+    _mel(doc).pop("ambientRatings")
+    assert_valid(sas_validator, doc)
+    _mel(doc).pop("continuousDrainCurrent")
+    assert_invalid(sas_validator, doc, contains="'continuousDrainCurrent' is a required property")
+
+
+def test_ambient_transient_rating_requires_duration(sas_validator):
+    doc = _ex("13_mosfet_ambient_only_si4896dy.json")
+    _mel(doc)["ambientRatings"][0].pop("duration")
+    assert_invalid_deep(sas_validator, doc, contains="'duration' is a required property")
+
+
+def test_ambient_steady_state_rating_rejects_duration(sas_validator):
+    doc = _ex("13_mosfet_ambient_only_si4896dy.json")
+    _mel(doc)["ambientRatings"][1]["duration"] = 10
+    assert_invalid(sas_validator, doc)
+
+
+def test_ambient_point_requires_a_rating(sas_validator):
+    doc = _ex("13_mosfet_ambient_only_si4896dy.json")
+    _mel(doc)["ambientRatings"][0]["points"].append({"ambientTemperature": 85})
+    assert_invalid(sas_validator, doc)
+
+
+def test_ambient_unstated_time_base_is_storable(sas_validator):
+    """Si3440DV prints one LIMIT column with no duration: timeBase stays absent, never inferred."""
+    doc = _ex("14_mosfet_ambient_single_column_si3440dv.json")
+    assert "timeBase" not in _mel(doc)["ambientRatings"][0]
+    assert_valid(sas_validator, doc)

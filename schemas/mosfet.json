@@ -234,7 +234,7 @@
         },
         "electricalBase": {
             "title": "mosfetElectricalBase",
-            "description": "MOSFET electrical characteristics — every field is relevant to MOSFETs. This base requires the four figures every MOSFET datasheet prints for a single device; the package-level continuousDrainCurrent requirement is added by 'electrical' on top of it. A DIE inside a multi-die package uses this base directly, because a continuous drain current is a package rating and several vendors publish it only per package (TI SLPS666 prints one package operating current and one pulsed I_DM for both die) — requiring it per die would make the faithful record unwritable.",
+            "description": "MOSFET electrical characteristics — every field is relevant to MOSFETs. This base requires the four figures every MOSFET datasheet prints for a single device; the package-level continuousDrainCurrent requirement is added by 'electrical' on top of it. A DIE inside a multi-die package uses this base directly, because a continuous drain current is a package rating and several vendors publish it only per package (TI SLPS666 prints one package operating current and one pulsed I_DM for both die) — requiring it per die would make the faithful record unwritable. Drain-current and dissipation ratings stated at an ambient temperature (board-mounted) live in ambientRatings, never in the case-referred continuousDrainCurrent / powerDissipation.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -248,7 +248,7 @@
                 },
                 "continuousDrainCurrent": {
                     "type": "number",
-                    "description": "I_D at Tc=25C in Amperes"
+                    "description": "I_D at Tc=25C in Amperes. Case-referred only: a rating the datasheet prints at an AMBIENT temperature (T_A = 25 C, board-mounted) goes in ambientRatings and is never written here."
                 },
                 "continuousDrainCurrentAt100C": {
                     "type": "number",
@@ -260,7 +260,16 @@
                 },
                 "powerDissipation": {
                     "type": "number",
-                    "description": "P_D max at Tc=25C in Watts"
+                    "description": "P_D max at Tc=25C in Watts. Case-referred only: a P_D printed at T_A goes in ambientRatings and is never written here."
+                },
+                "ambientRatings": {
+                    "description": "Ratings the datasheet states at an AMBIENT temperature with the part mounted on a board - the only drain-current and dissipation ratings most SO-8, SOT-23, TSOP-6, SC-70 and CSP parts print, and the T_A rows printed beside the T_C row on PowerPAK / DFN parts. One entry per printed condition column (time base + mounting), each carrying its rows by ambient temperature. A part may carry both continuousDrainCurrent (T_C) and ambientRatings (T_A); a part printing only T_A ratings carries ambientRatings alone.",
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                        "$ref": "#/$defs/ambientRating"
+                    }
                 },
                 "avalancheEnergy": {
                     "type": "number",
@@ -360,14 +369,171 @@
         },
         "electrical": {
             "title": "mosfetElectrical",
-            "description": "MOSFET electrical characteristics of a single-die part, or of one switch position of a module: the shared base plus the package-level continuousDrainCurrent, which a whole part always rates. Unchanged in effect from before dies[] existed — the same five required fields.",
+            "description": "MOSFET electrical characteristics of a single-die part, or of one switch position of a module: the shared base plus a package-level continuous drain current rating, which a whole part always states - either case-referred (continuousDrainCurrent, T_C = 25 C) or, for a part whose datasheet rates it only at an ambient temperature, at least one ambientRatings point carrying continuousDrainCurrent. A part printing a T_C rating is unchanged: the same five required fields.",
             "allOf": [
                 {
                     "$ref": "#/$defs/electricalBase"
                 },
                 {
+                    "$comment": "A whole part always rates its continuous drain current. A T_C rating is required exactly as before UNLESS the part carries an ambient point with I_D (a T_A-only part). if/else rather than anyOf so a part with neither still fails with \"'continuousDrainCurrent' is a required property\". An ambientRatings block holding only P_D or R_th(j-a) does not stand in for a current rating.",
+                    "if": {
+                        "required": [
+                            "ambientRatings"
+                        ],
+                        "properties": {
+                            "ambientRatings": {
+                                "contains": {
+                                    "required": [
+                                        "points"
+                                    ],
+                                    "properties": {
+                                        "points": {
+                                            "contains": {
+                                                "required": [
+                                                    "continuousDrainCurrent"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "else": {
+                        "required": [
+                            "continuousDrainCurrent"
+                        ]
+                    }
+                }
+            ]
+        },
+        "ambientRating": {
+            "title": "mosfetAmbientRating",
+            "description": "One printed ambient-rating condition: a time base (10 s or steady state), the board-mounting note, the junction-to-ambient thermal resistance that applies to it, and the ratings at each ambient temperature printed under it. A Vishay 'ABSOLUTE MAXIMUM RATINGS T_A = 25 C' table with '10 s' and 'Steady State' columns is two entries; a datasheet that prints two mounting conditions (Diodes Inc.: minimum pad vs 1 in^2 copper) is one entry per mounting. An R_th(j-a) row that is printed for a condition with no current or power under it (Vishay 't <= 5 s') is an entry with thermalResistanceJunctionAmbient and no points.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "timeBase": {
+                    "description": "Which kind of rating the condition is: 'steadyState' (the datasheet's 'Steady State' column or note), or 'transient' (a time-limited rating, 't <= 10 s'; its length is in duration). Absent = the datasheet does not say (a single LIMIT column with no duration note). Never inferred from P_D arithmetic - that inference is a Blade Runner finding, not a datasheet fact.",
+                    "type": "string",
+                    "enum": [
+                        "steadyState",
+                        "transient"
+                    ]
+                },
+                "duration": {
+                    "description": "Length of a transient rating, in s ('t <= 10 s' is 10, 't <= 5 s' is 5). Required when timeBase is 'transient'; not allowed otherwise.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "mounting": {
+                    "description": "The board-mounting condition exactly as the datasheet's note prints it ('Surface mounted on 1\" x 1\" FR4 board'; 'Device mounted on FR-4 PCB with minimum recommended pad layout, single sided'). Free text because the printed conditions vary along board material, copper area, copper weight, layer count and vias, and no closed vocabulary covers them without inventing equivalences. Absent = the datasheet prints no mounting note.",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                },
+                "thermalResistanceJunctionAmbient": {
+                    "description": "R_th(j-a) for THIS time base and mounting, in K/W: typical in nominal, maximum in maximum, as printed. The package-level datasheetInfo.thermal.thermalResistanceJunctionAmbient stays a single figure; this one carries the condition the single figure cannot.",
+                    "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance"
+                },
+                "points": {
+                    "description": "The ratings printed under this condition, one entry per ambient temperature (and per gate drive, where the datasheet rates I_D at more than one V_GS).",
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                        "$ref": "#/$defs/ambientRatingPoint"
+                    }
+                }
+            },
+            "allOf": [
+                {
+                    "$comment": "duration belongs to a transient rating and only to one: a transient rating without its length is not a rating, and a length on a steady-state (or unstated) condition contradicts it.",
+                    "if": {
+                        "required": [
+                            "timeBase"
+                        ],
+                        "properties": {
+                            "timeBase": {
+                                "const": "transient"
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "duration"
+                        ]
+                    },
+                    "else": {
+                        "not": {
+                            "required": [
+                                "duration"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "$comment": "An entry must carry something: ratings, or the R_th(j-a) of the condition.",
+                    "anyOf": [
+                        {
+                            "required": [
+                                "points"
+                            ]
+                        },
+                        {
+                            "required": [
+                                "thermalResistanceJunctionAmbient"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "ambientRatingPoint": {
+            "title": "mosfetAmbientRatingPoint",
+            "description": "The ratings printed at one ambient temperature under one ambientRating condition. Same field names, units and sign convention as the case-referred fields of electricalBase.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "ambientTemperature": {
+                    "description": "T_A of the row, in degC ('T_A = 70 C' is 70).",
+                    "type": "number"
+                },
+                "gateSourceVoltage": {
+                    "description": "Gate drive at which the row is rated, in V, signed as printed - only where the datasheet rates I_D at more than one V_GS (Diodes Inc. 'V_GS = -4.5 V' / '-2.5 V' rows). Absent = one rating, no gate-drive qualifier.",
+                    "type": "number"
+                },
+                "continuousDrainCurrent": {
+                    "description": "I_D at this ambient temperature, in A.",
+                    "type": "number"
+                },
+                "powerDissipation": {
+                    "description": "P_D at this ambient temperature, in W.",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "bodyDiodeContinuousCurrent": {
+                    "description": "I_S (continuous source current, diode conduction) at this ambient temperature, in A.",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "ambientTemperature"
+            ],
+            "anyOf": [
+                {
                     "required": [
                         "continuousDrainCurrent"
+                    ]
+                },
+                {
+                    "required": [
+                        "powerDissipation"
+                    ]
+                },
+                {
+                    "required": [
+                        "bodyDiodeContinuousCurrent"
                     ]
                 }
             ]

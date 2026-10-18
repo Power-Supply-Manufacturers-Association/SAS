@@ -1,0 +1,126 @@
+{
+  "mosfet": {
+    "manufacturerInfo": {
+      "name": "Vishay",
+      "reference": "Si3440DV",
+      "status": "production",
+      "description": "N-channel 150 V TrenchFET power MOSFET, TSOP-6",
+      "datasheetUrl": "https://www.vishay.com/docs/72380/si3440dv.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "Si3440DV",
+          "technology": "Si",
+          "subType": "nChannel",
+          "case": "TSOP-6"
+        },
+        "electrical": {
+          "drainSourceVoltage": 150,
+          "gateSourceVoltageMax": 20,
+          "pulsedDrainCurrent": 6,
+          "avalancheEnergy": 0.0008,
+          "ambientRatings": [
+            {
+              "mounting": "Surface mounted on 1\" x 1\" FR4 board",
+              "points": [
+                {
+                  "ambientTemperature": 25,
+                  "continuousDrainCurrent": 1.2,
+                  "powerDissipation": 1.14,
+                  "bodyDiodeContinuousCurrent": 1
+                },
+                {
+                  "ambientTemperature": 85,
+                  "continuousDrainCurrent": 0.8,
+                  "powerDissipation": 0.59
+                }
+              ]
+            },
+            {
+              "timeBase": "transient",
+              "duration": 5,
+              "mounting": "Surface mounted on 1\" x 1\" FR4 board",
+              "thermalResistanceJunctionAmbient": {
+                "nominal": 45,
+                "maximum": 62.5
+              }
+            },
+            {
+              "timeBase": "steadyState",
+              "mounting": "Surface mounted on 1\" x 1\" FR4 board",
+              "thermalResistanceJunctionAmbient": {
+                "nominal": 90,
+                "maximum": 110
+              }
+            }
+          ],
+          "onResistance": 0.375,
+          "onResistanceVgs": 10,
+          "onResistanceId": 1.5,
+          "gateThresholdVoltage": {
+            "minimum": 2,
+            "maximum": 4
+          },
+          "totalGateCharge": 5.4e-09,
+          "gateSourceCharge": 1.1e-09,
+          "gateDrainCharge": 1.9e-09,
+          "turnOnDelay": 8e-09,
+          "riseTime": 1e-08,
+          "turnOffDelay": 2e-08,
+          "fallTime": 1.5e-08,
+          "bodyDiodeForwardVoltage": 0.8,
+          "reverseRecoveryTime": 4e-08
+        },
+        "thermal": {
+          "junctionTemperatureMin": -55,
+          "junctionTemperatureMax": 150
+        },
+        "mechanical": {
+          "case": "TSOP-6",
+          "pinout": [
+            {
+              "pin": "1",
+              "name": "D",
+              "function": "drain"
+            },
+            {
+              "pin": "2",
+              "name": "D",
+              "function": "drain"
+            },
+            {
+              "pin": "3",
+              "name": "G",
+              "function": "gate"
+            },
+            {
+              "pin": "4",
+              "name": "S",
+              "function": "source"
+            },
+            {
+              "pin": "5",
+              "name": "D",
+              "function": "drain"
+            },
+            {
+              "pin": "6",
+              "name": "D",
+              "function": "drain"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Vishay Siliconix Si3440DV data sheet, document 72380, S09-0766-Rev. D, 04-May-09",
+            "sourceUrl": "https://www.vishay.com/docs/72380/si3440dv.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "Absolute maximum ratings at T_A = 25 C unless noted, one LIMIT column with no duration stated (time base left absent); note a: surface mounted on 1 in x 1 in FR4; R_th(j-a) printed for t <= 5 s and steady state; no T_C rating printed. T_J(max) 150 C from the operating range (the I_D row cites T_J = 175 C). R_DS(on) max at V_GS 10 V, I_D 1.5 A; Q_g and switching typical at V_DS 75 V, V_GS 10 V, I_D 1.5 A"
+          }
+        ]
+      }
+    }
+  }
+}

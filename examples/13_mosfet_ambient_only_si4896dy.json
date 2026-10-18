@@ -1,0 +1,144 @@
+{
+  "mosfet": {
+    "manufacturerInfo": {
+      "name": "Vishay",
+      "reference": "Si4896DY",
+      "status": "production",
+      "description": "N-channel 80 V TrenchFET power MOSFET, SO-8",
+      "datasheetUrl": "https://www.vishay.com/docs/71300/71300.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "Si4896DY",
+          "technology": "Si",
+          "subType": "nChannel",
+          "case": "SO-8"
+        },
+        "electrical": {
+          "drainSourceVoltage": 80,
+          "gateSourceVoltageMax": 20,
+          "pulsedDrainCurrent": 50,
+          "ambientRatings": [
+            {
+              "timeBase": "transient",
+              "duration": 10,
+              "mounting": "Surface Mounted on 1\" x 1\" FR4 board.",
+              "thermalResistanceJunctionAmbient": {
+                "nominal": 33,
+                "maximum": 40
+              },
+              "points": [
+                {
+                  "ambientTemperature": 25,
+                  "continuousDrainCurrent": 9.5,
+                  "powerDissipation": 3.1,
+                  "bodyDiodeContinuousCurrent": 2.8
+                },
+                {
+                  "ambientTemperature": 70,
+                  "continuousDrainCurrent": 7.6,
+                  "powerDissipation": 2.0
+                }
+              ]
+            },
+            {
+              "timeBase": "steadyState",
+              "mounting": "Surface Mounted on 1\" x 1\" FR4 board.",
+              "thermalResistanceJunctionAmbient": {
+                "nominal": 65,
+                "maximum": 80
+              },
+              "points": [
+                {
+                  "ambientTemperature": 25,
+                  "continuousDrainCurrent": 6.7,
+                  "powerDissipation": 1.56,
+                  "bodyDiodeContinuousCurrent": 1.4
+                },
+                {
+                  "ambientTemperature": 70,
+                  "continuousDrainCurrent": 5.4,
+                  "powerDissipation": 1.0
+                }
+              ]
+            }
+          ],
+          "onResistance": 0.0165,
+          "onResistanceVgs": 10,
+          "onResistanceId": 10,
+          "gateThresholdVoltage": {
+            "minimum": 2.0
+          },
+          "totalGateCharge": 3.4e-08,
+          "gateSourceCharge": 7.5e-09,
+          "gateDrainCharge": 1.1e-08,
+          "turnOnDelay": 1.7e-08,
+          "riseTime": 1.1e-08,
+          "turnOffDelay": 4e-08,
+          "fallTime": 3.1e-08,
+          "bodyDiodeForwardVoltage": 0.75,
+          "reverseRecoveryTime": 4.5e-08
+        },
+        "thermal": {
+          "junctionTemperatureMin": -55,
+          "junctionTemperatureMax": 150
+        },
+        "mechanical": {
+          "case": "SO-8",
+          "pinout": [
+            {
+              "pin": "1",
+              "name": "S",
+              "function": "source"
+            },
+            {
+              "pin": "2",
+              "name": "S",
+              "function": "source"
+            },
+            {
+              "pin": "3",
+              "name": "S",
+              "function": "source"
+            },
+            {
+              "pin": "4",
+              "name": "G",
+              "function": "gate"
+            },
+            {
+              "pin": "5",
+              "name": "D",
+              "function": "drain"
+            },
+            {
+              "pin": "6",
+              "name": "D",
+              "function": "drain"
+            },
+            {
+              "pin": "7",
+              "name": "D",
+              "function": "drain"
+            },
+            {
+              "pin": "8",
+              "name": "D",
+              "function": "drain"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Vishay Siliconix Si4896DY data sheet, document 71300, S09-0870-Rev. C, 18-May-09",
+            "sourceUrl": "https://www.vishay.com/docs/71300/71300.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "Absolute maximum ratings at T_A = 25 C unless noted, '10 s' and 'Steady State' columns, note a: surface mounted on 1 in x 1 in FR4; no T_C rating printed. R_DS(on) max at V_GS 10 V, I_D 10 A; V_GS(th) min only (no max printed); Q_g, Q_gs, Q_gd and switching times typical at V_DS 40 V, V_GS 10 V, I_D 10 A; V_SD typical at I_S 2.8 A; t_rr typical"
+          }
+        ]
+      }
+    }
+  }
+}

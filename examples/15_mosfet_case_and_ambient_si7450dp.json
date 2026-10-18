@@ -1,0 +1,105 @@
+{
+  "mosfet": {
+    "manufacturerInfo": {
+      "name": "Vishay",
+      "reference": "Si7450DP",
+      "status": "production",
+      "description": "N-channel 200 V TrenchFET power MOSFET, PowerPAK SO-8",
+      "datasheetUrl": "https://www.vishay.com/docs/71432/si7450dp.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "Si7450DP",
+          "technology": "Si",
+          "subType": "nChannel",
+          "case": "PowerPAK SO-8"
+        },
+        "electrical": {
+          "drainSourceVoltage": 200,
+          "gateSourceVoltageMax": 20,
+          "continuousDrainCurrent": 19.8,
+          "pulsedDrainCurrent": 40,
+          "ambientRatings": [
+            {
+              "timeBase": "transient",
+              "duration": 10,
+              "mounting": "Surface mounted on 1\" x 1\" FR4 board",
+              "thermalResistanceJunctionAmbient": {
+                "nominal": 19,
+                "maximum": 24
+              },
+              "points": [
+                {
+                  "ambientTemperature": 25,
+                  "continuousDrainCurrent": 5.3,
+                  "powerDissipation": 5.2,
+                  "bodyDiodeContinuousCurrent": 4.3
+                },
+                {
+                  "ambientTemperature": 70,
+                  "continuousDrainCurrent": 4.3,
+                  "powerDissipation": 3.3
+                }
+              ]
+            },
+            {
+              "timeBase": "steadyState",
+              "mounting": "Surface mounted on 1\" x 1\" FR4 board",
+              "thermalResistanceJunctionAmbient": {
+                "nominal": 52,
+                "maximum": 65
+              },
+              "points": [
+                {
+                  "ambientTemperature": 25,
+                  "continuousDrainCurrent": 3.2,
+                  "powerDissipation": 1.9,
+                  "bodyDiodeContinuousCurrent": 1.6
+                },
+                {
+                  "ambientTemperature": 70,
+                  "continuousDrainCurrent": 2.6,
+                  "powerDissipation": 1.2
+                }
+              ]
+            }
+          ],
+          "onResistance": 0.08,
+          "onResistanceVgs": 10,
+          "onResistanceId": 4,
+          "gateThresholdVoltage": {
+            "minimum": 2,
+            "maximum": 4.5
+          },
+          "totalGateCharge": 3.4e-08,
+          "gateSourceCharge": 7.5e-09,
+          "gateDrainCharge": 1.2e-08,
+          "turnOnDelay": 1.4e-08,
+          "riseTime": 2e-08,
+          "turnOffDelay": 3.2e-08,
+          "fallTime": 2.5e-08,
+          "bodyDiodeForwardVoltage": 0.75,
+          "reverseRecoveryTime": 7e-08
+        },
+        "thermal": {
+          "thermalResistanceJunctionCase": 1.8,
+          "junctionTemperatureMin": -55,
+          "junctionTemperatureMax": 150
+        },
+        "mechanical": {
+          "case": "PowerPAK SO-8"
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Vishay Siliconix Si7450DP data sheet, document 71432, S21-0290-Rev. G, 29-Mar-2021",
+            "sourceUrl": "https://www.vishay.com/docs/71432/si7450dp.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "I_D printed at T_C = 25 C (19.8 A, both columns) and at T_A = 25/70 C in '10 s' and 'Steady State' columns, note a: surface mounted on 1 in x 1 in FR4; P_D printed at T_A only (no T_C P_D); the T_C = 70 C I_D row (15.9 A) has no slot. R_th(j-c) max 1.8 K/W; R_DS(on) max at V_GS 10 V, I_D 4 A; Q_g and switching typical at V_DS 100 V, V_GS 10 V, I_D 4 A"
+          }
+        ]
+      }
+    }
+  }
+}

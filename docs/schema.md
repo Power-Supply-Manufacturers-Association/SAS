@@ -40,6 +40,8 @@ optocoupler records
   - [spiceModel (device-body)](#spicemodel-device-body)
 - [MOSFET Sections](#mosfet-sections)
   - [mosfetElectrical](#mosfetelectrical)
+  - [mosfetAmbientRating (T_A ratings)](#mosfetambientrating)
+  - [mosfetAmbientRatingPoint](#mosfetambientratingpoint)
   - [mosfetDie (multi-die packages)](#mosfetdie)
   - [mosfetModelParams](#mosfetmodelparams)
   - [mosfetCurves](#mosfetcurves)
@@ -351,26 +353,37 @@ empty `parameters` object.
 
 Electrical characteristics specific to MOSFETs. Closed object.
 
-**Required**: `drainSourceVoltage`, `onResistance`, `continuousDrainCurrent`,
-`gateThresholdVoltage`, `totalGateCharge`.
+**Required**: `drainSourceVoltage`, `onResistance`, `gateThresholdVoltage`, `totalGateCharge`,
+and a continuous drain current rating: `continuousDrainCurrent` (case-referred, T_C = 25 °C)
+**or**, for a part whose datasheet rates I_D only at an ambient temperature, at least one
+[`ambientRatings`](#mosfetambientrating) point carrying `continuousDrainCurrent`.
 
-The field set lives in `mosfet.json#/$defs/electricalBase`, which requires the first,
-second, fourth and fifth of those; `electrical` is that base plus
-`required: ["continuousDrainCurrent"]`. The split exists because
+The field set lives in `mosfet.json#/$defs/electricalBase`, which requires the first four;
+`electrical` is that base plus the drain-current rule, written as
+`if (some ambientRatings point has continuousDrainCurrent) else required: ["continuousDrainCurrent"]`
+so a part with neither still fails with *'continuousDrainCurrent' is a required property*. A part
+that prints a T_C rating is unchanged. The split exists because
 [`dies[].electrical`](#mosfetdie) uses the **base**: a continuous drain current is a
 package rating, and vendors such as TI publish one operating current for a package
 holding two die (SLPS666), so requiring it per die would make the faithful record
 unwritable. Everything that `$ref`s `#/$defs/electrical` — the package-level block and
-the module `switch` block — is unchanged and still requires all five.
+the module `switch` block — still requires a drain-current rating.
+
+**Case vs ambient.** `continuousDrainCurrent` and `powerDissipation` are **case-referred**
+(T_C = 25 °C). Small packages without an exposed pad (SO-8, SOT-23, TSOP-6, SC-70, wafer-level
+CSP) print I_D and P_D only at T_A = 25 °C with the part on a test board, usually in two columns
+(10 s and steady state), and PowerPAK / DFN parts often print T_A rows beside the T_C row. A T_A
+figure is **never** written into the case-referred fields — it goes in `ambientRatings`.
 
 | Field | Type | Required | Unit | Description |
 |-------|------|----------|------|-------------|
 | `drainSourceVoltage` | number | **Yes** | V | V_DS max -- maximum drain-source voltage |
 | `gateSourceVoltageMax` | number | No | V | V_GS max -- maximum gate-source voltage |
-| `continuousDrainCurrent` | number | **Yes** | A | I_D at T_c=25C |
+| `continuousDrainCurrent` | number | **Yes, unless an ambient point carries I_D** | A | I_D at T_c=25C. Case-referred only — a T_A figure goes in `ambientRatings` |
 | `continuousDrainCurrentAt100C` | number | No | A | I_D at T_c=100C |
 | `pulsedDrainCurrent` | number | No | A | I_DM -- pulsed drain current |
-| `powerDissipation` | number | No | W | P_D max at T_c=25C |
+| `powerDissipation` | number | No | W | P_D max at T_c=25C. Case-referred only — a T_A figure goes in `ambientRatings` |
+| `ambientRatings` | array of [mosfetAmbientRating](#mosfetambientrating) | No | — | I_D / P_D / I_S rated at an ambient temperature, one entry per printed condition (time base + mounting). `minItems: 1`, `uniqueItems`. Also allowed per die |
 | `avalancheEnergy` | number | No | J | E_AS -- single-pulse avalanche energy |
 | `onResistance` | number | **Yes** | Ohm | R_DS(on) -- drain-source on-resistance |
 | `onResistanceVgs` | number | No | V | V_GS at which R_DS(on) is specified |
@@ -393,6 +406,56 @@ the module `switch` block — is unchanged and still requires all five.
 | `reverseRecoveryTime` | number | No | s | t_rr -- body diode reverse recovery time |
 | `reverseRecoveryCharge` | number | No | C | Q_rr -- body diode reverse recovery charge |
 | `figureOfMerit` | number | No | Ohm*C | R_DS(on) x Q_g |
+
+### mosfetAmbientRating
+
+`mosfet.json#/$defs/ambientRating` — one printed ambient-rating condition. Closed object. A
+Vishay "ABSOLUTE MAXIMUM RATINGS T_A = 25 °C" table with **10 s** and **Steady State** columns is
+two entries; a datasheet printing two mounting conditions (Diodes Inc.: minimum pad vs 1 in²
+copper) is one entry per mounting. An R_th(j-a) row printed for a condition with no current or
+power under it (Vishay "t ≤ 5 s") is an entry with `thermalResistanceJunctionAmbient` and no
+`points`.
+
+| Field | Type | Required | Unit | Description |
+|-------|------|----------|------|-------------|
+| `timeBase` | string (enum) | No | — | `steadyState` or `transient`. **Absent = the datasheet does not say** (a single LIMIT column with no duration note); never inferred from P_D arithmetic |
+| `duration` | number (> 0) | when `timeBase` is `transient` | s | Length of a transient rating: "t ≤ 10 s" is `10`. Not allowed on a steady-state or unstated condition |
+| `mounting` | string (1–300) | No | — | The board-mounting note **as printed** ("Surface mounted on 1" x 1" FR4 board"). Absent = the datasheet prints none |
+| `thermalResistanceJunctionAmbient` | [dimensionWithTolerance](#dimensionwithtolerance) | No | K/W | R_th(j-a) for this time base and mounting: typical in `nominal`, maximum in `maximum` |
+| `points` | array of [mosfetAmbientRatingPoint](#mosfetambientratingpoint) | No | — | The ratings printed under this condition, one per ambient temperature (and gate drive) |
+
+An entry carries `points`, `thermalResistanceJunctionAmbient`, or both.
+
+### mosfetAmbientRatingPoint
+
+`mosfet.json#/$defs/ambientRatingPoint` — the ratings at one ambient temperature. Closed
+object; same field names, units and sign convention as the case-referred fields.
+
+| Field | Type | Required | Unit | Description |
+|-------|------|----------|------|-------------|
+| `ambientTemperature` | number | **Yes** | °C | T_A of the row ("T_A = 70 °C" is `70`) |
+| `gateSourceVoltage` | number | No | V | Gate drive of the row, signed as printed — only where the datasheet rates I_D at more than one V_GS |
+| `continuousDrainCurrent` | number | one of these three | A | I_D at this T_A |
+| `powerDissipation` | number (> 0) | one of these three | W | P_D at this T_A |
+| `bodyDiodeContinuousCurrent` | number | one of these three | A | I_S (diode conduction) at this T_A |
+
+Example (Vishay Si4896DY, SO-8, document 71300 — T_A ratings only):
+
+```json
+"ambientRatings": [
+  {"timeBase": "transient", "duration": 10, "mounting": "Surface Mounted on 1\" x 1\" FR4 board.",
+   "thermalResistanceJunctionAmbient": {"nominal": 33, "maximum": 40},
+   "points": [{"ambientTemperature": 25, "continuousDrainCurrent": 9.5, "powerDissipation": 3.1, "bodyDiodeContinuousCurrent": 2.8},
+              {"ambientTemperature": 70, "continuousDrainCurrent": 7.6, "powerDissipation": 2.0}]},
+  {"timeBase": "steadyState", "mounting": "Surface Mounted on 1\" x 1\" FR4 board.",
+   "thermalResistanceJunctionAmbient": {"nominal": 65, "maximum": 80},
+   "points": [{"ambientTemperature": 25, "continuousDrainCurrent": 6.7, "powerDissipation": 1.56, "bodyDiodeContinuousCurrent": 1.4},
+              {"ambientTemperature": 70, "continuousDrainCurrent": 5.4, "powerDissipation": 1.0}]}
+]
+```
+
+The schema cannot check that the steady-state I_D is below the 10 s I_D, that I_D falls with
+T_A, or that P_D ≈ (T_j(max) − T_A) / R_th(j-a) — those are Blade Runner checks.
 
 ### mosfetDie
 
