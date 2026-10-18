@@ -431,16 +431,42 @@ An entry carries `points`, `thermalResistanceJunctionAmbient`, or both.
 
 ### mosfetAmbientRatingPoint
 
-`mosfet.json#/$defs/ambientRatingPoint` — the ratings at one ambient temperature. Closed
-object; same field names, units and sign convention as the case-referred fields.
+`mosfet.json#/$defs/ambientRatingPoint` — the ratings at one ambient temperature, and the junction
+temperature they assume where the datasheet states one. Closed object; same field names, units
+and sign convention as the case-referred fields.
 
 | Field | Type | Required | Unit | Description |
 |-------|------|----------|------|-------------|
 | `ambientTemperature` | number | **Yes** | °C | T_A of the row ("T_A = 70 °C" is `70`) |
 | `gateSourceVoltage` | number | No | V | Gate drive of the row, signed as printed — only where the datasheet rates I_D at more than one V_GS |
+| `junctionTemperature` | number | No | °C | Junction temperature the row's ratings assume, **only where the datasheet states one**. **Absent = T_j(max)** (`datasheetInfo.thermal.junctionTemperatureMax`), the default every ambient rating assumes. Never derived from I_D, P_D and R_th(j-a) |
 | `continuousDrainCurrent` | number | one of these three | A | I_D at this T_A |
 | `powerDissipation` | number (> 0) | one of these three | W | P_D at this T_A |
 | `bodyDiodeContinuousCurrent` | number | one of these three | A | I_S (diode conduction) at this T_A |
+
+**Junction condition.** An ambient rating is normally the current or power that brings the
+junction to T_j(max) at that T_A, so nothing records it. A few datasheets hold the junction
+lower. TI's chip-scale NexFET sheets (CSD13302W, CSD13306W, CSD22204W, CSD22206W, CSD23202W10,
+CSD23203W, CSD25304W1015, CSD75207W15) print I_D under "T_A = 25 °C" with the footnote *"Device
+operating at a temperature of 105 °C"*. That I_D carries `junctionTemperature: 105`. The P_D
+under the same heading has no such footnote, (150 − 25) / 70 = 1.79 W ≈ 1.8 W, so it assumes
+T_j(max) and goes in a point without the field. Ratings that share a heading but assume
+different junction temperatures are separate points. A junction temperature is a row
+condition, like T_A and V_GS, so the field is on the point and not on the
+`mosfetAmbientRating` header (which rejects it).
+
+Example (TI CSD13302W, SLPS535, March 2015; DSBGA 1 × 1 mm, T_A ratings only):
+
+```json
+"ambientRatings": [
+  {"points": [{"ambientTemperature": 25, "junctionTemperature": 105, "continuousDrainCurrent": 1.6}]},
+  {"mounting": "Device mounted on FR4 material with 1 inch2 (6.45 cm2), 2 oz. (0.071 mm thick) Cu.",
+   "thermalResistanceJunctionAmbient": {"nominal": 70},
+   "points": [{"ambientTemperature": 25, "powerDissipation": 1.8}]},
+  {"mounting": "Device mounted on FR4 material with minimum Cu mounting area.",
+   "thermalResistanceJunctionAmbient": {"nominal": 275}}
+]
+```
 
 Example (Vishay Si4896DY, SO-8, document 71300 — T_A ratings only):
 
@@ -459,6 +485,8 @@ Example (Vishay Si4896DY, SO-8, document 71300 — T_A ratings only):
 
 The schema cannot check that the steady-state I_D is below the 10 s I_D, that I_D falls with
 T_A, or that P_D ≈ (T_j(max) − T_A) / R_th(j-a) — those are Blade Runner checks.
+Nor can it check that a `junctionTemperature` lies above the row's T_A and at or below
+T_j(max); Blade Runner does, and uses it in place of T_j(max) in its thermal checks.
 
 ### mosfetDie
 

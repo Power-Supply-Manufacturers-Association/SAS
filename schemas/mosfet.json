@@ -491,7 +491,7 @@
         },
         "ambientRatingPoint": {
             "title": "mosfetAmbientRatingPoint",
-            "description": "The ratings printed at one ambient temperature under one ambientRating condition. Same field names, units and sign convention as the case-referred fields of electricalBase.",
+            "description": "The ratings printed at one ambient temperature under one ambientRating condition, and the junction temperature they assume where the datasheet states one. Same field names, units and sign convention as the case-referred fields of electricalBase.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -501,6 +501,10 @@
                 },
                 "gateSourceVoltage": {
                     "description": "Gate drive at which the row is rated, in V, signed as printed - only where the datasheet rates I_D at more than one V_GS (Diodes Inc. 'V_GS = -4.5 V' / '-2.5 V' rows). Absent = one rating, no gate-drive qualifier.",
+                    "type": "number"
+                },
+                "junctionTemperature": {
+                    "description": "Junction temperature the row's ratings assume, in degC, where the datasheet states one for the row - TI chip-scale NexFET sheets print I_D under 'T_A = 25 C' with the footnote 'Device operating at a temperature of 105 C', which is 105. Absent = the datasheet states no junction condition for the row, and the ratings assume datasheetInfo.thermal.junctionTemperatureMax, as every ambient rating does by default. Ratings printed under one heading that assume different junction temperatures (TI: I_D at 105 C, P_D at T_j(max)) are separate points. Never derived from the printed I_D, P_D and R_th(j-a) - a junction temperature that only arithmetic implies is a Blade Runner finding, not a datasheet fact.",
                     "type": "number"
                 },
                 "continuousDrainCurrent": {

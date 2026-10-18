@@ -1290,7 +1290,8 @@ def test_design_requirements_thyristor_type_anchored(sas_validator, mosfet_doc):
 
 AMBIENT_EXAMPLES = ("13_mosfet_ambient_only_si4896dy.json",
                     "14_mosfet_ambient_single_column_si3440dv.json",
-                    "15_mosfet_case_and_ambient_si7450dp.json")
+                    "15_mosfet_case_and_ambient_si7450dp.json",
+                    "16_mosfet_junction_held_csd13302w.json")
 
 
 def _mel(doc):
@@ -1349,3 +1350,80 @@ def test_ambient_unstated_time_base_is_storable(sas_validator):
     doc = _ex("14_mosfet_ambient_single_column_si3440dv.json")
     assert "timeBase" not in _mel(doc)["ambientRatings"][0]
     assert_valid(sas_validator, doc)
+
+
+# ---------------------------------------------------------------------------
+# Junction condition on an ambient point: ambientRatingPoint.junctionTemperature
+# ---------------------------------------------------------------------------
+
+JUNCTION_EXAMPLE = "16_mosfet_junction_held_csd13302w.json"
+
+
+def _jpoint(doc):
+    """The CSD13302W I_D point: T_A 25, junction held at 105 degC."""
+    return _mel(doc)["ambientRatings"][0]["points"][0]
+
+
+def test_junction_example_carries_the_condition_on_the_point():
+    doc = _ex(JUNCTION_EXAMPLE)
+    assert _jpoint(doc) == {"ambientTemperature": 25, "junctionTemperature": 105,
+                            "continuousDrainCurrent": 1.6}
+    assert "continuousDrainCurrent" not in _mel(doc)
+
+
+def test_junction_held_point_is_allowed(sas_validator):
+    """TI's footnote 'Device operating at a temperature of 105 C' is stored on the I_D point."""
+    assert_valid(sas_validator, _ex(JUNCTION_EXAMPLE))
+
+
+def test_junction_held_point_stands_in_for_the_case_current(sas_validator):
+    doc = _ex(JUNCTION_EXAMPLE)
+    _mel(doc)["ambientRatings"].pop(0)
+    assert_invalid(sas_validator, doc, contains="'continuousDrainCurrent' is a required property")
+
+
+def test_junction_condition_on_a_die_point_is_allowed(sas_validator):
+    """Per-die ambient ratings take the same point shape (electricalBase scope)."""
+    doc = _ex("04_mosfet_dual_iaucn04s7l025ah.json")
+    die = doc["mosfet"]["manufacturerInfo"]["datasheetInfo"]["dies"][0]
+    die["electrical"]["ambientRatings"] = [
+        {"points": [{"ambientTemperature": 25, "junctionTemperature": 105,
+                     "continuousDrainCurrent": 1.0}]}]
+    assert_valid(sas_validator, doc)
+
+
+def test_same_heading_split_by_junction_condition_is_valid(sas_validator):
+    """One 'T_A = 25 C' heading: I_D held at 105 C and P_D at T_j(max) are separate points."""
+    doc = _ex(JUNCTION_EXAMPLE)
+    _mel(doc)["ambientRatings"][0]["points"].append(
+        {"ambientTemperature": 25, "continuousDrainCurrent": 2.0})
+    assert_valid(sas_validator, doc)
+    _mel(doc)["ambientRatings"][0]["points"][1] = dict(_jpoint(doc))
+    assert_invalid_deep(sas_validator, doc, contains="has non-unique elements")
+
+
+@pytest.mark.parametrize("bad", ["105 C", None, True])
+def test_junction_temperature_must_be_a_number(sas_validator, bad):
+    doc = _ex(JUNCTION_EXAMPLE)
+    _jpoint(doc)["junctionTemperature"] = bad
+    assert_invalid_deep(sas_validator, doc, contains="is not of type 'number'")
+
+
+def test_junction_temperature_is_rejected_on_the_header(sas_validator):
+    doc = _ex(JUNCTION_EXAMPLE)
+    entry = _mel(doc)["ambientRatings"][0]
+    entry["junctionTemperature"] = entry["points"][0].pop("junctionTemperature")
+    assert_invalid_deep(sas_validator, doc, contains="'junctionTemperature' was unexpected")
+
+
+def test_junction_temperature_is_rejected_on_case_referred_electrical(sas_validator):
+    doc = _ex("15_mosfet_case_and_ambient_si7450dp.json")
+    _mel(doc)["junctionTemperature"] = 105
+    assert_invalid_deep(sas_validator, doc, contains="'junctionTemperature' was unexpected")
+
+
+def test_junction_temperature_alone_is_not_a_rating(sas_validator):
+    doc = _ex(JUNCTION_EXAMPLE)
+    _mel(doc)["ambientRatings"][0]["points"] = [
+        {"ambientTemperature": 25, "junctionTemperature": 105}]
+    assert_invalid(sas_validator, doc, contains="'continuousDrainCurrent' is a required property")

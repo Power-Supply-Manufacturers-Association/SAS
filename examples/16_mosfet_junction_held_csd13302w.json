@@ -1,0 +1,128 @@
+{
+  "mosfet": {
+    "manufacturerInfo": {
+      "name": "Texas Instruments",
+      "reference": "CSD13302W",
+      "status": "production",
+      "description": "N-channel 12 V NexFET power MOSFET, 1.0 mm x 1.0 mm wafer-level DSBGA",
+      "datasheetUrl": "https://www.ti.com/lit/ds/symlink/csd13302w.pdf",
+      "datasheetInfo": {
+        "part": {
+          "partNumber": "CSD13302W",
+          "technology": "Si",
+          "subType": "nChannel",
+          "case": "DSBGA"
+        },
+        "electrical": {
+          "drainSourceVoltage": 12,
+          "gateSourceVoltageMax": 10,
+          "pulsedDrainCurrent": 29,
+          "ambientRatings": [
+            {
+              "points": [
+                {
+                  "ambientTemperature": 25,
+                  "junctionTemperature": 105,
+                  "continuousDrainCurrent": 1.6
+                }
+              ]
+            },
+            {
+              "mounting": "Device mounted on FR4 material with 1 inch2 (6.45 cm2), 2 oz. (0.071 mm thick) Cu.",
+              "thermalResistanceJunctionAmbient": {
+                "nominal": 70
+              },
+              "points": [
+                {
+                  "ambientTemperature": 25,
+                  "powerDissipation": 1.8
+                }
+              ]
+            },
+            {
+              "mounting": "Device mounted on FR4 material with minimum Cu mounting area.",
+              "thermalResistanceJunctionAmbient": {
+                "nominal": 275
+              }
+            }
+          ],
+          "onResistance": 0.0171,
+          "onResistanceVgs": 4.5,
+          "onResistanceId": 1,
+          "gateThresholdVoltage": {
+            "minimum": 0.7,
+            "nominal": 1.0,
+            "maximum": 1.3
+          },
+          "inputCapacitance": 6.63e-10,
+          "outputCapacitance": 2.11e-10,
+          "reverseTransferCapacitance": 1.51e-10,
+          "capacitanceMeasurementVds": 6,
+          "totalGateCharge": 6e-09,
+          "gateSourceCharge": 7e-10,
+          "gateDrainCharge": 2.1e-09,
+          "outputCharge": 1.3e-09,
+          "turnOnDelay": 6e-09,
+          "riseTime": 7e-09,
+          "turnOffDelay": 1.7e-08,
+          "fallTime": 7e-09,
+          "bodyDiodeForwardVoltage": 0.7,
+          "reverseRecoveryTime": 1.96e-08,
+          "reverseRecoveryCharge": 1.16e-08
+        },
+        "thermal": {
+          "junctionTemperatureMin": -55,
+          "junctionTemperatureMax": 150
+        },
+        "mechanical": {
+          "assemblyType": "smt",
+          "case": "DSBGA",
+          "length": {
+            "minimum": 0.0009,
+            "maximum": 0.001
+          },
+          "width": {
+            "minimum": 0.0009,
+            "maximum": 0.001
+          },
+          "height": {
+            "maximum": 0.00062
+          },
+          "pinout": [
+            {
+              "pin": "A1",
+              "name": "G",
+              "function": "gate"
+            },
+            {
+              "pin": "A2",
+              "name": "S",
+              "function": "source"
+            },
+            {
+              "pin": "B1",
+              "name": "D",
+              "function": "drain"
+            },
+            {
+              "pin": "B2",
+              "name": "D",
+              "function": "drain"
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "source": "manufacturerDatasheet",
+            "sourceName": "Texas Instruments CSD13302W data sheet, SLPS535, March 2015",
+            "sourceUrl": "https://www.ti.com/lit/ds/symlink/csd13302w.pdf",
+            "retrievedDate": "2026-10-18",
+            "verification": "valuesReadFromSource",
+            "verificationDate": "2026-10-18",
+            "verificationMethod": "Absolute maximum ratings under 'T_A = 25 C'; no T_C rating printed. I_D 1.6 A carries footnote (1) 'Device Operating at a temperature of 105 C' and no mounting note. P_D 1.8 W carries footnote (3) 'Max Cu Typ R_thJA = 70 C/W', the Thermal Information row whose note is the 1 in2 2 oz Cu mounting; R_thJA printed typical only (70 and 275 C/W). I_DM 29 A at min Cu, pulse <= 100 us, duty <= 1 %. R_DS(on) max at V_GS 4.5 V, I_D 1 A; capacitances, charges and switching times typical at V_DS 6 V; V_SD, Q_rr, t_rr typical at I_S 1 A; package 1.00 +0/-0.10 mm square, 0.62 mm max height, pin configuration table A1 gate, A2 source, B1/B2 drain"
+          }
+        ]
+      }
+    }
+  }
+}
