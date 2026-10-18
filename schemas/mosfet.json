@@ -248,7 +248,7 @@
                 },
                 "continuousDrainCurrent": {
                     "type": "number",
-                    "description": "I_D at Tc=25C in Amperes. A rating at the solder point (T_sp = 25 C, Nexperia) or the foot / drain lead (T_F = 25 C, Vishay small-signal) is the surface-mount equivalent of the case reference and is stored here too. Case-referred only: a rating the datasheet prints at an AMBIENT temperature (T_A = 25 C, board-mounted) goes in ambientRatings and is never written here."
+                    "description": "I_D at Tc=25C in Amperes. A rating at the solder point (T_sp = 25 C, Nexperia) the foot / drain lead (T_F = 25 C, Vishay small-signal) or the lead (T_L = 25 C, onsemi) is the surface-mount equivalent of the case reference and is stored here too. Case-referred only: a rating the datasheet prints at an AMBIENT temperature (T_A = 25 C, board-mounted) goes in ambientRatings and is never written here."
                 },
                 "continuousDrainCurrentAt100C": {
                     "type": "number",
@@ -260,7 +260,7 @@
                 },
                 "powerDissipation": {
                     "type": "number",
-                    "description": "P_D max at Tc=25C in Watts. A P_D at T_sp or T_F = 25 C counts as case-referred, as for continuousDrainCurrent. Case-referred only: a P_D printed at T_A goes in ambientRatings and is never written here."
+                    "description": "P_D max at Tc=25C in Watts. A P_D at T_sp, T_F or T_L = 25 C counts as case-referred, as for continuousDrainCurrent. Case-referred only: a P_D printed at T_A goes in ambientRatings and is never written here."
                 },
                 "ambientRatings": {
                     "description": "Ratings the datasheet states at an AMBIENT temperature with the part mounted on a board - the only drain-current and dissipation ratings most SO-8, SOT-23, TSOP-6, SC-70 and CSP parts print, and the T_A rows printed beside the T_C row on PowerPAK / DFN parts. One entry per printed condition column (time base + mounting), each carrying its rows by ambient temperature. A part may carry both continuousDrainCurrent (T_C) and ambientRatings (T_A); a part printing only T_A ratings carries ambientRatings alone.",

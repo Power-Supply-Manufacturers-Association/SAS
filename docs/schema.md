@@ -375,7 +375,7 @@ CSP) print I_D and P_D only at T_A = 25 °C with the part on a test board, usual
 (10 s and steady state), and PowerPAK / DFN parts often print T_A rows beside the T_C row. A T_A
 figure is **never** written into the case-referred fields — it goes in `ambientRatings`.
 A rating at the solder point (T_sp = 25 °C, as Nexperia prints it) or at the foot / drain lead
-(T_F = 25 °C, Vishay small-signal sheets) is the surface-mount equivalent of the case reference and
+(T_F = 25 °C, Vishay small-signal sheets) or at the lead (T_L = 25 °C, onsemi) is the surface-mount equivalent of the case reference and
 counts as case-referred.
 
 | Field | Type | Required | Unit | Description |
