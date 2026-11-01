@@ -681,7 +681,7 @@ Closed object. **Required**: `collectorEmitterVoltage`, `collectorEmitterSaturat
 |-------|------|----------|------|-------------|
 | `collectorEmitterVoltage` | number | **Yes** | V | V_CE max -- maximum collector-emitter voltage |
 | `gateEmitterVoltageMax` | number | No | V | V_GE max -- maximum gate-emitter voltage |
-| `continuousCollectorCurrent` | number | **Yes** | A | I_C at T_c=25C |
+| `continuousCollectorCurrent` | number or array of `{value, temperature}` | **Yes** | A | I_C. A plain number is the rating at T_c=25C; a list states the case temperature (Celsius) of each rating, closed object, at least one point |
 | `collectorEmitterSaturation` | number | **Yes** | V | V_CE(sat) -- collector-emitter saturation voltage |
 | `collectorEmitterSaturationIc` | number | No | A | I_C at which V_CE(sat) is specified |
 | `turnOnEnergy` | number | No | J | E_on -- turn-on switching energy |

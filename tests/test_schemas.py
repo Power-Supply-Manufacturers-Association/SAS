@@ -387,6 +387,40 @@ def test_module_igbt_switch_shape_accepted(sas_validator, module_doc):
     assert_valid(sas_validator, module_doc)
 
 
+def _igbt_module(module_doc):
+    elec = _module_electrical(module_doc)
+    elec["switchTechnology"] = "siliconIgbt"
+    elec["switch"] = {
+        "collectorEmitterVoltage": 1200,
+        "collectorEmitterSaturation": 1.85,
+        "continuousCollectorCurrent": 115,
+    }
+    module_doc["inputs"]["designRequirements"]["allowedSwitchTechnologies"] = ["siliconIgbt"]
+    module_doc["module"]["manufacturerInfo"]["datasheetInfo"]["part"]["technology"] = "Si"
+    return elec["switch"]
+
+
+def test_igbt_collector_current_accepts_temperature_points(sas_validator, module_doc):
+    _igbt_module(module_doc)["continuousCollectorCurrent"] = [
+        {"value": 115, "temperature": 25},
+        {"value": 70, "temperature": 100},
+    ]
+    assert_valid(sas_validator, module_doc)
+
+
+@pytest.mark.parametrize("bad", [
+    [],
+    [{"value": 115}],
+    [{"temperature": 25}],
+    [{"value": 115, "temperature": 25, "note": "x"}],
+    [115],
+    "115",
+])
+def test_igbt_collector_current_rejects_malformed_points(sas_validator, module_doc, bad):
+    _igbt_module(module_doc)["continuousCollectorCurrent"] = bad
+    assert_invalid(sas_validator, module_doc)
+
+
 def test_module_ntc_fields_require_ntc_integrated(sas_validator, module_doc):
     del _module_electrical(module_doc)["ntcIntegrated"]
     assert_invalid(sas_validator, module_doc)

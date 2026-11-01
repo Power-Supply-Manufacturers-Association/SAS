@@ -79,6 +79,26 @@
         }
     ],
     "$defs": {
+        "collectorCurrentPoint": {
+            "title": "collectorCurrentPoint",
+            "description": "One continuous collector current rating at a stated case temperature.",
+            "type": "object",
+            "properties": {
+                "value": {
+                    "description": "I_C in Amperes",
+                    "type": "number"
+                },
+                "temperature": {
+                    "description": "Case temperature of this rating, in Celsius",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "value",
+                "temperature"
+            ],
+            "additionalProperties": false
+        },
         "datasheetInfo": {
             "title": "igbtDatasheetInfo",
             "description": "All information extracted from the IGBT datasheet.",
@@ -156,8 +176,20 @@
                     "description": "V_GE max in Volts"
                 },
                 "continuousCollectorCurrent": {
-                    "type": "number",
-                    "description": "I_C at Tc=25C in Amperes"
+                    "description": "Continuous collector current I_C in Amperes. A plain number means the rating at Tc=25C; a list of points states the case temperature of each rating.",
+                    "oneOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/$defs/collectorCurrentPoint"
+                            },
+                            "minItems": 1,
+                            "uniqueItems": true
+                        }
+                    ]
                 },
                 "collectorEmitterSaturation": {
                     "type": "number",
