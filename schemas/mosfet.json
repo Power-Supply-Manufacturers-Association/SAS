@@ -311,6 +311,10 @@
                     "type": "number",
                     "description": "Q_g in Coulombs"
                 },
+                "totalGateChargeVgs": {
+                    "type": "number",
+                    "description": "V_GS at which Q_g (totalGateCharge) is specified, in Volts"
+                },
                 "gateSourceCharge": {
                     "type": "number",
                     "description": "Q_gs in Coulombs"
