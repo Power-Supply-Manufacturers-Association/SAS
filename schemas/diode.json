@@ -110,9 +110,10 @@
                                 "dieConfiguration": {
                                     "enum": [
                                         "single",
-                                        "dual"
+                                        "dual",
+                                        "array"
                                     ],
-                                    "description": "'dual' = two identical diodes in one package (center-tap rectifiers, BAT54C/A/S, BAV99). The electrical block then describes ONE diode, not the package: forwardCurrent, surgeCurrent, forwardVoltage/forwardVoltageAt, reverseLeakageCurrent, junctionCapacitance and powerDissipation are per diode, as datasheets state them 'per leg' / 'per diode'. Never divide a package total by two: record the per-diode figure the datasheet prints, or omit the field. Exception: where the datasheet itself states the per-diode rating as a fixed fraction of the printed package value (e.g. ROHM 'Io/2 per diode'), record that fraction; never infer a fraction when the datasheet is silent. Absent = single diode."
+                                    "description": "'dual' = two diodes in one package (center-tap rectifiers, BAT54C/A/S, BAV99); 'array' = three or more (multi-line ESD / TVS arrays such as Littelfuse AQ7520-08UTG, diode quads). When the diodes are identical the electrical block describes ONE diode, not the package: forwardCurrent, surgeCurrent, forwardVoltage/forwardVoltageAt, reverseLeakageCurrent, junctionCapacitance and powerDissipation are per diode, as datasheets state them 'per leg' / 'per diode' / 'per line', and electrical.numberOfElements states how many there are (required for 'array'). Never divide a package total by the count: record the per-diode figure the datasheet prints, or omit the field. Exception: where the datasheet itself states the per-diode rating as a fixed fraction of the printed package value (e.g. ROHM 'Io/2 per diode'), record that fraction; never infer a fraction when the datasheet is silent. When the diodes DIFFER (different subType or ratings in one package), there is no package electrical block: each is described in dies[]. Absent = single diode."
                                 },
                                 "internalConnection": {
                                     "enum": [
@@ -128,6 +129,14 @@
                 },
                 "electrical": {
                     "$ref": "#/$defs/electrical"
+                },
+                "dies": {
+                    "description": "One entry per diode in a multi-diode package whose diodes DIFFER (different subType or ratings, e.g. a steering-diode pair plus a different clamp). Present INSTEAD OF the package-level electrical block, never beside it: such a package has no single V_F, V_RWM or I_PP, and leaving a package-level slot open is what lets one diode's numbers be recorded as the part's. A package of identical diodes does NOT use dies[]: it keeps the one electrical block and states electrical.numberOfElements. The count is the length of dies[]. Order carries no meaning; diodes are identified by name.",
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/$defs/die"
+                    }
                 },
                 "thermal": {
                     "$ref": "./utils.json#/$defs/thermal"
@@ -147,8 +156,7 @@
                 }
             },
             "required": [
-                "part",
-                "electrical"
+                "part"
             ],
             "allOf": [
                 {
@@ -172,10 +180,7 @@
                     "then": {
                         "properties": {
                             "electrical": {
-                                "required": [
-                                    "breakdownVoltage",
-                                    "powerDissipation"
-                                ]
+                                "$ref": "#/$defs/zenerElectricalRequired"
                             }
                         }
                     },
@@ -200,26 +205,7 @@
                         "then": {
                             "properties": {
                                 "electrical": {
-                                    "required": [
-                                        "standoffVoltage"
-                                    ],
-                                    "anyOf": [
-                                        {
-                                            "required": [
-                                                "peakPulseCurrent"
-                                            ]
-                                        },
-                                        {
-                                            "required": [
-                                                "peakPulsePower"
-                                            ]
-                                        },
-                                        {
-                                            "required": [
-                                                "esdVoltageContact"
-                                            ]
-                                        }
-                                    ]
+                                    "$ref": "#/$defs/esdElectricalRequired"
                                 }
                             }
                         },
@@ -244,33 +230,354 @@
                             "then": {
                                 "properties": {
                                     "electrical": {
-                                        "required": [
-                                            "standoffVoltage",
-                                            "clampingVoltage"
-                                        ],
-                                        "anyOf": [
-                                            {
-                                                "required": [
-                                                    "peakPulseCurrent"
-                                                ]
-                                            },
-                                            {
-                                                "required": [
-                                                    "peakPulsePower"
-                                                ]
-                                            }
-                                        ]
+                                        "$ref": "#/$defs/tvsElectricalRequired"
                                     }
                                 }
                             },
                             "else": {
                                 "properties": {
                                     "electrical": {
-                                        "required": [
-                                            "reverseVoltage",
-                                            "forwardVoltage",
-                                            "forwardCurrent"
+                                        "$ref": "#/$defs/rectifierElectricalRequired"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "dies[] is the multi-diode shape: a part described per diode must declare dual or array.",
+                    "if": {
+                        "required": [
+                            "dies"
+                        ]
+                    },
+                    "then": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "dieConfiguration"
+                                ],
+                                "properties": {
+                                    "dieConfiguration": {
+                                        "enum": [
+                                            "dual",
+                                            "array"
                                         ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "An array of identical diodes described by one electrical block must state how many it holds (three or more).",
+                    "if": {
+                        "allOf": [
+                            {
+                                "required": [
+                                    "part"
+                                ],
+                                "properties": {
+                                    "part": {
+                                        "required": [
+                                            "dieConfiguration"
+                                        ],
+                                        "properties": {
+                                            "dieConfiguration": {
+                                                "const": "array"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "required": [
+                                    "electrical"
+                                ]
+                            }
+                        ]
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "required": [
+                                    "numberOfElements"
+                                ],
+                                "properties": {
+                                    "numberOfElements": {
+                                        "minimum": 3
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "A dual may state its count; it is then 2.",
+                    "if": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "dieConfiguration"
+                                ],
+                                "properties": {
+                                    "dieConfiguration": {
+                                        "const": "dual"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "properties": {
+                                    "numberOfElements": {
+                                        "const": 2
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "A count of identical diodes is only meaningful on a package declared dual or array.",
+                    "if": {
+                        "required": [
+                            "electrical"
+                        ],
+                        "properties": {
+                            "electrical": {
+                                "required": [
+                                    "numberOfElements"
+                                ]
+                            }
+                        }
+                    },
+                    "then": {
+                        "required": [
+                            "part"
+                        ],
+                        "properties": {
+                            "part": {
+                                "required": [
+                                    "dieConfiguration"
+                                ],
+                                "properties": {
+                                    "dieConfiguration": {
+                                        "enum": [
+                                            "dual",
+                                            "array"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "$comment": "dies[] length agrees with the declared configuration: a dual holds exactly two diodes, an array three or more.",
+                    "if": {
+                        "allOf": [
+                            {
+                                "required": [
+                                    "part"
+                                ],
+                                "properties": {
+                                    "part": {
+                                        "required": [
+                                            "dieConfiguration"
+                                        ],
+                                        "properties": {
+                                            "dieConfiguration": {
+                                                "const": "dual"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "required": [
+                                    "dies"
+                                ]
+                            }
+                        ]
+                    },
+                    "then": {
+                        "properties": {
+                            "dies": {
+                                "maxItems": 2
+                            }
+                        }
+                    }
+                },
+                {
+                    "if": {
+                        "allOf": [
+                            {
+                                "required": [
+                                    "part"
+                                ],
+                                "properties": {
+                                    "part": {
+                                        "required": [
+                                            "dieConfiguration"
+                                        ],
+                                        "properties": {
+                                            "dieConfiguration": {
+                                                "const": "array"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "required": [
+                                    "dies"
+                                ]
+                            }
+                        ]
+                    },
+                    "then": {
+                        "properties": {
+                            "dies": {
+                                "minItems": 3
+                            }
+                        }
+                    }
+                }
+            ],
+            "oneOf": [
+                {
+                    "required": [
+                        "electrical"
+                    ],
+                    "not": {
+                        "required": [
+                            "dies"
+                        ]
+                    }
+                },
+                {
+                    "required": [
+                        "dies"
+                    ],
+                    "not": {
+                        "required": [
+                            "electrical"
+                        ]
+                    }
+                }
+            ]
+        },
+        "die": {
+            "title": "diodeDie",
+            "description": "One diode inside a multi-diode package whose diodes differ, with the complete electrical block the discrete file already defines — the same physics and the same field names as a single-diode part, stated once per diode. Every diode states its own values even when the datasheet prints them as equal ('D1 = D2'), so 'both diodes are 0.4 V' and 'the part is 0.4 V' are different documents. 'Die' here is the SAS name for one device position (as in mosfet.json / bjt.json dies[]); it does not claim a separate silicon die — the elements of a monolithic array are entries too.",
+            "unevaluatedProperties": false,
+            "allOf": [
+                {
+                    "$ref": "./utils.json#/$defs/dieBase"
+                },
+                {
+                    "type": "object",
+                    "required": [
+                        "subType",
+                        "electrical"
+                    ],
+                    "properties": {
+                        "subType": {
+                            "description": "Diode type OF THIS DIODE. This is the field a mixed package needs and the single-diode shape cannot provide: a steering diode says switching and the clamp beside it says tvs, in one part. It selects the same required electrical fields as part.subType does for a single-diode part.",
+                            "type": "string",
+                            "enum": [
+                                "rectifier",
+                                "schottky",
+                                "sicSchottky",
+                                "fastRecovery",
+                                "ultrafast",
+                                "switching",
+                                "pin",
+                                "zener",
+                                "tvs",
+                                "esd"
+                            ]
+                        },
+                        "electrical": {
+                            "description": "The complete electrical block, per diode. numberOfElements is not legal here: one entry is one diode.",
+                            "allOf": [
+                                {
+                                    "$ref": "#/$defs/electrical"
+                                },
+                                {
+                                    "not": {
+                                        "required": [
+                                            "numberOfElements"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "thermal": {
+                            "description": "Per-diode thermal figures where the datasheet gives them (junction-to-case, per-diode power dissipation). The package-level figure stays in datasheetInfo.thermal — one package, one R_th(j-a).",
+                            "$ref": "./utils.json#/$defs/thermal"
+                        }
+                    }
+                },
+                {
+                    "$comment": "Same subType-driven required sets as the package-level block (datasheetInfo.allOf), applied to this diode's own subType.",
+                    "if": {
+                        "properties": {
+                            "subType": {
+                                "const": "zener"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "electrical": {
+                                "$ref": "#/$defs/zenerElectricalRequired"
+                            }
+                        }
+                    },
+                    "else": {
+                        "if": {
+                            "properties": {
+                                "subType": {
+                                    "const": "esd"
+                                }
+                            }
+                        },
+                        "then": {
+                            "properties": {
+                                "electrical": {
+                                    "$ref": "#/$defs/esdElectricalRequired"
+                                }
+                            }
+                        },
+                        "else": {
+                            "if": {
+                                "properties": {
+                                    "subType": {
+                                        "const": "tvs"
+                                    }
+                                }
+                            },
+                            "then": {
+                                "properties": {
+                                    "electrical": {
+                                        "$ref": "#/$defs/tvsElectricalRequired"
+                                    }
+                                }
+                            },
+                            "else": {
+                                "properties": {
+                                    "electrical": {
+                                        "$ref": "#/$defs/rectifierElectricalRequired"
                                     }
                                 }
                             }
@@ -281,7 +588,7 @@
         },
         "electrical": {
             "title": "diodeElectrical",
-            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardVoltage (V_F, the defining rectifier conduction parameter) + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM). For a package declared part.dieConfiguration='dual', every value here is PER DIODE (per leg), never the package total. Each pulse rating carries its own waveform field; ratings at different waveforms are not comparable.",
+            "description": "Diode electrical characteristics. Required fields depend on part.subType (enforced in datasheetInfo): rectifier-family parts require reverseVoltage + forwardVoltage (V_F, the defining rectifier conduction parameter) + forwardCurrent; zener requires breakdownVoltage (= V_Z) + powerDissipation; esd requires standoffVoltage + at least one pulse rating (peakPulseCurrent, peakPulsePower or esdVoltageContact); tvs requires standoffVoltage + clampingVoltage + at least one pulse rating (peakPulseCurrent or peakPulsePower). TVS and ESD parts do not have a forwardCurrent (I_F(AV)) rating — that is a rectifier parameter; their forward-direction capability, when published, is the surge surgeCurrent (I_FSM). For a package declared part.dieConfiguration='dual' or 'array', every value here is PER DIODE (per leg / per line), never the package total, and numberOfElements states how many identical diodes the block describes. Each pulse rating carries its own waveform field; ratings at different waveforms are not comparable.",
             "type": "object",
             "additionalProperties": false,
             "dependentRequired": {
@@ -299,6 +606,11 @@
                 ]
             },
             "properties": {
+                "numberOfElements": {
+                    "description": "Number of IDENTICAL diodes in the package that this one electrical block describes; every other value in the block is per diode, never a package total. For an ESD / TVS array one element is one protected line (I/O channel) as the datasheet counts it ('8 lines'), whatever its internal steering/clamp structure. Required when part.dieConfiguration is 'array' (then >= 3); a 'dual' may state it and it is then 2; a single diode omits it. Taken from the datasheet, never inferred from the pin count. A package whose diodes differ has no electrical block and no count field: it is described in datasheetInfo.dies[], whose length is the count.",
+                    "type": "integer",
+                    "minimum": 2
+                },
                 "reverseVoltage": {
                     "type": "number",
                     "description": "V_RRM in Volts"
@@ -473,6 +785,63 @@
                     "description": "Safe Operating Area"
                 }
             }
+        },
+        "zenerElectricalRequired": {
+            "description": "Fields a zener diode's electrical block must state (V_Z and its dissipation rating).",
+            "required": [
+                "breakdownVoltage",
+                "powerDissipation"
+            ]
+        },
+        "esdElectricalRequired": {
+            "description": "Fields an ESD protection diode's electrical block must state: the standoff voltage plus at least one pulse rating.",
+            "required": [
+                "standoffVoltage"
+            ],
+            "anyOf": [
+                {
+                    "required": [
+                        "peakPulseCurrent"
+                    ]
+                },
+                {
+                    "required": [
+                        "peakPulsePower"
+                    ]
+                },
+                {
+                    "required": [
+                        "esdVoltageContact"
+                    ]
+                }
+            ]
+        },
+        "tvsElectricalRequired": {
+            "description": "Fields a TVS diode's electrical block must state: standoff and clamping voltage plus at least one pulse rating.",
+            "required": [
+                "standoffVoltage",
+                "clampingVoltage"
+            ],
+            "anyOf": [
+                {
+                    "required": [
+                        "peakPulseCurrent"
+                    ]
+                },
+                {
+                    "required": [
+                        "peakPulsePower"
+                    ]
+                }
+            ]
+        },
+        "rectifierElectricalRequired": {
+            "description": "Fields every other (rectifier-family) diode's electrical block must state.",
+            "required": [
+                "reverseVoltage",
+                "forwardVoltage",
+                "forwardCurrent"
+            ]
         }
     }
 }

@@ -138,7 +138,14 @@ json diode_leaf(const json& peas, const PEAS::Fidelity& fidelity, const std::str
         auto diode = peas.at("semiconductor").at("diode").get<Diode>();   // validate structure
         const auto& mfg = diode.get_manufacturer_info();
         if (!mfg) throw std::runtime_error("SAS real diode: manufacturerInfo.datasheetInfo missing");
-        if (!mfg->get_datasheet_info().get_electrical().get_forward_voltage())
+        // A package whose diodes differ carries per-diode electricals (dies[]) and NO package-level ones; a
+        // single-diode leaf cannot pick a diode on the caller's behalf (same rule as mosfet_leaf).
+        const auto& elecOpt = mfg->get_datasheet_info().get_electrical();
+        if (!elecOpt)
+            throw std::runtime_error("SAS real diode '" + name + "': datasheetInfo has no package-level electrical "
+                                     "(a package of differing diodes carries per-diode electricals in dies[]); a "
+                                     "single-diode leaf needs one diode's values");
+        if (!elecOpt->get_forward_voltage())
             throw std::runtime_error("SAS real diode: electrical.forwardVoltage missing");
         // Carry the datasheet electrical block forward (Vf, Vf@I, junctionCapacitance, trr, BV, ...).
         electrical = peas.at("semiconductor").at("diode").at("manufacturerInfo")
