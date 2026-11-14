@@ -579,6 +579,7 @@ enforced by conditionals in the diode `datasheetInfo` (next section).
 | `zenerTestCurrent` | number | A | I_ZT -- test current at which V_Z (breakdownVoltage) is specified |
 | `zenerImpedance` | number | Ohm | Z_ZT -- dynamic impedance at I_ZT |
 | `standoffVoltage` | number | V | V_RWM -- working voltage for TVS/ESD |
+| `polarity` | string (enum) | — | TVS/ESD clamping direction: `unidirectional` (clamps one polarity, conducts forward in the other) or `bidirectional` (clamps both polarities). Only where the vendor's document states it for the part; never inferred from a part-number suffix. Absent = not stated (no default) |
 | `peakPulseCurrent` | number | A | I_PP (I_PPM) rating for TVS/ESD, at `peakPulseCurrentWaveform` |
 | `peakPulseCurrentWaveform` | [PEAS `surgeWaveform`](../../PEAS/docs/architecture.md#surge-waveform-peas-rfc-0003-2026-10) | — | Impulse the `peakPulseCurrent` rating is stated at (e.g. `8/20` per IEC 61000-4-5). Requires `peakPulseCurrent`. Absent = not stated (no default) |
 | `peakPulsePower` | number | W | P_PP (P_PPM) rating for TVS/ESD, at `peakPulsePowerWaveform` |

@@ -684,6 +684,14 @@
                     "type": "number",
                     "description": "V_RWM working voltage for TVS/ESD in Volts"
                 },
+                "polarity": {
+                    "type": "string",
+                    "enum": [
+                        "unidirectional",
+                        "bidirectional"
+                    ],
+                    "description": "Clamping direction of a TVS/ESD diode: 'unidirectional' clamps one polarity and conducts forward in the other; 'bidirectional' clamps both polarities symmetrically. Recorded only where the vendor's document states it for the part; never inferred from a part-number suffix. Absent = not stated (no default)."
+                },
                 "peakPulseCurrent": {
                     "type": "number",
                     "description": "I_PP (I_PPM) rating for TVS/ESD in Amperes, at peakPulseCurrentWaveform."

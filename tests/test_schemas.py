@@ -1461,3 +1461,25 @@ def test_junction_temperature_alone_is_not_a_rating(sas_validator):
     _mel(doc)["ambientRatings"][0]["points"] = [
         {"ambientTemperature": 25, "junctionTemperature": 105}]
     assert_invalid(sas_validator, doc, contains="'continuousDrainCurrent' is a required property")
+
+
+# ---------------------------------------------------------------------------
+# TVS/ESD clamping direction (electrical.polarity)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("value", ["unidirectional", "bidirectional"])
+def test_tvs_polarity_accepted(sas_validator, tvs_doc, value):
+    _tvs_electrical(tvs_doc)["polarity"] = value
+    assert_valid(sas_validator, tvs_doc)
+
+
+@pytest.mark.parametrize("bad", ["bi", "Bidirectional", "uni", "CA", ""])
+def test_tvs_polarity_unknown_rejected(sas_validator, tvs_doc, bad):
+    _tvs_electrical(tvs_doc)["polarity"] = bad
+    assert_invalid(sas_validator, tvs_doc, contains="is not one of")
+
+
+def test_tvs_polarity_absent_still_valid(sas_validator, tvs_doc):
+    """Absent = not stated; existing TVS/ESD rows without it stay valid."""
+    assert "polarity" not in _tvs_electrical(tvs_doc)
+    assert_valid(sas_validator, tvs_doc)
