@@ -291,9 +291,17 @@
                     "$ref": "https://psma.com/peas/utils.json#/$defs/dimensionWithTolerance",
                     "description": "h_FE"
                 },
+                "dcCurrentGainIc": {
+                    "type": "number",
+                    "description": "I_C for h_FE spec in Amperes"
+                },
                 "saturationVoltage": {
                     "type": "number",
                     "description": "V_CE(sat) in Volts"
+                },
+                "saturationVoltageIc": {
+                    "type": "number",
+                    "description": "I_C for V_CE(sat) spec in Amperes"
                 },
                 "transitionFrequency": {
                     "type": "number",
