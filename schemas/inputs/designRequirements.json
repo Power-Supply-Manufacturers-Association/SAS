@@ -170,7 +170,20 @@
                             "description": "Maximum allowed reverse leakage current I_R, in A",
                             "type": "number",
                             "minimum": 0
+                        },
+                        "junctionCapacitance": {
+                            "description": "Junction capacitance C_j the circuit is designed and simulated with, per diode, in F, stated at the reverse bias junctionCapacitanceVr. A design value for a diode that is not selected yet (the same quantity as manufacturerInfo.datasheetInfo.electrical.junctionCapacitance of a selected part, which supersedes it once a part is bound). It is not a selection limit.",
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "junctionCapacitanceVr": {
+                            "description": "Reverse bias V_R at which junctionCapacitance is stated, in V (as electrical.junctionCapacitanceVr).",
+                            "type": "number",
+                            "minimum": 0
                         }
+                    },
+                    "dependentRequired": {
+                        "junctionCapacitance": ["junctionCapacitanceVr"]
                     },
                     "required": []
                 },

@@ -285,6 +285,34 @@ def test_design_requirements_diode_rated_fields_optional(sas_validator, diode_do
     assert_valid(sas_validator, ok)
 
 
+def test_design_requirements_diode_junction_capacitance(sas_validator, diode_doc):
+    # A design C_j for a not-yet-selected diode, stated at its reverse bias.
+    ok = copy.deepcopy(diode_doc)
+    ok["inputs"]["designRequirements"]["junctionCapacitance"] = 100e-12
+    ok["inputs"]["designRequirements"]["junctionCapacitanceVr"] = 10.0
+    assert_valid(sas_validator, ok)
+    # dependentRequired: C_j without its bias point is ambiguous.
+    no_vr = copy.deepcopy(ok)
+    del no_vr["inputs"]["designRequirements"]["junctionCapacitanceVr"]
+    assert_invalid(sas_validator, no_vr)
+    # The bias alone is allowed (it constrains nothing).
+    vr_only = copy.deepcopy(ok)
+    del vr_only["inputs"]["designRequirements"]["junctionCapacitance"]
+    assert_valid(sas_validator, vr_only)
+    zero = copy.deepcopy(ok)
+    zero["inputs"]["designRequirements"]["junctionCapacitance"] = 0
+    assert_invalid(sas_validator, zero)
+    neg_vr = copy.deepcopy(ok)
+    neg_vr["inputs"]["designRequirements"]["junctionCapacitanceVr"] = -1.0
+    assert_invalid(sas_validator, neg_vr)
+
+
+def test_design_requirements_junction_capacitance_is_diode_only(sas_validator, mosfet_doc):
+    mosfet_doc["inputs"]["designRequirements"]["junctionCapacitance"] = 100e-12
+    mosfet_doc["inputs"]["designRequirements"]["junctionCapacitanceVr"] = 10.0
+    assert_invalid(sas_validator, mosfet_doc)
+
+
 def test_unknown_device_type_in_design_requirements_rejected(sas_validator, mosfet_doc):
     mosfet_doc["inputs"]["designRequirements"]["deviceType"] = "vacuumTube"
     assert_invalid(sas_validator, mosfet_doc)
