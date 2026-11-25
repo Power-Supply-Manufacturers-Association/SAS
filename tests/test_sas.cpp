@@ -68,6 +68,41 @@ TEST_CASE("SAS sas_to_cias", "[sas]") {
     CHECK_MSG(threw, "MKF_MODEL origin throws for SAS");
 }
 
+TEST_CASE("SAS ideal diode carries the requirement junction capacitance; a real one does not", "[sas][diode][cj]") {
+    // A not-yet-selected diode states the C_j it is designed with in its design requirements. The ideal
+    // atom keeps the ideal forward characteristic and carries the inputs, so CIAS emits that C_j.
+    json seed = json::parse(R"({
+        "semiconductor": { "diode": {} },
+        "inputs": { "designRequirements": { "deviceType": "diode", "ratedReverseVoltage": 600,
+            "junctionCapacitance": 1e-10, "junctionCapacitanceVr": 10 } }
+    })");
+    json ideal = SAS::sas_to_cias(seed, Fidelity(Fidelity::Origin::REQUIREMENTS));
+    const json& atom = ideal.at("components").at(0).at("data");
+    CHECK(diode_vf(ideal) == 0.8334);
+    CHECK_FALSE(atom.at("semiconductor").at("diode").at("manufacturerInfo").at("datasheetInfo")
+                    .at("electrical").contains("junctionCapacitance"));
+    REQUIRE(atom.contains("inputs"));
+    CHECK(atom.at("inputs").at("designRequirements").at("junctionCapacitance") == 1e-10);
+    CHECK(atom.at("inputs").at("designRequirements").at("junctionCapacitanceVr") == 10);
+
+    // No requirement C_j: the ideal atom is unchanged (no inputs).
+    seed["inputs"]["designRequirements"].erase("junctionCapacitance");
+    seed["inputs"]["designRequirements"].erase("junctionCapacitanceVr");
+    CHECK_FALSE(SAS::sas_to_cias(seed, Fidelity(Fidelity::Origin::REQUIREMENTS))
+                    .at("components").at(0).at("data").contains("inputs"));
+
+    // A real part: its datasheet alone, the requirement is not carried.
+    json real = json::parse(R"({
+        "semiconductor": { "diode": { "manufacturerInfo": { "name": "Wolfspeed", "datasheetInfo": {
+            "part": { "partNumber": "C3D10065A", "technology": "SiC" },
+            "electrical": { "reverseVoltage": 650, "forwardVoltage": 1.5, "forwardCurrent": 10 } } } } },
+        "inputs": { "designRequirements": { "deviceType": "diode",
+            "junctionCapacitance": 1e-10, "junctionCapacitanceVr": 10 } }
+    })");
+    CHECK_FALSE(SAS::sas_to_cias(real, Fidelity(Fidelity::Origin::DATASHEET))
+                    .at("components").at(0).at("data").contains("inputs"));
+}
+
 TEST_CASE("SAS real MOSFET -> multi-atom (switch + Coss + body diode)", "[sas][real][mosfet]") {
     json doc = json::parse(R"({
         "semiconductor": { "mosfet": { "manufacturerInfo": { "name": "Infineon", "datasheetInfo": {

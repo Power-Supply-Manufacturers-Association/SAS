@@ -153,11 +153,20 @@ json diode_leaf(const json& peas, const PEAS::Fidelity& fidelity, const std::str
     } else {
         electrical["forwardVoltage"] = IDEAL_DIODE_VF_REF;   // single source: SasConverter.hpp   // ideal: IS=1e-14 at 1 A (matches MKF DIDEAL)
     }
+    json atom = make_diode_atom(electrical);
+    // A diode that is not selected yet may state the junction capacitance it is designed with
+    // (inputs.designRequirements.junctionCapacitance at junctionCapacitanceVr). The ideal realization
+    // carries the document's inputs into the atom so the CIAS emitter puts that capacitance on the
+    // ideal .model card; the ideal electrical block itself stays the ideal forward characteristic. A real
+    // part is described by its datasheet alone (its electrical.junctionCapacitance, carried above).
+    if (!fidelity.is_real() && peas.contains("inputs") && peas.at("inputs").contains("designRequirements")
+        && peas.at("inputs").at("designRequirements").contains("junctionCapacitance"))
+        atom["inputs"] = peas.at("inputs");
 
     json ports = json::array();
     for (auto p : {"anode", "cathode"}) ports.push_back(json{{"name", p}});
     json components = json::array();
-    components.push_back(json{{"name", "D"}, {"data", make_diode_atom(electrical)}});
+    components.push_back(json{{"name", "D"}, {"data", atom}});
     json connections = json::array();
     connections.push_back(pin_port_net("anode",   "D", "anode",   "anode"));
     connections.push_back(pin_port_net("cathode", "D", "cathode", "cathode"));
